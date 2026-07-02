@@ -158,3 +158,181 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
             resize_keyboard=True
         )
     )
+
+# ===========================
+# SWITCH 7 BUTTON MODE
+# ===========================
+
+AllBotAdminss = Bot.getData("AllBotAdminss") or []
+
+is_Admin = False
+
+# If no admin exists, assign owner automatically
+if not AllBotAdminss:
+    MAIN_ADMIN = u
+    AllBotAdminss.append(MAIN_ADMIN)
+    Bot.saveData("AllBotAdminss", AllBotAdminss)
+    Bot.saveData("Owner", u)
+    is_Admin = True
+
+# Check admin access
+for userid in AllBotAdminss:
+    if str(u) == str(userid):
+        is_Admin = True
+        break
+
+# Not admin → block access
+if not is_Admin:
+    bot.replyText(
+        u,
+        "<b><i>🚫 You Are Not This Bot Admin</i></b>",
+        parse_mode="html"
+    )
+    raise ReturnCommand()
+
+# Save button mode
+Bot.saveData("button_count", 7)
+
+# Response
+bot.sendMessage("✅ Switched to 7 Buttons")
+
+# ===========================
+# SWITCH 5 BUTTON MODE
+# ===========================
+
+AllBotAdminss = Bot.getData("AllBotAdminss") or []
+
+is_Admin = False
+
+# Auto assign owner if no admin exists
+if not AllBotAdminss:
+    MAIN_ADMIN = u
+    AllBotAdminss.append(MAIN_ADMIN)
+    Bot.saveData("AllBotAdminss", AllBotAdminss)
+    Bot.saveData("Owner", u)
+    is_Admin = True
+
+# Check admin access
+for userid in AllBotAdminss:
+    if str(u) == str(userid):
+        is_Admin = True
+        break
+
+# Not admin → block access
+if not is_Admin:
+    bot.replyText(
+        u,
+        "<b><i>🚫 You Are Not This Bot Admin</i></b>",
+        parse_mode="html"
+    )
+    raise ReturnCommand()
+
+# Save button mode
+Bot.saveData("button_count", 5)
+
+# Response
+bot.sendMessage("✅ Switched to 5 Buttons")
+
+
+if message.text == "ᴛᴏᴛᴀʟ ᴜꜱᴇʀꜱ":
+
+    admins = ["7937757398", "8102646437", "7669606015"]
+
+    if str(message.from_user.id) not in admins:
+        raise ReturnCommand()
+
+    users = Bot.getData("users") or []
+
+    total = len(users)
+
+    bot.sendMessage(
+        chat_id=message.chat.id,
+        text=f"👥 <b>ᴛᴏᴛᴀʟ ᴜꜱᴇʀꜱ :</b> <code>{total}</code>",
+        parse_mode="html"
+    )
+
+    ADMINS = ["7937757398", "8102646437", "7669606015"]
+
+
+def is_admin(user_id):
+    return str(user_id) in ADMINS
+
+
+def send_message(chat_id, text):
+    requests.post(URL + "/sendMessage", data={
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML"
+    })
+
+
+# =========================
+# WEBHOOK ROUTE
+# =========================
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot is running"
+
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.get_json()
+
+    if "message" not in data:
+        return "ok"
+
+    message = data["message"]
+    chat_id = message["chat"]["id"]
+    user_id = str(message["from"]["id"])
+    text = message.get("text", "")
+
+    # =========================
+    # SET START TEXT (ADMIN)
+    # =========================
+    if text == "ꜱᴇᴛ ꜱᴛᴀʀᴛ ᴛᴇxᴛ":
+
+        if not is_admin(user_id):
+            send_message(chat_id, "🚫 You Are Not This Bot Admin")
+            return "ok"
+
+        send_message(chat_id, "📩 Send me Start Message Text")
+        NEXT_CMD[user_id] = "save_start_text"
+        return "ok"
+
+    # =========================
+    # SAVE START TEXT
+    # =========================
+    if NEXT_CMD.get(user_id) == "save_start_text":
+
+        if not is_admin(user_id):
+            send_message(chat_id, "🚫 Not Allowed")
+            return "ok"
+
+        DATA["start_text"] = text
+
+        send_message(
+            chat_id,
+            "✅ Start message saved successfully\n\n" + text
+        )
+
+        NEXT_CMD.pop(user_id, None)
+        return "ok"
+
+    # =========================
+    # TOTAL START
+    # =========================
+    if text == "/start":
+        send_message(
+            chat_id,
+            DATA.get("start_text", "👋 Default Start Message")
+        )
+        return "ok"
+
+    return "ok"
+
+
+# =========================
+# RUN SERVER
+# =========================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
