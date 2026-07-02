@@ -124,3 +124,37 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ===========================
+# /admin
+# ===========================
+
+from telegram import ReplyKeyboardMarkup
+
+async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    uid = update.effective_user.id
+
+    if uid not in ADMINS:
+        await update.message.reply_text("🚫 You Are Not Admin")
+        return
+
+    keyboard = [
+        ["ᴀᴅᴍɪɴꜱ"],
+        ["ʙᴏᴛ ᴏɴ", "ʙᴏᴛ ꜱᴛᴏᴘ"],
+        ["ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 1", "ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 2", "ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 3"],
+        ["ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 4", "ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 5", "ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 6"],
+        ["ꜱᴇᴛ ᴄʜᴀɴɴᴇʟ 7"],
+        ["ꜱᴡɪᴛᴄʜ 𝟓 ʙᴜᴛᴛᴏɴ", "ꜱᴡɪᴛᴄʜ 𝟕 ʙᴜᴛᴛᴏɴ"],
+        ["ꜱᴇᴛ ᴘʜᴏᴛᴏ", "ꜱᴇᴛ ꜱᴛᴀʀᴛ ᴛᴇxᴛ"],
+        ["ʙʀᴏᴀᴅᴄᴀꜱᴛ"],
+        ["ᴛᴏᴛᴀʟ ᴜꜱᴇʀꜱ"]
+    ]
+
+    await update.message.reply_text(
+        "✅ ADMIN PANEL",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True
+        )
+    )
