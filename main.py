@@ -518,11 +518,9 @@ Please complete payment and contact support with proof.
 
 
 def main():
-    bot_token = os.getenv("8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4")
-    if not bot_token:
-        raise RuntimeError("BOT_TOKEN environment variable is required.")
+    BOT_TOKEN = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
 
-    app = Application.builder().token(bot_token).build()
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(shop_menu, pattern="^/shopnawkk$"))
