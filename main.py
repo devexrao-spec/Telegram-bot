@@ -184,6 +184,52 @@ def get_support_keyboard():
     )
 
 
+def get_amount_text(amount):
+    display_amount = amount or "0"
+    return (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        f"Amount: ₹{display_amount}\n\n"
+        "Use the keypad below to enter amount."
+    )
+
+
+def get_amount_keyboard():
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("1", callback_data="/num1"),
+                InlineKeyboardButton("2", callback_data="/num2"),
+                InlineKeyboardButton("3", callback_data="/num3"),
+            ],
+            [
+                InlineKeyboardButton("4", callback_data="/num4"),
+                InlineKeyboardButton("5", callback_data="/num5"),
+                InlineKeyboardButton("6", callback_data="/num6"),
+            ],
+            [
+                InlineKeyboardButton("7", callback_data="/num7"),
+                InlineKeyboardButton("8", callback_data="/num8"),
+                InlineKeyboardButton("9", callback_data="/num9"),
+            ],
+            [
+                premium_button("❌ CLEAR", callback_data="/clearamt", style="danger"),
+                InlineKeyboardButton("0", callback_data="/num0"),
+                premium_button("✅ CONFIRM", callback_data="/done"),
+            ],
+            [
+                premium_button(
+                    "BACK",
+                    callback_data="/backkkk",
+                    style="danger",
+                    emoji_id="6039539366177541657",
+                )
+            ],
+        ]
+    )
+
+
 async def edit_query_message(query, *, text, reply_markup, parse_mode=ParseMode.HTML):
     try:
         await query.edit_message_text(
@@ -375,21 +421,108 @@ async def add_fund_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    text = """
+    user_data.setdefault(query.from_user.id, {})["pay_amount"] = ""
+
+    await edit_query_message(
+        query,
+        text=get_amount_text(""),
+        reply_markup=get_amount_keyboard(),
+    )
+
+
+async def amount_number_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    digit = query.data.replace("/num", "", 1)
+    user_store = user_data.setdefault(query.from_user.id, {})
+    current_amount = user_store.get("pay_amount", "")
+
+    if len(current_amount) >= 7:
+        return
+
+    if current_amount == "" and digit == "0":
+        new_amount = ""
+    else:
+        new_amount = current_amount + digit
+
+    user_store["pay_amount"] = new_amount
+
+    await edit_query_message(
+        query,
+        text=get_amount_text(new_amount),
+        reply_markup=get_amount_keyboard(),
+    )
+
+
+async def clear_amount_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    user_data.setdefault(query.from_user.id, {})["pay_amount"] = ""
+
+    await edit_query_message(
+        query,
+        text=get_amount_text(""),
+        reply_markup=get_amount_keyboard(),
+    )
+
+
+async def confirm_amount_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    amount = user_data.setdefault(query.from_user.id, {}).get("pay_amount", "")
+
+    if not amount or int(amount) <= 0:
+        text = (
+            "<blockquote>"
+            "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+            "</blockquote>\n\n"
+            "Please enter an amount greater than ₹0."
+        )
+        await edit_query_message(query, text=text, reply_markup=get_amount_keyboard())
+        return
+
+    text = f"""
 <blockquote>
-<tg-emoji emoji-id="6278302366303260172">💰</tg-emoji> <b>ADD FUND</b>
+<tg-emoji emoji-id="6089104607328342288">💰</tg-emoji> <b>PAYMENT CONFIRMATION</b>
 </blockquote>
 
-Add fund system coming soon.
+<b>Amount:</b> ₹{amount}
+
+Please complete payment and contact support with proof.
 """
 
-    await edit_query_message(query, text=text, reply_markup=get_back_keyboard())
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                premium_button(
+                    "SUPPORT",
+                    callback_data="/supportj",
+                    emoji_id="5897567714674741148",
+                )
+            ],
+            [
+                premium_button(
+                    "BACK",
+                    callback_data="/addpayment",
+                    style="danger",
+                    emoji_id="6039539366177541657",
+                )
+            ],
+        ]
+    )
+
+    await edit_query_message(query, text=text, reply_markup=keyboard)
 
 
 def main():
-    BOT_TOKEN = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
+    bot_token = os.getenv("8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4")
+    if not bot_token:
+        raise RuntimeError("BOT_TOKEN environment variable is required.")
 
-    app = Application.builder().token(BOT_TOKEN).build()
+    app = Application.builder().token(bot_token).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(shop_menu, pattern="^/shopnawkk$"))
@@ -400,9 +533,13 @@ def main():
     app.add_handler(CallbackQueryHandler(how_to_use_handler, pattern="^/spinj$"))
     app.add_handler(CallbackQueryHandler(support_handler, pattern="^/supportj$"))
     app.add_handler(CallbackQueryHandler(add_fund_handler, pattern="^/addpayment$"))
+    app.add_handler(CallbackQueryHandler(amount_number_handler, pattern="^/num[0-9]$"))
+    app.add_handler(CallbackQueryHandler(clear_amount_handler, pattern="^/clearamt$"))
+    app.add_handler(CallbackQueryHandler(confirm_amount_handler, pattern="^/done$"))
 
     print("Bot is running...")
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
