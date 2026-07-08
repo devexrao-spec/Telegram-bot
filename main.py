@@ -387,9 +387,9 @@ Add fund system coming soon.
 
 
 def main():
-    bot_token = os.getenv("8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4")
-    if not bot_token:
-        raise RuntimeError("BOT_TOKEN environment variable is required.")
+    BOT_TOKEN = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
+
+app = Application.builder().token(BOT_TOKEN).build()
 
     app = Application.builder().token(bot_token).build()
 
