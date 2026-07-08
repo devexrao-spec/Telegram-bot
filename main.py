@@ -309,9 +309,7 @@ def get_shop_keyboard():
                 )
             ]
         ]
-          
-        )
-)
+    )
 
 async def profile_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
