@@ -466,17 +466,14 @@ async def my_key_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def add_fund_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
-
     await query.answer()
-
 
     update_user(
         query.from_user.id,
         {
-            "pay_amount":""
+            "pay_amount": ""
         }
     )
-
 
     await query.edit_message_text(
         text=(
@@ -487,7 +484,9 @@ async def add_fund_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
         parse_mode=ParseMode.HTML
     )
-    async def verify_payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+
+async def verify_payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
@@ -497,6 +496,7 @@ async def add_fund_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     order_id = user.get("order_id")
 
     if not order_id:
+        return
         await query.edit_message_text(
             "❌ No active payment found.",
             reply_markup=get_back_keyboard()
@@ -508,7 +508,7 @@ async def add_fund_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "https://fampay.anujbots.xyz/verify.php",
         {
             "order_id": order_id,
-            "api_key": FAMPAY_API_KEY
+            "api_key": FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8
         }
     )
 
