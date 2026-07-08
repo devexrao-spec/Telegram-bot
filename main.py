@@ -4,7 +4,7 @@ import json
 import os
 
 # ================= CONFIG =================
-BOT_TOKEN = "PASTE_YOUR_NEW_TOKEN_HERE"
+BOT_TOKEN = "8828131983:AAHf7iP4dm-qhcnm8nayCzNNXVyQlSvEpls"
 
 ADMINS = [8102646437, 7937757398]
 
