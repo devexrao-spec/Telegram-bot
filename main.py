@@ -90,11 +90,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await context.bot.send_photo(
-        chat_id=uid,
-        photo=PHOTO,
-        caption=f"👋 Hello {user.first_name}\n\n{START_TEXT}",
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        # ================= ADMIN =================
+    chat_id=uid,
+    photo=PHOTO,
+    caption=f"👋 Hello {user.first_name}\n\n{START_TEXT}",
+    reply_markup=InlineKeyboardMarkup(keyboard),
+)
+# ================= ADMIN =================
 
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -177,7 +178,5 @@ def main():
     )
 
 
-if __name__ == "__main__":
+if if __name__ == "__main__":
     main()
-    )
-    )
