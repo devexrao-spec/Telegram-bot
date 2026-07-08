@@ -389,9 +389,7 @@ Add fund system coming soon.
 def main():
     BOT_TOKEN = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
 
-app = Application.builder().token(BOT_TOKEN).build()
-
-    app = Application.builder().token(bot_token).build()
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(shop_menu, pattern="^/shopnawkk$"))
@@ -405,7 +403,6 @@ app = Application.builder().token(BOT_TOKEN).build()
 
     print("Bot is running...")
     app.run_polling()
-
 
 if __name__ == "__main__":
     main()
