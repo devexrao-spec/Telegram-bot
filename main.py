@@ -1,182 +1,123 @@
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-)
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-)
-import json
-import os
-
-# ================= CONFIG =================
-
-BOT_TOKEN = "8828131983:AAHf7iP4dm-qhcnm8nayCzNNXVyQlSvEpls"
-
-ADMINS = [8102646437, 7937757398]
-
-PHOTO = "https://i.postimg.cc/ryC2ypLJ/IMG-20250929-182323-680.jpg"
-
-START_TEXT = "Welcome To The Bot!"
-
-CHANNELS = [
-    "https://t.me/+hd8XwDL8030yNzE1",
-    "https://t.me/+hd8XwDL8030yNzE1",
-    "https://t.me/+hd8XwDL8030yNzE1",
-]
-
-DB = "users.json"
-
-# ================= DATABASE =================
-
-if not os.path.exists(DB):
-    with open(DB, "w") as f:
-        json.dump([], f)
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ParseMode
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 
-def load_users():
-    with open(DB, "r") as f:
-        return json.load(f)
+# Simple in-memory storage
+# Production me database use karna better hai
+user_data = {}
+balances = {}
 
-
-def save_users(users):
-    with open(DB, "w") as f:
-        json.dump(users, f)
-
-
-# ================= START =================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     user = update.effective_user
-    uid = user.id
+    chat_id = update.effective_chat.id
 
-    users = load_users()
+    # joined_date save
+    if user.id not in user_data:
+        user_data[user.id] = {
+            "joined_date": update.message.date
+        }
 
-    new = False
+    first_name = user.first_name or "User"
 
-    if uid not in users:
-        users.append(uid)
-        save_users(users)
-        new = True
-
-    total = len(users)
-
-    text = (
-        f"{'🚨 NEW USER' if new else '♻️ OLD USER'}\n\n"
-        f"👤 Name : {user.first_name}\n"
-        f"🆔 ID : {uid}\n"
-        f"📛 Username : @{user.username}\n\n"
-        f"👥 Total Users : {total}"
-    )
-
-    for admin in ADMINS:
-        try:
-            await context.bot.send_message(admin, text)
-        except:
-            pass
-
-    keyboard = []
-
-    for i, link in enumerate(CHANNELS, start=1):
-        keyboard.append(
-            [InlineKeyboardButton(f"CHANNEL {i}", url=link)]
-        )
-
-    keyboard.append(
-        [InlineKeyboardButton("CHECK JOINED ✅", url="https://t.me/")]
-    )
-
-    await context.bot.send_photo(
-    chat_id=uid,
-    photo=PHOTO,
-    caption=f"👋 Hello {user.first_name}\n\n{START_TEXT}",
-    reply_markup=InlineKeyboardMarkup(keyboard),
-)
-# ================= ADMIN =================
-
-async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_user.id not in ADMINS:
-        await update.message.reply_text("❌ You Are Not Admin.")
-        return
-
-    users = load_users()
+    # Balance get
+    balance = balances.get(user.id, 0)
 
     text = (
-        "🛠 ADMIN PANEL\n\n"
-        f"👥 Total Users : {len(users)}\n"
-        "🤖 Bot Status : ONLINE"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
+        "WELCOME TO HACK STORE "
+        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
+        "</blockquote>\n\n"
+
+        "<i>"
+        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
+        "Your ultimate destination for premium mods, cheats & clients!"
+        "</i>\n\n"
+
+        "<blockquote>"
+        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
+
+        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
+
+        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
+
+        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
+        "</blockquote>\n\n"
+
+        "<blockquote>"
+        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> "
+        f"Your Balance: ₹{balance}"
+        "</blockquote>"
     )
 
-    await update.message.reply_text(text)
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="BUY HACK",
+                callback_data="/shopnawkk"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="MY KEY",
+                callback_data="/orderksk"
+            ),
+            InlineKeyboardButton(
+                text="PROFILE",
+                callback_data="/profilemmm"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="HOW TO USE",
+                callback_data="/spinj"
+            ),
+            InlineKeyboardButton(
+                text="SUPPORT",
+                callback_data="/supportj"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="ADD FUND",
+                callback_data="/addpayment"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="PAY PROOF",
+                url="https://t.me/subhajit_feedback"
+            ),
+            InlineKeyboardButton(
+                text="DOWNLOAD APK",
+                url="https://t.me/+hasTLSVjzaZjZGVl"
+            )
+        ]
+    ]
 
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-# ================= BROADCAST =================
-
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_user.id not in ADMINS:
-        await update.message.reply_text("❌ You Are Not Admin.")
-        return
-
-    if not context.args:
-        await update.message.reply_text(
-            "Usage:\n/broadcast Your Message"
-        )
-        return
-
-    msg = " ".join(context.args)
-
-    users = load_users()
-
-    success = 0
-    failed = 0
-
-    for uid in users:
-        try:
-            await context.bot.send_message(uid, msg)
-            success += 1
-        except:
-            failed += 1
-
-    await update.message.reply_text(
-        f"✅ Broadcast Complete\n\n"
-        f"Success : {success}\n"
-        f"Failed : {failed}"
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=text,
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+        reply_markup=reply_markup
     )
 
-
-# ================= USERS =================
-
-async def users(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_user.id not in ADMINS:
-        return
-
-    total = len(load_users())
-
-    await update.message.reply_text(
-        f"👥 Total Users : {total}"
-        # ================= MAIN =================
 
 def main():
+    BOT_TOKEN = "8828131983:AAHf7iP4dm-qhcnm8nayCzNNXVyQlSvEpls"
 
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("admin", admin))
-    app.add_handler(CommandHandler("broadcast", broadcast))
-    app.add_handler(CommandHandler("users", users))
 
-    print("🤖 Bot Started Successfully...")
-
-    app.run_polling(
-        allowed_updates=Update.ALL_TYPES
-    )
+    print("Bot is running...")
+    app.run_polling()
 
 
-if if __name__ == "__main__":
+if name == "main":
     main()
