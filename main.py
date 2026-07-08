@@ -1,4 +1,5 @@
 import json
+import os
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
@@ -18,8 +19,8 @@ user_data = {}
 balances = {}
 user_orders = {}
 
-UPI_ID = "bablu.xyztb@fam"
-FAMPAY_API_KEY = "FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8"
+UPI_ID = os.getenv("UPI_ID", "bablu.xyztb@fam")
+FAMPAY_API_KEY = os.getenv("FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8")
 
 
 def premium_button(text, *, callback_data=None, url=None, style="success", emoji_id=None):
@@ -266,14 +267,21 @@ def build_url(base_url, params):
     return f"{base_url}?{urlencode(params)}"
 
 
-async def edit_query_message(query, *, text, reply_markup, parse_mode=ParseMode.HTML):
+async def edit_query_message(query, *, text, reply_markup=None, parse_mode=ParseMode.HTML):
     try:
-        await query.edit_message_text(
-            text=text,
-            parse_mode=parse_mode,
-            disable_web_page_preview=True,
-            reply_markup=reply_markup,
-        )
+        if query.message.photo:
+            await query.edit_message_caption(
+                caption=text,
+                parse_mode=parse_mode,
+                reply_markup=reply_markup,
+            )
+        else:
+            await query.edit_message_text(
+                text=text,
+                parse_mode=parse_mode,
+                disable_web_page_preview=True,
+                reply_markup=reply_markup,
+            )
     except Exception as e:
         if "message is not modified" not in str(e).lower():
             raise e
@@ -553,17 +561,20 @@ async def confirm_amount_handler(update: Update, context: ContextTypes.DEFAULT_T
     qr_url = data["data"]["qr_url"]
     user_store["addpay_order_id"] = order_id
 
-    await edit_query_message(
-        query,
-        text=(
-            "<blockquote>"
-            "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED"
-            "</blockquote>\n\n"
-            "QR image sent below. Scan it and complete payment.\n\n"
-            f"Amount: ₹{amount}"
-        ),
-        reply_markup=get_payment_keyboard(),
-    )
+    try:
+        await query.message.delete()
+    except Exception:
+        await edit_query_message(
+            query,
+            text=(
+                "<blockquote>"
+                "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED"
+                "</blockquote>\n\n"
+                "QR image sent below. Scan it and complete payment.\n\n"
+                f"Amount: ₹{amount}"
+            ),
+            reply_markup=None,
+        )
 
     await context.bot.send_photo(
         chat_id=query.message.chat_id,
@@ -596,10 +607,10 @@ async def verify_addpay_handler(update: Update, context: ContextTypes.DEFAULT_TY
         )
         return
 
-    if not FAMPAY_API_KEY or FAMPAY_API_KEY == "YAHAN_APNI_FAMPAY_API_KEY":
+    if not FAMPAY_API_KEY:
         await edit_query_message(
             query,
-            text="❌ Payment verify API key missing.",
+            text="❌ Payment verify API key missing. Set FAMPAY_API_KEY.",
             reply_markup=get_back_keyboard(),
             parse_mode=None,
         )
@@ -623,9 +634,7 @@ async def verify_addpay_handler(update: Update, context: ContextTypes.DEFAULT_TY
 
     if data.get("status") == "success":
         amount = float(data["data"]["amount"])
-
         balances[query.from_user.id] = balances.get(query.from_user.id, 0) + amount
-
         user_store["addpay_order_id"] = ""
         user_store["pay_amount"] = ""
         user_store["last_deposit_amount"] = ""
@@ -668,28 +677,20 @@ def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-
     app.add_handler(CallbackQueryHandler(shop_menu, pattern="^/shopnawkk$"))
     app.add_handler(CallbackQueryHandler(back_to_home, pattern="^/backkkk$"))
-
     app.add_handler(CallbackQueryHandler(product_handler, pattern="^/SHOP_P"))
-
     app.add_handler(CallbackQueryHandler(my_key_handler, pattern="^/orderksk$"))
     app.add_handler(CallbackQueryHandler(profile_handler, pattern="^/profilemmm$"))
     app.add_handler(CallbackQueryHandler(how_to_use_handler, pattern="^/spinj$"))
     app.add_handler(CallbackQueryHandler(support_handler, pattern="^/supportj$"))
-
     app.add_handler(CallbackQueryHandler(add_fund_handler, pattern="^/addpayment$"))
     app.add_handler(CallbackQueryHandler(amount_number_handler, pattern="^/num[0-9]$"))
     app.add_handler(CallbackQueryHandler(clear_amount_handler, pattern="^/clearamt$"))
     app.add_handler(CallbackQueryHandler(confirm_amount_handler, pattern="^/done$"))
 
-    app.add_handler(CallbackQueryHandler(verify_addpay_handler, pattern="^/verify_addpay$"))
-    app.add_handler(CallbackQueryHandler(cancel_payment_handler, pattern="^/cancel$"))
-
     print("Bot is running...")
     app.run_polling()
-
 
 if __name__ == "__main__":
     main()
