@@ -663,7 +663,7 @@ async def cancel_payment_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 
 def main():
-    BOT_TOKEN = "8828131983:AAHf7iP4dm-qhcnm8nayCzNNXVyQlSvEpls"
+    BOT_TOKEN = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
 
     app = Application.builder().token(BOT_TOKEN).build()
 
