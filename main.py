@@ -17,7 +17,7 @@ from telegram.ext import (
 
 # ================= DATABASE =================
 
-MONGO_URL = os.getenv("MONGO_URL")
+MONGO_URL = os.getenv("mongodb+srv://crasher3210_db_user:devex5656@cluster0.9y5axka.mongodb.net/?appName=Cluster0&compressors=zlib")
 
 if not MONGO_URL:
     raise RuntimeError("MONGO_URL missing")
