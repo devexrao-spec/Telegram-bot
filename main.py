@@ -595,86 +595,21 @@ async def back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-    token = os.getenv("8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4")
-
-    if not token:
-        raise RuntimeError(
-            "BOT_TOKEN missing"
-        )
-
+    token = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
 
     app = Application.builder().token(token).build()
 
-
-    app.add_handler(
-        CommandHandler(
-            "start",
-            start
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            shop_handler,
-            pattern="^shop$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            back_handler,
-            pattern="^back$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            profile_handler,
-            pattern="^profile$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            my_key_handler,
-            pattern="^mykey$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            add_fund_handler,
-            pattern="^addfund$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            product_handler,
-            pattern="^product"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            verify_payment_handler,
-            pattern="^verify$"
-        )
-    )
-
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(shop_handler, pattern="^shop$"))
+    app.add_handler(CallbackQueryHandler(back_handler, pattern="^back$"))
+    app.add_handler(CallbackQueryHandler(profile_handler, pattern="^profile$"))
+    app.add_handler(CallbackQueryHandler(my_key_handler, pattern="^mykey$"))
+    app.add_handler(CallbackQueryHandler(add_fund_handler, pattern="^addfund$"))
+    app.add_handler(CallbackQueryHandler(product_handler, pattern="^product"))
+    app.add_handler(CallbackQueryHandler(verify_payment_handler, pattern="^verify$"))
 
     print("Bot Running...")
-
-
     app.run_polling()
-
 
 
 if __name__ == "__main__":
