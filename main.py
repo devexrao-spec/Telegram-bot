@@ -611,6 +611,10 @@ async def verify_payment_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 # ================= MAIN =================
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "Welcome to bot"
+    )
 
 def main():
 
