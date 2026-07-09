@@ -1001,7 +1001,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ============================================================
-# ADMIN COMMANDS
+# ADMIN COMMANDS - FIXED FOR BALANCE
 # ============================================================
 
 async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1015,7 +1015,7 @@ async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         if len(args) < 2:
             await update.message.reply_text(
                 "💡 Send User Telegram Id & Amount\n\n"
-                "⚠️ Use Format: `user_id 10`\n\n"
+                "⚠️ Use Format: `/ChangeAnyUserBal 123456789 100`\n\n"
                 "Add - Before Amount To Deduct Balance Like `-10`",
                 parse_mode="HTML"
             )
@@ -1024,23 +1024,36 @@ async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         target_user = args[0].strip()
         amount = float(args[1].strip())
         
+        # Get current balance
         current_balance = UserResources.get_balance(target_user)
+        
+        # Calculate new balance
         new_balance = current_balance + amount
+        
+        # Set new balance
         UserResources.set_balance(target_user, new_balance)
         
         time_info = get_indian_time()
+        
+        if amount > 0:
+            action = "Added"
+        else:
+            action = "Deducted"
+        
         await update.message.reply_text(
-            f"<b>✅ Account Updated!\n\n"
-            f"💰 {'Added' if amount > 0 else 'Deducted'}: ₹{abs(amount)}\n"
-            f"💳 Final Balance: ₹{UserResources.get_balance(target_user)}</b>",
+            f"<b>✅ Account Updated!</b>\n\n"
+            f"💰 {action}: ₹{abs(amount)}\n"
+            f"💳 Previous Balance: ₹{current_balance}\n"
+            f"💳 New Balance: ₹{UserResources.get_balance(target_user)}",
             parse_mode="HTML"
         )
         
+        # Log admin action
         admin_actions = BotData.get("AdmAC", [])
         admin_actions.append(
             f"<b>📆 Time:</b> {time_info['easy_time']}\n"
             f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
-            f"🔍<b> Action: </b> {'Added' if amount > 0 else 'Deducted'} {abs(amount)} Rs To {target_user} Account"
+            f"🔍<b> Action: </b> {action} {abs(amount)} Rs To {target_user} Account"
         )
         BotData.set("AdmAC", admin_actions)
         
@@ -1522,16 +1535,16 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ============================================================
-# SINGLE MESSAGE HANDLER - FIXED FOR /cancel AND /done
+# SINGLE MESSAGE HANDLER - FINAL FIXED
 # ============================================================
 
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all text messages in one place"""
+    """Handle all text messages in one place - FINAL FIXED"""
     user_id = str(update.effective_user.id)
     text = update.message.text
     
     # ============================================================
-    # CHECK FOR /cancel AND /done COMMANDS FIRST
+    # CHECK FOR COMMANDS FIRST
     # ============================================================
     if text == "/cancel":
         context.user_data.clear()
@@ -1876,7 +1889,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
 # ============================================================
-# ADMIN CALLBACKS
+# ADMIN CALLBACKS - FIXED FOR BOT ON/OFF
 # ============================================================
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1888,10 +1901,11 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("<b><i>🚫 You Are Not This Bot Admin</i></b>", parse_mode="HTML")
         return
     
+    # Check for BotMode toggle
     if query.data and "BotMode" in query.data:
         parts = query.data.split()
         if len(parts) >= 2:
-            mode = parts[1]
+            mode = parts[1]  # "ON" or "OFF"
             BotData.set("BotMode", mode)
             time_info = get_indian_time()
             admin_actions = BotData.get("AdmAC", [])
@@ -2114,6 +2128,8 @@ async def main():
     application.add_handler(CommandHandler("removereseller", remove_reseller_command))
     application.add_handler(CommandHandler("resellerlist", reseller_list_command))
     application.add_handler(CommandHandler("TUSHAR_AddAdmin", add_admin_command))
+    application.add_handler(CommandHandler("cancel", cancel_command_handler))
+    application.add_handler(CommandHandler("done", done_command_handler))
     
     # SINGLE message handler for all text messages
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_all_messages))
@@ -2127,6 +2143,7 @@ async def main():
     print("📝 You can add multiple keys one by one!")
     print("🔴 Type /cancel to cancel any operation")
     print("✅ Type /done to finish adding keys")
+    print("💰 Use /ChangeAnyUserBal user_id amount to add/deduct balance")
     
     await application.initialize()
     await application.start()
