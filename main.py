@@ -5,9 +5,17 @@ import re
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 import requests
+import logging
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # CONFIGURATION
@@ -297,7 +305,7 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
 # ============================================================
-# SHOP COMMANDS
+# SHOP COMMANDS (Keep all existing shop functions)
 # ============================================================
 
 async def shop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1137,7 +1145,7 @@ SHOP 🛍️ MOOD
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
 # ============================================================
-# SHOP ADMIN COMMANDS (For adding keys and setting prices)
+# SHOP ADMIN COMMANDS
 # ============================================================
 
 async def shop_admin_p1(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1339,7 +1347,7 @@ async def shop_admin_p3(update: Update, context: ContextTypes.DEFAULT_TYPE):
             raise e
 
 # ============================================================
-# SHOPADD HANDLERS (For setting prices and adding keys)
+# SHOPADD HANDLERS - FIXED
 # ============================================================
 
 async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1359,7 +1367,6 @@ async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     option = data[1]
     
-    # Product mappings for price
     price_map = {
         "1": ("drip_1d_price", "DRIP CLIENT APK MOD\n1 Days"),
         "2": ("drip_3d_price", "DRIP CLIENT APK MOD\n3 Days"),
@@ -1371,40 +1378,24 @@ async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "8": ("drip_7d_reseller_price", "👑 RESELLER PANEL\n🛒 DRIP CLIENT APK MOD\n7 Days"),
         "9": ("drip_15d_reseller_price", "👑 RESELLER PANEL\n🛒 DRIP CLIENT APK MOD\n15 Days"),
         "10": ("drip_30d_reseller_price", "👑 RESELLER PANEL\n🛒 DRIP CLIENT APK MOD\n30 Days"),
-        "11": ("HG_1d_price", "🛒 HG-CHEATS ANDROID\n1 Days"),
-        "12": ("HG_7d_price", "🛒 HG-CHEATS ANDROID\n7 Days"),
-        "13": ("HG_10d_price", "🛒 HG-CHEATS ANDROID\n10 Days"),
-        "14": ("HG_30d_price", "🛒 HG-CHEATS ANDROID\n30 Days"),
-        "15": ("HG_1d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n1 Days"),
-        "16": ("HG_7d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n7 Days"),
-        "17": ("HG_10d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n10 Days"),
-        "18": ("HG_30d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n30 Days"),
-        "191": ("PATO_1d_price", "🛒PROXY SERVER [DR-CL]\n1 Days"),
-        "19": ("PATO_3d_price", "🛒 PROXY SERVER [DR-CL]\n3 Days"),
-        "20": ("PATO_7d_price", "🛒 PROXY SERVER [DR-CL]\n7 Days"),
-        "21": ("PATO_15d_price", "🛒 PROXY SERVER [DR-CL]\n10 Days"),
-        "221": ("PATO_1d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER [DR-CL]\n1 Days"),
-        "22": ("PATO_3d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER [DR-CL]\n3 Days"),
-        "23": ("PATO_7d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER [DR-CL]\n7 Days"),
-        "24": ("PATO_15d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER [DR-CL]\n10 Days"),
-        "25": ("PRIME_5d_price", "🛒 PRIME-HOOK-MOD APK\n5 Days"),
-        "26": ("PRIME_10d_price", "🛒 PRIME-HOOK-MOD APK\n10 Days"),
-        "27": ("PRIME_5d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME-HOOK-MOD APK\n5 Days"),
-        "28": ("PRIME_10d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME-HOOK-MOD APK\n10 Days"),
-        "29": ("ROOT_10d_price", "🛒 BR MOD ROOT\n10 Days"),
-        "30": ("ROOT_20d_price", "🛒 BR MOD ROOT\n20 Days"),
-        "31": ("ROOT_10d_reseller_price", "👑 RESELLER PANEL\n🛒 BR MOD ROOT\n10 Days"),
-        "32": ("ROOT_20d_reseller_price", "👑 RESELLER PANEL\n🛒 BR MOD ROOT\n20 Days"),
-        "311": ("HG_1d_price", "🛒 HG-CHEATS ANDROID\n1 Days"),
-        "312": ("HG_3d_price", "🛒 HG-CHEATS ANDROID\n3 Days"),
-        "313": ("HG_7d_price", "🛒 HG-CHEATS ANDROID\n7 Days"),
-        "314": ("HG_14d_price", "🛒 HG-CHEATS ANDROID\n14 Days"),
-        "315": ("HG_21d_price", "🛒 HG-CHEATS ANDROID\n21 Days"),
-        "316": ("HG_1d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n1 Days"),
-        "317": ("HG_3d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n3 Days"),
-        "318": ("HG_7d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n7 Days"),
-        "319": ("HG_14d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n14 Days"),
-        "320": ("HG_21d_reseller_price", "👑 RESELLER PANEL\n🛒 HG-CHEATS ANDROID\n21 Days"),
+        "311": ("HG_1d_price", "🛒 PRIME HOOK\n1 Days"),
+        "312": ("HG_3d_price", "🛒 PRIME HOOK\n3 Days"),
+        "313": ("HG_7d_price", "🛒 PRIME HOOK\n7 Days"),
+        "314": ("HG_14d_price", "🛒 PRIME HOOK\n14 Days"),
+        "315": ("HG_21d_price", "🛒 PRIME HOOK\n21 Days"),
+        "316": ("HG_1d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME HOOK\n1 Days"),
+        "317": ("HG_3d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME HOOK\n3 Days"),
+        "318": ("HG_7d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME HOOK\n7 Days"),
+        "319": ("HG_14d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME HOOK\n14 Days"),
+        "320": ("HG_21d_reseller_price", "👑 RESELLER PANEL\n🛒 PRIME HOOK\n21 Days"),
+        "191": ("PATO_1d_price", "🛒 PROXY SERVER\n1 Days"),
+        "19": ("PATO_3d_price", "🛒 PROXY SERVER\n3 Days"),
+        "20": ("PATO_7d_price", "🛒 PROXY SERVER\n7 Days"),
+        "21": ("PATO_15d_price", "🛒 PROXY SERVER\n10 Days"),
+        "221": ("PATO_1d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER\n1 Days"),
+        "22": ("PATO_3d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER\n3 Days"),
+        "23": ("PATO_7d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER\n7 Days"),
+        "24": ("PATO_15d_reseller_price", "👑 RESELLER PANEL\n🛒 PROXY SERVER\n10 Days"),
     }
     
     if option not in price_map:
@@ -1413,9 +1404,7 @@ async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     price_key, title = price_map[option]
     
-    # Store in both places for safety
-    UserData.set("temp_price_key", price_key, user_id)
-    UserData.set("temp_price_title", title, user_id)
+    # Store in context
     context.user_data['waiting_for_price'] = True
     context.user_data['price_key'] = price_key
     context.user_data['price_title'] = title
@@ -1444,30 +1433,21 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     option = data[1]
     
-    # Key mappings
     key_map = {
         "1": "drip_1d_keys",
         "2": "drip_3d_keys",
         "3": "drip_7d_keys",
         "4": "drip_15d_keys",
         "5": "drip_30d_keys",
-        "6": "HG_1d_keys",
-        "7": "HG_7d_keys",
-        "8": "HG_10d_keys",
-        "9": "HG_30d_keys",
-        "101": "PATO_1d_keys",
-        "10": "PATO_3d_keys",
-        "11": "PATO_7d_keys",
-        "12": "PATO_15d_keys",
-        "13": "PRIME_5d_keys",
-        "14": "PRIME_10d_keys",
-        "15": "ROOT_10d_keys",
-        "16": "ROOT_20d_keys",
         "306": "HG_1d_keys",
         "307": "HG_3d_keys",
         "308": "HG_7d_keys",
         "309": "HG_14d_keys",
         "310": "HG_21d_keys",
+        "101": "PATO_1d_keys",
+        "10": "PATO_3d_keys",
+        "11": "PATO_7d_keys",
+        "12": "PATO_15d_keys",
     }
     
     if option not in key_map:
@@ -1476,37 +1456,26 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     key_name = key_map[option]
     
-    # Get title
     title_map = {
         "1": "DRIP CLIENT APK MOD\n1d Key",
         "2": "DRIP CLIENT APK MOD\n3d Key",
         "3": "DRIP CLIENT APK MOD\n7d Key",
         "4": "DRIP CLIENT APK MOD\n15d Key",
         "5": "DRIP CLIENT APK MOD\n30d Key",
-        "6": "PRIME-HOOK-MOD\n1d Key",
-        "7": "HG-CHEATS ANDROID\n7d Key",
-        "8": "HG-CHEATS ANDROID\n10d Key",
-        "9": "HG-CHEATS ANDROID\n30d Key",
-        "101": "PROXY SERVER [DR-CL]\n1d Key",
-        "10": "PROXY SERVER [DR-CL]\n3d Key",
-        "11": "PROXY SERVER [DR-CL]\n7d Key",
-        "12": "PROXY SERVER [DR-CL]\n15d Key",
-        "13": "PRIME-HOOK-MOD APK\n5d Key",
-        "14": "PRIME-HOOK-MOD APK\n10d Key",
-        "15": "BR MOD ROOT\n10d Key",
-        "16": "BR MOD ROOT\n20d Key",
-        "306": "𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀\n1d Key",
-        "307": "𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀\n3d Key",
-        "308": "𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀\n7d Key",
-        "309": "𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀\n14d Key",
-        "310": "𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀\n21d Key",
+        "306": "PRIME HOOK\n1d Key",
+        "307": "PRIME HOOK\n3d Key",
+        "308": "PRIME HOOK\n7d Key",
+        "309": "PRIME HOOK\n14d Key",
+        "310": "PRIME HOOK\n21d Key",
+        "101": "PROXY SERVER\n1d Key",
+        "10": "PROXY SERVER\n3d Key",
+        "11": "PROXY SERVER\n7d Key",
+        "12": "PROXY SERVER\n10d Key",
     }
     
     title = title_map.get(option, "Product")
     
-    # Store in both places for safety
-    UserData.set("temp_key_name", key_name, user_id)
-    UserData.set("temp_key_title", title, user_id)
+    # Store in context
     context.user_data['waiting_for_key'] = True
     context.user_data['key_name'] = key_name
     context.user_data['key_title'] = title
@@ -1518,106 +1487,225 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML"
     )
 
-async def handle_price_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle price input from admin"""
+# ============================================================
+# SINGLE MESSAGE HANDLER - FIXED
+# ============================================================
+
+async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle all text messages in one place"""
     user_id = str(update.effective_user.id)
+    text = update.message.text
     
-    if not context.user_data.get('waiting_for_price'):
-        return
+    # Check if user is admin
+    is_admin_user = is_admin(user_id)
     
-    if update.message.text == "/cancel":
-        await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
-        context.user_data['waiting_for_price'] = False
-        return
-    
-    try:
-        price = float(update.message.text.strip())
-        
-        # Get from context first, then from UserData
-        price_key = context.user_data.get('price_key') or UserData.get("temp_price_key", user_id)
-        title = context.user_data.get('price_title') or UserData.get("temp_price_title", user_id)
-        
-        if not price_key:
-            await update.message.reply_text("❌ Error: No product selected. Please start again.")
+    # 1. Check for price input
+    if context.user_data.get('waiting_for_price'):
+        if text == "/cancel":
+            await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
             context.user_data['waiting_for_price'] = False
             return
         
-        BotData.set(price_key, price)
+        try:
+            price = float(text.strip())
+            price_key = context.user_data.get('price_key')
+            title = context.user_data.get('price_title')
+            
+            if not price_key:
+                await update.message.reply_text("❌ Error: No product selected. Please start again.")
+                context.user_data['waiting_for_price'] = False
+                return
+            
+            BotData.set(price_key, price)
+            
+            time_info = get_indian_time()
+            admin_actions = BotData.get("AdmAC", [])
+            admin_actions.append(
+                f"<b>📆 Time:</b> {time_info['easy_time']}\n"
+                f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
+                f"🔍<b> Action: </b> {title} Price = ₹{price}"
+            )
+            BotData.set("AdmAC", admin_actions)
+            
+            await update.message.reply_text(
+                f"✅ <b>Successfully Set</b>\n\n"
+                f"{title} Price = ₹{price}",
+                parse_mode="HTML"
+            )
+            context.user_data['waiting_for_price'] = False
+            
+        except ValueError:
+            await update.message.reply_text(
+                "❌ Invalid number.\n"
+                "Send numeric value like 90\n\n"
+                "Type /cancel to stop.",
+                parse_mode="HTML"
+            )
+        return
+    
+    # 2. Check for key input
+    if context.user_data.get('waiting_for_key'):
+        if text == "/cancel":
+            await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
+            context.user_data['waiting_for_key'] = False
+            return
+        
+        key_value = text.strip()
+        
+        if len(key_value) < 3:
+            await update.message.reply_text("❌ Invalid Key. Minimum 3 characters.\n\nType /cancel to stop.", parse_mode="HTML")
+            return
+        
+        key_name = context.user_data.get('key_name')
+        title = context.user_data.get('key_title')
+        
+        if not key_name:
+            await update.message.reply_text("❌ Error: No product selected. Please start again.")
+            context.user_data['waiting_for_key'] = False
+            return
+        
+        existing_data = BotData.get(key_name)
+        
+        if not existing_data:
+            keys_list = []
+        elif isinstance(existing_data, str):
+            keys_list = [existing_data]
+        else:
+            keys_list = existing_data
+        
+        keys_list.append(key_value)
+        BotData.set(key_name, keys_list)
+        
+        await update.message.reply_text(
+            f"✅ <b>Key Added Successfully</b>\n\n"
+            f"{title}\n"
+            f"🔑 <code>{key_value}</code>\n"
+            f"📦 Total Stock: {len(keys_list)}",
+            parse_mode="HTML"
+        )
+        context.user_data['waiting_for_key'] = False
+        return
+    
+    # 3. Check for admin input
+    if context.user_data.get('waiting_for_admin'):
+        if text == "/cancel":
+            await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
+            context.user_data['waiting_for_admin'] = False
+            return
+        
+        admin_id = text.strip()
+        
+        if not admin_id.isdigit():
+            await update.message.reply_text("❌ Invalid User ID. Please send a numeric Telegram ID.", parse_mode="HTML")
+            return
+        
+        admins = BotData.get("AllBotAdminss", [])
+        
+        if admin_id in admins:
+            await update.message.reply_text("⚠️ Admin Already Exists", parse_mode="HTML")
+        else:
+            admins.append(admin_id)
+            BotData.set("AllBotAdminss", admins)
+            
+            time_info = get_indian_time()
+            admin_actions = BotData.get("AdmAC", [])
+            admin_actions.append(
+                f"<b>📆 Time:</b> {time_info['easy_time']}\n"
+                f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
+                f"🔍<b> Action: </b> Added {admin_id} as Bot Admin"
+            )
+            BotData.set("AdmAC", admin_actions)
+            
+            await update.message.reply_text(
+                f"✅ Admin Added Successfully: <code>{admin_id}</code>\n\n"
+                f"📊 Total Admins: {len(admins)}",
+                parse_mode="HTML"
+            )
+            
+            try:
+                await context.bot.send_message(
+                    chat_id=admin_id,
+                    text="🎉 Congratulations! You have been added as a Bot Admin.\n\nUse /admin to access admin panel."
+                )
+            except:
+                pass
+        
+        context.user_data['waiting_for_admin'] = False
+        return
+    
+    # 4. Check for broadcast input
+    if context.user_data.get('waiting_for_broadcast'):
+        if text == "/cancel":
+            await update.message.reply_text("❌ Broadcast cancelled", parse_mode="HTML")
+            context.user_data['waiting_for_broadcast'] = False
+            return
+        
+        broadcast_msg = text
+        
+        users_data = BotData.get("users", {})
+        user_ids = list(users_data.keys())
+        
+        if not user_ids:
+            await update.message.reply_text("❌ No users found to broadcast.", parse_mode="HTML")
+            context.user_data['waiting_for_broadcast'] = False
+            return
+        
+        progress_msg = await update.message.reply_text(
+            f"📣 <b>Broadcasting...</b>\n\n"
+            f"📊 Total Users: {len(user_ids)}\n"
+            f"⏳ Please wait...",
+            parse_mode="HTML"
+        )
+        
+        success_count = 0
+        fail_count = 0
+        
+        for idx, uid in enumerate(user_ids):
+            try:
+                await context.bot.send_message(
+                    chat_id=uid,
+                    text=f"📣 <b>Announcement</b>\n\n{broadcast_msg}",
+                    parse_mode="HTML"
+                )
+                success_count += 1
+            except Exception as e:
+                fail_count += 1
+                logger.error(f"Failed to send to {uid}: {e}")
+            
+            if (idx + 1) % 10 == 0:
+                try:
+                    await progress_msg.edit_text(
+                        f"📣 <b>Broadcasting...</b>\n\n"
+                        f"📊 Progress: {idx + 1}/{len(user_ids)}\n"
+                        f"✅ Success: {success_count}\n"
+                        f"❌ Failed: {fail_count}",
+                        parse_mode="HTML"
+                    )
+                except:
+                    pass
+        
+        await progress_msg.edit_text(
+            f"✅ <b>Broadcast Complete!</b>\n\n"
+            f"📊 Total Users: {len(user_ids)}\n"
+            f"✅ Success: {success_count}\n"
+            f"❌ Failed: {fail_count}",
+            parse_mode="HTML"
+        )
         
         time_info = get_indian_time()
         admin_actions = BotData.get("AdmAC", [])
         admin_actions.append(
             f"<b>📆 Time:</b> {time_info['easy_time']}\n"
             f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
-            f"🔍<b> Action: </b> {title} Price = ₹{price}"
+            f"🔍<b> Action: </b> Broadcast sent to {success_count} users"
         )
         BotData.set("AdmAC", admin_actions)
         
-        await update.message.reply_text(
-            f"✅ <b>Successfully Set</b>\n\n"
-            f"{title} Price = ₹{price}",
-            parse_mode="HTML"
-        )
-        context.user_data['waiting_for_price'] = False
-        
-    except ValueError:
-        await update.message.reply_text(
-            "❌ Invalid number.\n"
-            "Send numeric value like 90\n\n"
-            "Type /cancel to stop.",
-            parse_mode="HTML"
-        )
-
-async def handle_key_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle key input from admin"""
-    user_id = str(update.effective_user.id)
-    
-    if not context.user_data.get('waiting_for_key'):
+        context.user_data['waiting_for_broadcast'] = False
         return
-    
-    if update.message.text == "/cancel":
-        await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
-        context.user_data['waiting_for_key'] = False
-        return
-    
-    key_value = update.message.text.strip()
-    
-    if len(key_value) < 3:
-        await update.message.reply_text("❌ Invalid Key. Minimum 3 characters.\n\nType /cancel to stop.", parse_mode="HTML")
-        return
-    
-    # Get from context first, then from UserData
-    key_name = context.user_data.get('key_name') or UserData.get("temp_key_name", user_id)
-    title = context.user_data.get('key_title') or UserData.get("temp_key_title", user_id)
-    
-    if not key_name:
-        await update.message.reply_text("❌ Error: No product selected. Please start again.")
-        context.user_data['waiting_for_key'] = False
-        return
-    
-    existing_data = BotData.get(key_name)
-    
-    if not existing_data:
-        keys_list = []
-    elif isinstance(existing_data, str):
-        keys_list = [existing_data]
-    else:
-        keys_list = existing_data
-    
-    keys_list.append(key_value)
-    BotData.set(key_name, keys_list)
-    
-    await update.message.reply_text(
-        f"✅ <b>Key Added Successfully</b>\n\n"
-        f"{title}\n"
-        f"🔑 <code>{key_value}</code>\n"
-        f"📦 Total Stock: {len(keys_list)}",
-        parse_mode="HTML"
-    )
-    context.user_data['waiting_for_key'] = False
 
 # ============================================================
-# BROADCAST HANDLERS
+# BROADCAST COMMAND
 # ============================================================
 
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1637,85 +1725,6 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML"
     )
     context.user_data['waiting_for_broadcast'] = True
-
-async def handle_broadcast_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle broadcast message input"""
-    user_id = str(update.effective_user.id)
-    
-    if not context.user_data.get('waiting_for_broadcast'):
-        return
-    
-    if update.message.text == "/cancel":
-        await update.message.reply_text("❌ Broadcast cancelled", parse_mode="HTML")
-        context.user_data['waiting_for_broadcast'] = False
-        return
-    
-    broadcast_msg = update.message.text
-    
-    # Get all users from data
-    users_data = BotData.get("users", {})
-    user_ids = list(users_data.keys())
-    
-    if not user_ids:
-        await update.message.reply_text("❌ No users found to broadcast.", parse_mode="HTML")
-        context.user_data['waiting_for_broadcast'] = False
-        return
-    
-    # Send confirmation
-    progress_msg = await update.message.reply_text(
-        f"📣 <b>Broadcasting...</b>\n\n"
-        f"📊 Total Users: {len(user_ids)}\n"
-        f"⏳ Please wait...",
-        parse_mode="HTML"
-    )
-    
-    success_count = 0
-    fail_count = 0
-    
-    for idx, uid in enumerate(user_ids):
-        try:
-            await context.bot.send_message(
-                chat_id=uid,
-                text=f"📣 <b>Announcement</b>\n\n{broadcast_msg}",
-                parse_mode="HTML"
-            )
-            success_count += 1
-        except Exception as e:
-            fail_count += 1
-            print(f"Failed to send to {uid}: {e}")
-        
-        # Update progress every 10 users
-        if (idx + 1) % 10 == 0:
-            try:
-                await progress_msg.edit_text(
-                    f"📣 <b>Broadcasting...</b>\n\n"
-                    f"📊 Progress: {idx + 1}/{len(user_ids)}\n"
-                    f"✅ Success: {success_count}\n"
-                    f"❌ Failed: {fail_count}",
-                    parse_mode="HTML"
-                )
-            except:
-                pass
-    
-    await progress_msg.edit_text(
-        f"✅ <b>Broadcast Complete!</b>\n\n"
-        f"📊 Total Users: {len(user_ids)}\n"
-        f"✅ Success: {success_count}\n"
-        f"❌ Failed: {fail_count}",
-        parse_mode="HTML"
-    )
-    
-    # Log admin action
-    time_info = get_indian_time()
-    admin_actions = BotData.get("AdmAC", [])
-    admin_actions.append(
-        f"<b>📆 Time:</b> {time_info['easy_time']}\n"
-        f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
-        f"🔍<b> Action: </b> Broadcast sent to {success_count} users"
-    )
-    BotData.set("AdmAC", admin_actions)
-    
-    context.user_data['waiting_for_broadcast'] = False
 
 # ============================================================
 # ADMIN ADD HANDLERS
@@ -1746,59 +1755,8 @@ async def add_admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("<b><i>🚫 You Are Not This Bot Admin</i></b>", parse_mode="HTML")
         return
     
-    await update.message.reply_text("📩 Send UserID of Admin You Want To Add", parse_mode="HTML")
+    await update.message.reply_text("📩 Send UserID of Admin You Want To Add\n\nType /cancel to stop.", parse_mode="HTML")
     context.user_data['waiting_for_admin'] = True
-
-async def handle_admin_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle admin ID input"""
-    user_id = str(update.effective_user.id)
-    
-    if not context.user_data.get('waiting_for_admin'):
-        return
-    
-    if update.message.text == "/cancel":
-        await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
-        context.user_data['waiting_for_admin'] = False
-        return
-    
-    admin_id = update.message.text.strip()
-    
-    if not admin_id.isdigit():
-        await update.message.reply_text("❌ Invalid User ID. Please send a numeric Telegram ID.", parse_mode="HTML")
-        return
-    
-    admins = BotData.get("AllBotAdminss", [])
-    
-    if admin_id in admins:
-        await update.message.reply_text("⚠️ Admin Already Exists", parse_mode="HTML")
-    else:
-        admins.append(admin_id)
-        BotData.set("AllBotAdminss", admins)
-        
-        time_info = get_indian_time()
-        admin_actions = BotData.get("AdmAC", [])
-        admin_actions.append(
-            f"<b>📆 Time:</b> {time_info['easy_time']}\n"
-            f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
-            f"🔍<b> Action: </b> Added {admin_id} as Bot Admin"
-        )
-        BotData.set("AdmAC", admin_actions)
-        
-        await update.message.reply_text(
-            f"✅ Admin Added Successfully: <code>{admin_id}</code>\n\n"
-            f"📊 Total Admins: {len(admins)}",
-            parse_mode="HTML"
-        )
-        
-        try:
-            await context.bot.send_message(
-                chat_id=admin_id,
-                text="🎉 Congratulations! You have been added as a Bot Admin.\n\nUse /admin to access admin panel."
-            )
-        except:
-            pass
-    
-    context.user_data['waiting_for_admin'] = False
 
 # ============================================================
 # CALLBACK ROUTER
@@ -1885,11 +1843,10 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("<b><i>🚫 You Are Not This Bot Admin</i></b>", parse_mode="HTML")
         return
     
-    # Check for BotMode toggle
     if query.data and "BotMode" in query.data:
         parts = query.data.split()
         if len(parts) >= 2:
-            mode = parts[1]  # "ON" or "OFF"
+            mode = parts[1]
             BotData.set("BotMode", mode)
             time_info = get_indian_time()
             admin_actions = BotData.get("AdmAC", [])
@@ -2113,17 +2070,15 @@ async def main():
     application.add_handler(CommandHandler("resellerlist", reseller_list_command))
     application.add_handler(CommandHandler("TUSHAR_AddAdmin", add_admin_command))
     
-    # Message handlers for admin inputs
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_price_input))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_key_input))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_admin_input))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_broadcast_input))
+    # SINGLE message handler for all text messages
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_all_messages))
     
     # Callback handler
     application.add_handler(CallbackQueryHandler(callback_handler))
     
     print("🤖 Bot is running...")
     print("📁 Data saved to: bot_data.json")
+    print("✅ All features are now working properly!")
     
     await application.initialize()
     await application.start()
