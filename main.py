@@ -1,43 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-ðŸš¨ðŸ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”  ðŸ”’  â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”ðŸ”ðŸš¨
-ðŸ‘‘ Â©ï¸ 2026  |  LICENSED â€¢ PRIVATE â€¢ CONFIDENTIAL
-
-ðŸ‘¨â€ðŸ’»ðŸ‘‘ Built by        : @TusharBairagi ðŸ§ ðŸ”¥
-ðŸ§ âš™ï¸ Architecture     : Custom TPY Logic ðŸ§©âš¡
-ðŸ¤–ðŸš€ Runtime Engine   : Telegram Bot Automation ðŸ¤–ðŸ’¥
-
-âš ï¸ðŸš« Copying lines âŒ wonâ€™t copy mindset ðŸ§ 
-ðŸ”¥ðŸ’ª Skill  >  Source Code  >  Tutorials ðŸ˜Ž
-ðŸ§©âš”ï¸ Think â€¢ Build â€¢ Dominate â€¢ Repeat ðŸ”
-
-ðŸš¨ðŸ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”  ðŸ”’  â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”ðŸ”ðŸš¨
-
-ðŸ“œâš–ï¸ LICENSE & LEGAL NOTICE âš–ï¸ðŸ“œ
-ðŸ”’ This source code is the intellectual property
-ðŸ‘‘ of Tushar Bairagi and is protected under law ðŸ›¡ï¸
-
-âœ…âœ”ï¸ Allowed:
-ðŸ’° Sale or licensing by the original author
-ðŸ‘€ Use by licensed buyer for personal / internal use
-
-âŒâ›” Strictly Prohibited:
-ðŸš« Claiming authorship or removing credits
-ðŸš« Reselling, redistributing, or sublicensing
-ðŸš« Public re-upload without written permission
-
-âš ï¸ðŸš¨ Violation of these terms may lead to legal action âš–ï¸ðŸ”¥
-
-ðŸ“©ðŸ“§ Permissions & licensing:
-âœ‰ï¸ bairagixd@gmail.com
-
-ðŸš¨ðŸ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”ðŸ”ðŸš¨
-##ðŸ‘‘TusharBairagi #ðŸ”¥EliteDev #ðŸ¤–TPYCode #ðŸ”LicensedCode
-##ðŸš«NoResale #ðŸ§ RealDeveloper #âš¡OwnerBuild #ðŸ’ŽOriginalMind
-"""
-
 import os
 import json
 import requests
@@ -187,9 +150,9 @@ def log_admin_action(user_id: str, action: str):
     log = db.get("AdmAC", [])
     time_str = get_current_time()
     log.append(
-        f"<b>ðŸ“† Time:</b> {time_str}\n"
-        f"ðŸ‘¥ <b>By {user_id}</b> [ID: <code>{user_id}</code>]\n"
-        f"ðŸ”<b> Action: </b> {action}"
+        f"Time: {time_str}\n"
+        f"By: {user_id}\n"
+        f"Action: {action}"
     )
     db.set("AdmAC", log)
 
@@ -203,37 +166,16 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not db.get(f"joined_{user_id}"):
         db.set(f"joined_{user_id}", int(time.time()))
     
-    first_name = update.effective_user.first_name or "User"
     balance = get_balance(user_id)
     
     text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>ðŸŒŸ</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>ðŸŒ™</tg-emoji>"
-        "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>âœ¨</tg-emoji> "
-        "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>ðŸš€</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>âš¡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>ðŸ’³</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>ðŸ›¡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        f"<tg-emoji emoji-id='5348392971207194994'>ðŸ’°</tg-emoji> Your Balance: â‚¹{balance:.2f}"
-        "</blockquote>"
+        f"WELCOME TO HACK STORE\n\n"
+        f"Your Balance: ₹{balance:.2f}\n\n"
+        f"Your ultimate destination for premium mods!"
     )
     
     keyboard = [
-        [
-            InlineKeyboardButton(
-                "BUY HACK",
-                callback_data="/shopnawkk",
-            )
-        ],
+        [InlineKeyboardButton("BUY HACK", callback_data="/shopnawkk")],
         [
             InlineKeyboardButton("MY KEY", callback_data="/orderksk"),
             InlineKeyboardButton("PROFILE", callback_data="/profilemmm")
@@ -242,22 +184,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("HOW TO USE", callback_data="/spinj"),
             InlineKeyboardButton("SUPPORT", callback_data="/supportj")
         ],
-        [
-            InlineKeyboardButton("ADD FUND", callback_data="/addpayment")
-        ],
-        [
-            InlineKeyboardButton("PAY PROOF", url="https://t.me/subhajit_feedback"),
-            InlineKeyboardButton("DOWNLOAD APK", url="https://t.me/+hasTLSVjzaZjZGVl")
-        ]
+        [InlineKeyboardButton("ADD FUND", callback_data="/addpayment")],
     ]
     
     if is_admin(user_id):
-        keyboard.append([InlineKeyboardButton("âš™ï¸ ADMIN PANEL", callback_data="/admin")])
+        keyboard.append([InlineKeyboardButton("ADMIN PANEL", callback_data="/admin")])
     
     await update.message.reply_text(
         text,
-        parse_mode="HTML",
-        disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -272,34 +206,10 @@ async def back_to_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     balance = get_balance(user_id)
     
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>ðŸŒŸ</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>ðŸŒ™</tg-emoji>"
-        "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>âœ¨</tg-emoji> "
-        "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>ðŸš€</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>âš¡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>ðŸ’³</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>ðŸ›¡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        f"<tg-emoji emoji-id='5348392971207194994'>ðŸ’°</tg-emoji> Your Balance: â‚¹{balance:.2f}"
-        "</blockquote>"
-    )
+    text = f"WELCOME TO HACK STORE\n\nBalance: ₹{balance:.2f}"
     
     keyboard = [
-        [
-            InlineKeyboardButton(
-                "BUY HACK",
-                callback_data="/shopnawkk",
-            )
-        ],
+        [InlineKeyboardButton("BUY HACK", callback_data="/shopnawkk")],
         [
             InlineKeyboardButton("MY KEY", callback_data="/orderksk"),
             InlineKeyboardButton("PROFILE", callback_data="/profilemmm")
@@ -308,22 +218,14 @@ async def back_to_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("HOW TO USE", callback_data="/spinj"),
             InlineKeyboardButton("SUPPORT", callback_data="/supportj")
         ],
-        [
-            InlineKeyboardButton("ADD FUND", callback_data="/addpayment")
-        ],
-        [
-            InlineKeyboardButton("PAY PROOF", url="https://t.me/subhajit_feedback"),
-            InlineKeyboardButton("DOWNLOAD APK", url="https://t.me/+hasTLSVjzaZjZGVl")
-        ]
+        [InlineKeyboardButton("ADD FUND", callback_data="/addpayment")],
     ]
     
     if is_admin(user_id):
-        keyboard.append([InlineKeyboardButton("âš™ï¸ ADMIN PANEL", callback_data="/admin")])
+        keyboard.append([InlineKeyboardButton("ADMIN PANEL", callback_data="/admin")])
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
-        disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -348,53 +250,51 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.set("Owner", user_id)
     
     if not is_admin(user_id):
-        msg = "<b><i>ðŸš« You Are Not This Bot Admin</i></b>"
+        msg = "You Are Not This Bot Admin"
         if query:
-            await query.edit_message_text(msg, parse_mode="html")
+            await query.edit_message_text(msg)
         else:
-            await update.message.reply_text(msg, parse_mode="html")
+            await update.message.reply_text(msg)
         return
     
     bot_mode = db.get("BotMode", "ON")
-    bot_status = "ðŸŸ¢ On" if bot_mode == "ON" else "ðŸ”´ Off"
+    bot_status = "On" if bot_mode == "ON" else "Off"
     bot_toggle = "BotMode OFF" if bot_mode == "ON" else "BotMode ON"
     
     text = (
-        f"<b>ðŸ‘‹ Welcome {update.effective_user.first_name} ðŸŽ‰</b>\n\n"
-        f"â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        f"ðŸ¤– Bot Status : {bot_status}\n"
-        f"â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+        f"Welcome {update.effective_user.first_name}\n"
+        f"--------------------\n"
+        f"Bot Status : {bot_status}\n"
+        f"--------------------\n"
     )
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ‘‘ Admins", callback_data="/TUSHAR_Admins")],
+        [InlineKeyboardButton("Admins", callback_data="/TUSHAR_Admins")],
         [
-            InlineKeyboardButton("ðŸ“£ Broadcast", callback_data="/broadcast"),
-            InlineKeyboardButton(f"ðŸ¤– Bot: {bot_status}", callback_data=f"/admin_BotMode {bot_toggle}")
+            InlineKeyboardButton("Broadcast", callback_data="/broadcast"),
+            InlineKeyboardButton(f"Bot: {bot_status}", callback_data=f"/admin_BotMode {bot_toggle}")
         ],
         [
-            InlineKeyboardButton("ðŸ’° Add Balance", callback_data="/ChangeAnyUserBal"),
-            InlineKeyboardButton("ðŸ“ Recent Actions", callback_data="/TUSHAR_AdminAction")
+            InlineKeyboardButton("Add Balance", callback_data="/ChangeAnyUserBal"),
+            InlineKeyboardButton("Recent Actions", callback_data="/TUSHAR_AdminAction")
         ],
-        [InlineKeyboardButton("ðŸ“Š Shop Setup", callback_data="/setshop_psue")],
+        [InlineKeyboardButton("Shop Setup", callback_data="/setshop_psue")],
         [
-            InlineKeyboardButton("ðŸ’° Add Reseller", callback_data="/addreseller"),
-            InlineKeyboardButton("â›” Remove Reseller", callback_data="/removereseller")
+            InlineKeyboardButton("Add Reseller", callback_data="/addreseller"),
+            InlineKeyboardButton("Remove Reseller", callback_data="/removereseller")
         ],
-        [InlineKeyboardButton("ðŸ“ Reseller List", callback_data="/resellerlist")],
-        [InlineKeyboardButton("ðŸ”™ Back", callback_data="/backkkk")]
+        [InlineKeyboardButton("Reseller List", callback_data="/resellerlist")],
+        [InlineKeyboardButton("Back", callback_data="/backkkk")]
     ]
     
     if query:
         await query.edit_message_text(
             text,
-            parse_mode="html",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     else:
         await update.message.reply_text(
             text,
-            parse_mode="html",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -409,15 +309,13 @@ async def admin_add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     await query.edit_message_text(
-        "<b>ðŸ’¡ Send User Telegram Id & Amount\n\nâš ï¸ Use Format: <code>123456789 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
-        parse_mode="html"
+        "Send User Telegram Id & Amount\n\n"
+        "Use Format: 123456789 10\n\n"
+        "Add - Before Amount To Deduct Balance Like -10"
     )
     context.user_data["awaiting_balance"] = True
 
@@ -425,10 +323,7 @@ async def admin_add_balance_process(update: Update, context: ContextTypes.DEFAUL
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_balance"):
@@ -437,44 +332,32 @@ async def admin_add_balance_process(update: Update, context: ContextTypes.DEFAUL
     try:
         parts = update.message.text.split()
         if len(parts) < 2:
-            await update.message.reply_text(
-                "âŒ Invalid format. Use: <code>123456789 10</code>",
-                parse_mode="html"
-            )
+            await update.message.reply_text("Invalid format. Use: 123456789 10")
             return
         
         target_user = parts[0]
         amount = float(parts[1])
         
         new_balance = add_balance(target_user, amount)
-        time_str = get_current_time()
-        
-        user_tag = f"<a href='tg://user?id={target_user}'>{target_user}</a>"
         
         await update.message.reply_text(
-            f"<b>ðŸ’´ Account Of {user_tag} Was Increased By {amount}\n\nðŸ’° Final Balance = â‚¹{new_balance:.2f}</b>",
-            parse_mode="html"
+            f"Account Updated\n\nFinal Balance = ₹{new_balance:.2f}"
         )
         
         log_admin_action(user_id, f"Added {amount} Rs To {target_user} Account")
         
-        # Notify user
         try:
             await update.message.bot.send_message(
                 chat_id=target_user,
-                text=f"<b>ðŸ’° Admin Added â‚¹{amount} To Your Balance</b>",
-                parse_mode="html"
+                text=f"Admin Added ₹{amount} To Your Balance"
             )
         except:
             pass
         
     except ValueError:
-        await update.message.reply_text(
-            "âŒ Invalid amount. Please enter a valid number.",
-            parse_mode="html"
-        )
+        await update.message.reply_text("Invalid amount. Please enter a valid number.")
     except Exception as e:
-        await update.message.reply_text(f"âŒ Error: {str(e)}")
+        await update.message.reply_text(f"Error: {str(e)}")
     
     context.user_data["awaiting_balance"] = False
 
@@ -489,10 +372,7 @@ async def admin_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     log = db.get("AdmAC", [])
@@ -503,10 +383,7 @@ async def admin_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     latest_10 = log[-10:][::-1]
     text = "\n\n".join(latest_10)
     
-    await query.edit_message_text(
-        text,
-        parse_mode="html"
-    )
+    await query.edit_message_text(text)
 
 # ========================================
 # ADMIN BOT MODE
@@ -519,10 +396,7 @@ async def admin_bot_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     data = query.data
@@ -530,10 +404,7 @@ async def admin_bot_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db.set("BotMode", mode)
     log_admin_action(user_id, f"Bot Mode turned {mode}")
     
-    await query.edit_message_text(
-        f"<b>âœ… Bot Mode set to {mode}</b>",
-        parse_mode="html"
-    )
+    await query.edit_message_text(f"Bot Mode set to {mode}")
 
 # ========================================
 # ADMIN ADMINS MANAGEMENT
@@ -546,10 +417,7 @@ async def admin_manage_admins(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     admins = db.get("AllBotAdminss", [])
@@ -557,18 +425,17 @@ async def admin_manage_admins(update: Update, context: ContextTypes.DEFAULT_TYPE
     keyboard = []
     for admin in admins:
         keyboard.append([
-            InlineKeyboardButton(f"ðŸ‘¤ {admin}", callback_data=f"/admin_view_{admin}"),
-            InlineKeyboardButton("âŒ", callback_data=f"/admin_remove_{admin}")
+            InlineKeyboardButton(f"{admin}", callback_data=f"/admin_view_{admin}"),
+            InlineKeyboardButton("X", callback_data=f"/admin_remove_{admin}")
         ])
     
-    keyboard.append([InlineKeyboardButton("âž• Add Admin", callback_data="/TUSHAR_AddAdmin")])
-    keyboard.append([InlineKeyboardButton("ðŸ”™ Back", callback_data="/admin")])
+    keyboard.append([InlineKeyboardButton("Add Admin", callback_data="/TUSHAR_AddAdmin")])
+    keyboard.append([InlineKeyboardButton("Back", callback_data="/admin")])
     
-    text = "<b>ðŸ‘‘ Manage Bot Admins</b>\n\nTotal Admins: " + str(len(admins))
+    text = f"Manage Bot Admins\n\nTotal Admins: {len(admins)}"
     
     await query.edit_message_text(
         text,
-        parse_mode="html",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -579,26 +446,17 @@ async def admin_add_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
-    await query.edit_message_text(
-        "<b>ðŸ’¡ Send User ID of Admin You Want To Add</b>",
-        parse_mode="html"
-    )
+    await query.edit_message_text("Send User ID of Admin You Want To Add")
     context.user_data["awaiting_admin_add"] = True
 
 async def admin_add_admin_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_admin_add"):
@@ -609,15 +467,15 @@ async def admin_add_admin_process(update: Update, context: ContextTypes.DEFAULT_
         admins = db.get("AllBotAdminss", [])
         
         if new_admin in admins:
-            await update.message.reply_text("âš ï¸ Admin Already Exists")
+            await update.message.reply_text("Admin Already Exists")
         else:
             admins.append(new_admin)
             db.set("AllBotAdminss", admins)
             log_admin_action(user_id, f"Added {new_admin} as Bot Admin")
-            await update.message.reply_text(f"âœ… Admin {new_admin} Added Successfully")
+            await update.message.reply_text(f"Admin {new_admin} Added Successfully")
             await admin_panel(update, context)
     except Exception as e:
-        await update.message.reply_text(f"âŒ Error: {str(e)}")
+        await update.message.reply_text(f"Error: {str(e)}")
     
     context.user_data["awaiting_admin_add"] = False
 
@@ -628,10 +486,7 @@ async def admin_remove_admin(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     data = query.data
@@ -656,26 +511,17 @@ async def admin_add_reseller(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
-    await query.edit_message_text(
-        "ðŸ“© Send me reseller ID to add",
-        parse_mode="html"
-    )
+    await query.edit_message_text("Send me reseller ID to add")
     context.user_data["awaiting_reseller_add"] = True
 
 async def admin_add_reseller_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_reseller_add"):
@@ -686,22 +532,22 @@ async def admin_add_reseller_process(update: Update, context: ContextTypes.DEFAU
         resellers = db.get("resellers_list", [])
         
         if target_user in resellers:
-            await update.message.reply_text("âš ï¸ User already a reseller.")
+            await update.message.reply_text("User already a reseller.")
         else:
             resellers.append(target_user)
             db.set("resellers_list", resellers)
             log_admin_action(user_id, f"Added {target_user} as Reseller")
-            await update.message.reply_text(f"âœ… User <code>{target_user}</code> added as Reseller.", parse_mode="html")
+            await update.message.reply_text(f"User {target_user} added as Reseller.")
             
             try:
                 await update.message.bot.send_message(
                     chat_id=target_user,
-                    text="ðŸŽ‰ You are now a Reseller ðŸ‘‘"
+                    text="You are now a Reseller"
                 )
             except:
                 pass
     except Exception as e:
-        await update.message.reply_text(f"âŒ Error: {str(e)}")
+        await update.message.reply_text(f"Error: {str(e)}")
     
     context.user_data["awaiting_reseller_add"] = False
     await admin_panel(update, context)
@@ -713,26 +559,17 @@ async def admin_remove_reseller(update: Update, context: ContextTypes.DEFAULT_TY
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
-    await query.edit_message_text(
-        "ðŸ“© Send me reseller ID to remove",
-        parse_mode="html"
-    )
+    await query.edit_message_text("Send me reseller ID to remove")
     context.user_data["awaiting_reseller_remove"] = True
 
 async def admin_remove_reseller_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_reseller_remove"):
@@ -743,22 +580,22 @@ async def admin_remove_reseller_process(update: Update, context: ContextTypes.DE
         resellers = db.get("resellers_list", [])
         
         if target_user not in resellers:
-            await update.message.reply_text("âš ï¸ User is not a reseller.")
+            await update.message.reply_text("User is not a reseller.")
         else:
             resellers.remove(target_user)
             db.set("resellers_list", resellers)
             log_admin_action(user_id, f"Removed {target_user} from Resellers")
-            await update.message.reply_text(f"âœ… User <code>{target_user}</code> removed from Resellers.", parse_mode="html")
+            await update.message.reply_text(f"User {target_user} removed from Resellers.")
             
             try:
                 await update.message.bot.send_message(
                     chat_id=target_user,
-                    text="âŒ You are no longer a Reseller."
+                    text="You are no longer a Reseller."
                 )
             except:
                 pass
     except Exception as e:
-        await update.message.reply_text(f"âŒ Error: {str(e)}")
+        await update.message.reply_text(f"Error: {str(e)}")
     
     context.user_data["awaiting_reseller_remove"] = False
     await admin_panel(update, context)
@@ -770,27 +607,23 @@ async def admin_reseller_list(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     resellers = db.get("resellers_list", [])
     
     if not resellers:
-        await query.edit_message_text("ðŸ“­ No resellers found.")
+        await query.edit_message_text("No resellers found.")
         return
     
-    text = "ðŸ‘‘ <b>Reseller List</b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
+    text = "Reseller List\n--------------------\n"
     
     for i, user_id in enumerate(resellers, 1):
-        text += f"{i}. ðŸ†” <code>{user_id}</code>\n"
+        text += f"{i}. {user_id}\n"
     
-    text += f"\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
-    text += f"\nðŸ“Š Total Resellers: {len(resellers)}"
+    text += f"\nTotal Resellers: {len(resellers)}"
     
-    await query.edit_message_text(text, parse_mode="html")
+    await query.edit_message_text(text)
 
 # ========================================
 # SHOP SETUP
@@ -803,22 +636,18 @@ async def shop_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ›’ DRIP CLIENT APK MOD", callback_data="/SHOPADMIN_P1")],
-        [InlineKeyboardButton("ðŸ›’ PROXY SERVER [DR-CL]", callback_data="/SHOPADMIN_P3")],
-        [InlineKeyboardButton("ðŸ”¥ PRIME HOOK", callback_data="/SHOPADMIN_P2")],
-        [InlineKeyboardButton("ðŸ”™ Back", callback_data="/admin")]
+        [InlineKeyboardButton("DRIP CLIENT APK MOD", callback_data="/SHOPADMIN_P1")],
+        [InlineKeyboardButton("PROXY SERVER [DR-CL]", callback_data="/SHOPADMIN_P3")],
+        [InlineKeyboardButton("PRIME HOOK", callback_data="/SHOPADMIN_P2")],
+        [InlineKeyboardButton("Back", callback_data="/admin")]
     ]
     
     await query.edit_message_text(
-        "<b>ðŸ“Š Shop Setup Panel</b>\n\nSelect product to manage:",
-        parse_mode="html",
+        "Shop Setup Panel\n\nSelect product to manage:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -833,20 +662,17 @@ async def shop_setup_drip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     def get_stock(days):
         keys = db.get(f"drip_{days}d_keys", [])
         if not keys:
-            return "âŒ Out of Stock"
+            return "Out of Stock"
         elif len(keys) <= 2:
-            return f"âš ï¸ Only {len(keys)} left!"
+            return f"Only {len(keys)} left!"
         else:
-            return f"âœ… In Stock ({len(keys)})"
+            return f"In Stock ({len(keys)})"
     
     p1 = db.get("drip_1d_price", 0)
     r1 = db.get("drip_1d_reseller_price", 0)
@@ -869,54 +695,53 @@ async def shop_setup_drip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     s30 = get_stock(30)
     
     text = (
-        "ðŸŽ® ðŸ›’ DRIP CLIENT APK MOD\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        f"ðŸ‘‘ 1D Reseller: â‚¹{r1}\n"
-        f"ðŸ’° 1D Price: â‚¹{p1}\nðŸ“¦ {s1}\n\n"
-        f"ðŸ‘‘ 3D Reseller: â‚¹{r3}\n"
-        f"ðŸ’° 3D Price: â‚¹{p3}\nðŸ“¦ {s3}\n\n"
-        f"ðŸ‘‘ 7D Reseller: â‚¹{r7}\n"
-        f"ðŸ’° 7D Price: â‚¹{p7}\nðŸ“¦ {s7}\n\n"
-        f"ðŸ‘‘ 15D Reseller: â‚¹{r15}\n"
-        f"ðŸ’° 15D Price: â‚¹{p15}\nðŸ“¦ {s15}\n\n"
-        f"ðŸ‘‘ 30D Reseller: â‚¹{r30}\n"
-        f"ðŸ’° 30D Price: â‚¹{p30}\nðŸ“¦ {s30}\n\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "ðŸ‘‡ Select duration below:"
+        "DRIP CLIENT APK MOD\n"
+        "--------------------\n\n"
+        f"1D Reseller: ₹{r1}\n"
+        f"1D Price: ₹{p1}\n{s1}\n\n"
+        f"3D Reseller: ₹{r3}\n"
+        f"3D Price: ₹{p3}\n{s3}\n\n"
+        f"7D Reseller: ₹{r7}\n"
+        f"7D Price: ₹{p7}\n{s7}\n\n"
+        f"15D Reseller: ₹{r15}\n"
+        f"15D Price: ₹{p15}\n{s15}\n\n"
+        f"30D Reseller: ₹{r30}\n"
+        f"30D Price: ₹{p30}\n{s30}\n\n"
+        "--------------------\n"
+        "Select duration below:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 1D", callback_data="/SHOPADD_PM_6")],
+        [InlineKeyboardButton("RESELLER 1D", callback_data="/SHOPADD_PM_6")],
         [
             InlineKeyboardButton("1D Price", callback_data="/SHOPADD_PM_1"),
             InlineKeyboardButton("Add 1D Key", callback_data="/SHOPADDKEY_1")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 3D", callback_data="/SHOPADD_PM_7")],
+        [InlineKeyboardButton("RESELLER 3D", callback_data="/SHOPADD_PM_7")],
         [
             InlineKeyboardButton("3D Price", callback_data="/SHOPADD_PM_2"),
             InlineKeyboardButton("Add 3D Key", callback_data="/SHOPADDKEY_2")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 7D", callback_data="/SHOPADD_PM_8")],
+        [InlineKeyboardButton("RESELLER 7D", callback_data="/SHOPADD_PM_8")],
         [
             InlineKeyboardButton("7D Price", callback_data="/SHOPADD_PM_3"),
             InlineKeyboardButton("Add 7D Key", callback_data="/SHOPADDKEY_3")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 15D", callback_data="/SHOPADD_PM_9")],
+        [InlineKeyboardButton("RESELLER 15D", callback_data="/SHOPADD_PM_9")],
         [
             InlineKeyboardButton("15D Price", callback_data="/SHOPADD_PM_4"),
             InlineKeyboardButton("Add 15D Key", callback_data="/SHOPADDKEY_4")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 30D", callback_data="/SHOPADD_PM_10")],
+        [InlineKeyboardButton("RESELLER 30D", callback_data="/SHOPADD_PM_10")],
         [
             InlineKeyboardButton("30D Price", callback_data="/SHOPADD_PM_5"),
             InlineKeyboardButton("Add 30D Key", callback_data="/SHOPADDKEY_5")
         ],
-        [InlineKeyboardButton("ðŸ”™ Back", callback_data="/setshop_psue")]
+        [InlineKeyboardButton("Back", callback_data="/setshop_psue")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="html",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -931,20 +756,17 @@ async def shop_setup_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     def get_stock(days):
         keys = db.get(f"PATO_{days}d_keys", [])
         if not keys:
-            return "âŒ Out of Stock"
+            return "Out of Stock"
         elif len(keys) <= 2:
-            return f"âš ï¸ Only {len(keys)} left!"
+            return f"Only {len(keys)} left!"
         else:
-            return f"âœ… In Stock ({len(keys)})"
+            return f"In Stock ({len(keys)})"
     
     p1 = db.get("PATO_1d_price", 0)
     r1 = db.get("PATO_1d_reseller_price", 0)
@@ -963,47 +785,46 @@ async def shop_setup_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     s15 = get_stock(15)
     
     text = (
-        "ðŸŽ® PROXY SERVER [DR-CL]\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        f"ðŸ‘‘ 1D Reseller: â‚¹{r1}\n"
-        f"ðŸ’° 1D Price: â‚¹{p1}\nðŸ“¦ {s1}\n\n"
-        f"ðŸ‘‘ 3D Reseller: â‚¹{r3}\n"
-        f"ðŸ’° 3D Price: â‚¹{p3}\nðŸ“¦ {s3}\n\n"
-        f"ðŸ‘‘ 7D Reseller: â‚¹{r7}\n"
-        f"ðŸ’° 7D Price: â‚¹{p7}\nðŸ“¦ {s7}\n\n"
-        f"ðŸ‘‘ 15D Reseller: â‚¹{r15}\n"
-        f"ðŸ’° 15D Price: â‚¹{p15}\nðŸ“¦ {s15}\n\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "ðŸ‘‡ Select duration below:"
+        "PROXY SERVER [DR-CL]\n"
+        "--------------------\n\n"
+        f"1D Reseller: ₹{r1}\n"
+        f"1D Price: ₹{p1}\n{s1}\n\n"
+        f"3D Reseller: ₹{r3}\n"
+        f"3D Price: ₹{p3}\n{s3}\n\n"
+        f"7D Reseller: ₹{r7}\n"
+        f"7D Price: ₹{p7}\n{s7}\n\n"
+        f"15D Reseller: ₹{r15}\n"
+        f"15D Price: ₹{p15}\n{s15}\n\n"
+        "--------------------\n"
+        "Select duration below:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 1D", callback_data="/SHOPADD_PM_221")],
+        [InlineKeyboardButton("RESELLER 1D", callback_data="/SHOPADD_PM_221")],
         [
             InlineKeyboardButton("1D Price", callback_data="/SHOPADD_PM_191"),
             InlineKeyboardButton("Add 1D Key", callback_data="/SHOPADDKEY_101")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 3D", callback_data="/SHOPADD_PM_22")],
+        [InlineKeyboardButton("RESELLER 3D", callback_data="/SHOPADD_PM_22")],
         [
             InlineKeyboardButton("3D Price", callback_data="/SHOPADD_PM_19"),
             InlineKeyboardButton("Add 3D Key", callback_data="/SHOPADDKEY_10")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 7D", callback_data="/SHOPADD_PM_23")],
+        [InlineKeyboardButton("RESELLER 7D", callback_data="/SHOPADD_PM_23")],
         [
             InlineKeyboardButton("7D Price", callback_data="/SHOPADD_PM_20"),
             InlineKeyboardButton("Add 7D Key", callback_data="/SHOPADDKEY_11")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 15D", callback_data="/SHOPADD_PM_24")],
+        [InlineKeyboardButton("RESELLER 15D", callback_data="/SHOPADD_PM_24")],
         [
             InlineKeyboardButton("15D Price", callback_data="/SHOPADD_PM_21"),
             InlineKeyboardButton("Add 15D Key", callback_data="/SHOPADDKEY_12")
         ],
-        [InlineKeyboardButton("ðŸ”™ Back", callback_data="/setshop_psue")]
+        [InlineKeyboardButton("Back", callback_data="/setshop_psue")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="html",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1018,20 +839,17 @@ async def shop_setup_prime(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     def get_stock(days):
         keys = db.get(f"HG_{days}d_keys", [])
         if not keys:
-            return "âŒ Out of Stock"
+            return "Out of Stock"
         elif len(keys) <= 2:
-            return f"âš ï¸ Only {len(keys)} left!"
+            return f"Only {len(keys)} left!"
         else:
-            return f"âœ… In Stock ({len(keys)})"
+            return f"In Stock ({len(keys)})"
     
     p1 = db.get("HG_1d_price", 0)
     r1 = db.get("HG_1d_reseller_price", 0)
@@ -1054,54 +872,53 @@ async def shop_setup_prime(update: Update, context: ContextTypes.DEFAULT_TYPE):
     s21 = get_stock(21)
     
     text = (
-        "ðŸ“¦ PRIME HOOK\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        f"ðŸ‘‘ 1D Reseller: â‚¹{r1}\n"
-        f"ðŸ’° 1D Price: â‚¹{p1}\nðŸ“¦ {s1}\n\n"
-        f"ðŸ‘‘ 3D Reseller: â‚¹{r3}\n"
-        f"ðŸ’° 3D Price: â‚¹{p3}\nðŸ“¦ {s3}\n\n"
-        f"ðŸ‘‘ 7D Reseller: â‚¹{r7}\n"
-        f"ðŸ’° 7D Price: â‚¹{p7}\nðŸ“¦ {s7}\n\n"
-        f"ðŸ‘‘ 14D Reseller: â‚¹{r14}\n"
-        f"ðŸ’° 14D Price: â‚¹{p14}\nðŸ“¦ {s14}\n\n"
-        f"ðŸ‘‘ 21D Reseller: â‚¹{r21}\n"
-        f"ðŸ’° 21D Price: â‚¹{p21}\nðŸ“¦ {s21}\n\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "ðŸ‘‡ Select duration below:"
+        "PRIME HOOK\n"
+        "--------------------\n\n"
+        f"1D Reseller: ₹{r1}\n"
+        f"1D Price: ₹{p1}\n{s1}\n\n"
+        f"3D Reseller: ₹{r3}\n"
+        f"3D Price: ₹{p3}\n{s3}\n\n"
+        f"7D Reseller: ₹{r7}\n"
+        f"7D Price: ₹{p7}\n{s7}\n\n"
+        f"14D Reseller: ₹{r14}\n"
+        f"14D Price: ₹{p14}\n{s14}\n\n"
+        f"21D Reseller: ₹{r21}\n"
+        f"21D Price: ₹{p21}\n{s21}\n\n"
+        "--------------------\n"
+        "Select duration below:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 1D", callback_data="/SHOPADD_PM_316")],
+        [InlineKeyboardButton("RESELLER 1D", callback_data="/SHOPADD_PM_316")],
         [
             InlineKeyboardButton("1D Price", callback_data="/SHOPADD_PM_311"),
             InlineKeyboardButton("Add 1D Key", callback_data="/SHOPADDKEY_306")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 3D", callback_data="/SHOPADD_PM_317")],
+        [InlineKeyboardButton("RESELLER 3D", callback_data="/SHOPADD_PM_317")],
         [
             InlineKeyboardButton("3D Price", callback_data="/SHOPADD_PM_312"),
             InlineKeyboardButton("Add 3D Key", callback_data="/SHOPADDKEY_307")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 7D", callback_data="/SHOPADD_PM_318")],
+        [InlineKeyboardButton("RESELLER 7D", callback_data="/SHOPADD_PM_318")],
         [
             InlineKeyboardButton("7D Price", callback_data="/SHOPADD_PM_313"),
             InlineKeyboardButton("Add 7D Key", callback_data="/SHOPADDKEY_308")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 14D", callback_data="/SHOPADD_PM_319")],
+        [InlineKeyboardButton("RESELLER 14D", callback_data="/SHOPADD_PM_319")],
         [
             InlineKeyboardButton("14D Price", callback_data="/SHOPADD_PM_314"),
             InlineKeyboardButton("Add 14D Key", callback_data="/SHOPADDKEY_309")
         ],
-        [InlineKeyboardButton("ðŸ‘‘ RESELLER 21D", callback_data="/SHOPADD_PM_320")],
+        [InlineKeyboardButton("RESELLER 21D", callback_data="/SHOPADD_PM_320")],
         [
             InlineKeyboardButton("21D Price", callback_data="/SHOPADD_PM_315"),
             InlineKeyboardButton("Add 21D Key", callback_data="/SHOPADDKEY_310")
         ],
-        [InlineKeyboardButton("ðŸ”™ Back", callback_data="/setshop_psue")]
+        [InlineKeyboardButton("Back", callback_data="/setshop_psue")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="html",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1116,60 +933,53 @@ async def shop_add_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     data = query.data
     product_id = data.replace("/SHOPADDKEY_", "")
     
     product_map = {
-        "1": {"key": "drip_1d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n1d Key"},
-        "2": {"key": "drip_3d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n3d Key"},
-        "3": {"key": "drip_7d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n7d Key"},
-        "4": {"key": "drip_15d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n15d Key"},
-        "5": {"key": "drip_30d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n30d Key"},
-        "101": {"key": "PATO_1d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n1d Key"},
-        "10": {"key": "PATO_3d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n3d Key"},
-        "11": {"key": "PATO_7d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n7d Key"},
-        "12": {"key": "PATO_15d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n10d Key"},
-        "306": {"key": "HG_1d_keys", "title": "ðŸ›’ PRIME HOOK\n1d Key"},
-        "307": {"key": "HG_3d_keys", "title": "ðŸ›’ PRIME HOOK\n3d Key"},
-        "308": {"key": "HG_7d_keys", "title": "ðŸ›’ PRIME HOOK\n7d Key"},
-        "309": {"key": "HG_14d_keys", "title": "ðŸ›’ PRIME HOOK\n14d Key"},
-        "310": {"key": "HG_21d_keys", "title": "ðŸ›’ PRIME HOOK\n21d Key"},
+        "1": {"key": "drip_1d_keys", "title": "DRIP CLIENT APK MOD 1d Key"},
+        "2": {"key": "drip_3d_keys", "title": "DRIP CLIENT APK MOD 3d Key"},
+        "3": {"key": "drip_7d_keys", "title": "DRIP CLIENT APK MOD 7d Key"},
+        "4": {"key": "drip_15d_keys", "title": "DRIP CLIENT APK MOD 15d Key"},
+        "5": {"key": "drip_30d_keys", "title": "DRIP CLIENT APK MOD 30d Key"},
+        "101": {"key": "PATO_1d_keys", "title": "PROXY SERVER [DR-CL] 1d Key"},
+        "10": {"key": "PATO_3d_keys", "title": "PROXY SERVER [DR-CL] 3d Key"},
+        "11": {"key": "PATO_7d_keys", "title": "PROXY SERVER [DR-CL] 7d Key"},
+        "12": {"key": "PATO_15d_keys", "title": "PROXY SERVER [DR-CL] 10d Key"},
+        "306": {"key": "HG_1d_keys", "title": "PRIME HOOK 1d Key"},
+        "307": {"key": "HG_3d_keys", "title": "PRIME HOOK 3d Key"},
+        "308": {"key": "HG_7d_keys", "title": "PRIME HOOK 7d Key"},
+        "309": {"key": "HG_14d_keys", "title": "PRIME HOOK 14d Key"},
+        "310": {"key": "HG_21d_keys", "title": "PRIME HOOK 21d Key"},
     }
     
     if product_id not in product_map:
-        await query.edit_message_text("âŒ Invalid product ID.")
+        await query.edit_message_text("Invalid product ID.")
         return
     
     context.user_data["add_key_config"] = product_map[product_id]
     context.user_data["awaiting_key_add"] = True
     
     await query.edit_message_text(
-        f"ðŸ›’ <b>{product_map[product_id]['title']}</b>\n\n"
-        "Send key\n\nType /cancel to stop.",
-        parse_mode="html"
+        f"Product: {product_map[product_id]['title']}\n\n"
+        "Send key\n\nType /cancel to stop."
     )
 
 async def shop_add_key_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_key_add"):
         return
     
     if update.message.text == "/cancel":
-        await update.message.reply_text("<b>âŒ Cancelled</b>", parse_mode="html")
+        await update.message.reply_text("Cancelled")
         context.user_data["awaiting_key_add"] = False
         return
     
@@ -1181,7 +991,7 @@ async def shop_add_key_process(update: Update, context: ContextTypes.DEFAULT_TYP
         key_value = update.message.text.strip()
         
         if len(key_value) < 3:
-            await update.message.reply_text("âŒ Invalid Key. Send again or /cancel")
+            await update.message.reply_text("Invalid Key. Send again or /cancel")
             return
         
         keys = db.get(key_name, [])
@@ -1189,17 +999,16 @@ async def shop_add_key_process(update: Update, context: ContextTypes.DEFAULT_TYP
         db.set(key_name, keys)
         
         await update.message.reply_text(
-            f"âœ… <b>Key Added Successfully</b>\n\n"
+            f"Key Added Successfully\n\n"
             f"{title}\n"
-            f"ðŸ”‘ <code>{key_value}</code>\n"
-            f"ðŸ“¦ Total Stock: {len(keys)}",
-            parse_mode="html"
+            f"Key: {key_value}\n"
+            f"Total Stock: {len(keys)}"
         )
         
         log_admin_action(user_id, f"Added key for {title}")
         
     except Exception as e:
-        await update.message.reply_text(f"âŒ Error: {str(e)}")
+        await update.message.reply_text(f"Error: {str(e)}")
     
     context.user_data["awaiting_key_add"] = False
 
@@ -1214,74 +1023,67 @@ async def shop_add_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     data = query.data
     product_id = data.replace("/SHOPADD_PM_", "")
     
     product_map = {
-        "1": {"key": "drip_1d_price", "title": "ðŸ›’ DRIP CLIENT APK MOD\n1 Days"},
-        "2": {"key": "drip_3d_price", "title": "ðŸ›’ DRIP CLIENT APK MOD\n3 Days"},
-        "3": {"key": "drip_7d_price", "title": "ðŸ›’ DRIP CLIENT APK MOD\n7 Days"},
-        "4": {"key": "drip_15d_price", "title": "ðŸ›’ DRIP CLIENT APK MOD\n15 Days"},
-        "5": {"key": "drip_30d_price", "title": "ðŸ›’ DRIP CLIENT APK MOD\n30 Days"},
-        "6": {"key": "drip_1d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ DRIP CLIENT APK MOD\n1 Days"},
-        "7": {"key": "drip_3d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ DRIP CLIENT APK MOD\n3 Days"},
-        "8": {"key": "drip_7d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ DRIP CLIENT APK MOD\n7 Days"},
-        "9": {"key": "drip_15d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ DRIP CLIENT APK MOD\n15 Days"},
-        "10": {"key": "drip_30d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ DRIP CLIENT APK MOD\n30 Days"},
-        "191": {"key": "PATO_1d_price", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n1 Days"},
-        "19": {"key": "PATO_3d_price", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n3 Days"},
-        "20": {"key": "PATO_7d_price", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n7 Days"},
-        "21": {"key": "PATO_15d_price", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n10 Days"},
-        "221": {"key": "PATO_1d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PROXY SERVER [DR-CL]\n1 Days"},
-        "22": {"key": "PATO_3d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PROXY SERVER [DR-CL]\n3 Days"},
-        "23": {"key": "PATO_7d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PROXY SERVER [DR-CL]\n7 Days"},
-        "24": {"key": "PATO_15d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PROXY SERVER [DR-CL]\n10 Days"},
-        "311": {"key": "HG_1d_price", "title": "ðŸ›’ PRIME HOOK\n1 Days"},
-        "312": {"key": "HG_3d_price", "title": "ðŸ›’ PRIME HOOK\n3 Days"},
-        "313": {"key": "HG_7d_price", "title": "ðŸ›’ PRIME HOOK\n7 Days"},
-        "314": {"key": "HG_14d_price", "title": "ðŸ›’ PRIME HOOK\n14 Days"},
-        "315": {"key": "HG_21d_price", "title": "ðŸ›’ PRIME HOOK\n21 Days"},
-        "316": {"key": "HG_1d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PRIME HOOK\n1 Days"},
-        "317": {"key": "HG_3d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PRIME HOOK\n3 Days"},
-        "318": {"key": "HG_7d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PRIME HOOK\n7 Days"},
-        "319": {"key": "HG_14d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PRIME HOOK\n14 Days"},
-        "320": {"key": "HG_21d_reseller_price", "title": "ðŸ‘‘ RESELLER PANEL\nðŸ›’ PRIME HOOK\n21 Days"},
+        "1": {"key": "drip_1d_price", "title": "DRIP CLIENT APK MOD 1 Days"},
+        "2": {"key": "drip_3d_price", "title": "DRIP CLIENT APK MOD 3 Days"},
+        "3": {"key": "drip_7d_price", "title": "DRIP CLIENT APK MOD 7 Days"},
+        "4": {"key": "drip_15d_price", "title": "DRIP CLIENT APK MOD 15 Days"},
+        "5": {"key": "drip_30d_price", "title": "DRIP CLIENT APK MOD 30 Days"},
+        "6": {"key": "drip_1d_reseller_price", "title": "RESELLER PANEL DRIP CLIENT APK MOD 1 Days"},
+        "7": {"key": "drip_3d_reseller_price", "title": "RESELLER PANEL DRIP CLIENT APK MOD 3 Days"},
+        "8": {"key": "drip_7d_reseller_price", "title": "RESELLER PANEL DRIP CLIENT APK MOD 7 Days"},
+        "9": {"key": "drip_15d_reseller_price", "title": "RESELLER PANEL DRIP CLIENT APK MOD 15 Days"},
+        "10": {"key": "drip_30d_reseller_price", "title": "RESELLER PANEL DRIP CLIENT APK MOD 30 Days"},
+        "191": {"key": "PATO_1d_price", "title": "PROXY SERVER [DR-CL] 1 Days"},
+        "19": {"key": "PATO_3d_price", "title": "PROXY SERVER [DR-CL] 3 Days"},
+        "20": {"key": "PATO_7d_price", "title": "PROXY SERVER [DR-CL] 7 Days"},
+        "21": {"key": "PATO_15d_price", "title": "PROXY SERVER [DR-CL] 10 Days"},
+        "221": {"key": "PATO_1d_reseller_price", "title": "RESELLER PANEL PROXY SERVER [DR-CL] 1 Days"},
+        "22": {"key": "PATO_3d_reseller_price", "title": "RESELLER PANEL PROXY SERVER [DR-CL] 3 Days"},
+        "23": {"key": "PATO_7d_reseller_price", "title": "RESELLER PANEL PROXY SERVER [DR-CL] 7 Days"},
+        "24": {"key": "PATO_15d_reseller_price", "title": "RESELLER PANEL PROXY SERVER [DR-CL] 10 Days"},
+        "311": {"key": "HG_1d_price", "title": "PRIME HOOK 1 Days"},
+        "312": {"key": "HG_3d_price", "title": "PRIME HOOK 3 Days"},
+        "313": {"key": "HG_7d_price", "title": "PRIME HOOK 7 Days"},
+        "314": {"key": "HG_14d_price", "title": "PRIME HOOK 14 Days"},
+        "315": {"key": "HG_21d_price", "title": "PRIME HOOK 21 Days"},
+        "316": {"key": "HG_1d_reseller_price", "title": "RESELLER PANEL PRIME HOOK 1 Days"},
+        "317": {"key": "HG_3d_reseller_price", "title": "RESELLER PANEL PRIME HOOK 3 Days"},
+        "318": {"key": "HG_7d_reseller_price", "title": "RESELLER PANEL PRIME HOOK 7 Days"},
+        "319": {"key": "HG_14d_reseller_price", "title": "RESELLER PANEL PRIME HOOK 14 Days"},
+        "320": {"key": "HG_21d_reseller_price", "title": "RESELLER PANEL PRIME HOOK 21 Days"},
     }
     
     if product_id not in product_map:
-        await query.edit_message_text("âŒ Invalid product ID.")
+        await query.edit_message_text("Invalid product ID.")
         return
     
     context.user_data["add_price_config"] = product_map[product_id]
     context.user_data["awaiting_price_add"] = True
     
     await query.edit_message_text(
-        f"ðŸ›’ <b>{product_map[product_id]['title']}</b>\n\n"
-        "Send key price (numbers only).\n\nType /cancel to stop.",
-        parse_mode="html"
+        f"Product: {product_map[product_id]['title']}\n\n"
+        "Send key price (numbers only).\n\nType /cancel to stop."
     )
 
 async def shop_add_price_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_price_add"):
         return
     
     if update.message.text == "/cancel":
-        await update.message.reply_text("<b>âŒ Cancelled</b>", parse_mode="html")
+        await update.message.reply_text("Cancelled")
         context.user_data["awaiting_price_add"] = False
         return
     
@@ -1293,26 +1095,25 @@ async def shop_add_price_process(update: Update, context: ContextTypes.DEFAULT_T
         rate = float(update.message.text.strip())
         
         if rate < 0:
-            await update.message.reply_text("âŒ Price cannot be negative. Send again or /cancel")
+            await update.message.reply_text("Price cannot be negative. Send again or /cancel")
             return
         
         db.set(price_key, rate)
         
         await update.message.reply_text(
-            f"âœ… <b>Successfully Set</b>\n\n"
-            f"{title} Price = â‚¹{rate}",
-            parse_mode="html"
+            f"Successfully Set\n\n"
+            f"{title} Price = ₹{rate}"
         )
         
-        log_admin_action(user_id, f"{title} Price = â‚¹{rate}")
+        log_admin_action(user_id, f"{title} Price = ₹{rate}")
         
     except ValueError:
         await update.message.reply_text(
-            "âŒ Invalid number.\nSend numeric value like 90\n\nType /cancel to stop."
+            "Invalid number.\nSend numeric value like 90\n\nType /cancel to stop."
         )
         return
     except Exception as e:
-        await update.message.reply_text(f"âŒ Error: {str(e)}")
+        await update.message.reply_text(f"Error: {str(e)}")
     
     context.user_data["awaiting_price_add"] = False
 
@@ -1329,49 +1130,49 @@ async def shop_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     params = data.split(" ")[1] if len(data.split(" ")) > 1 else None
     
     if not params:
-        await query.edit_message_text("âŒ Invalid Product")
+        await query.edit_message_text("Invalid Product")
         return
     
     is_reseller_user = is_reseller(user_id)
     
     normal_map = {
-        "1": {"price": "drip_1d_price", "key": "drip_1d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n1 Day"},
-        "2": {"price": "drip_3d_price", "key": "drip_3d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n3 Days"},
-        "3": {"price": "drip_7d_price", "key": "drip_7d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n7 Days"},
-        "4": {"price": "drip_15d_price", "key": "drip_15d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n15 Days"},
-        "5": {"price": "drip_30d_price", "key": "drip_30d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n30 Days"},
-        "6": {"price": "PATO_1d_price", "key": "PATO_1d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n1 Day"},
-        "7": {"price": "PATO_3d_price", "key": "PATO_3d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n3 Days"},
-        "8": {"price": "PATO_7d_price", "key": "PATO_7d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n7 Days"},
-        "9": {"price": "PATO_15d_price", "key": "PATO_15d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n10 Days"},
-        "10": {"price": "HG_1d_price", "key": "HG_1d_keys", "title": "ðŸ›’ PRIME HOOK\n1 Day"},
-        "11": {"price": "HG_3d_price", "key": "HG_3d_keys", "title": "ðŸ›’ PRIME HOOK\n3 Days"},
-        "12": {"price": "HG_7d_price", "key": "HG_7d_keys", "title": "ðŸ›’ PRIME HOOK\n7 Days"},
-        "13": {"price": "HG_14d_price", "key": "HG_14d_keys", "title": "ðŸ›’ PRIME HOOK\n14 Days"},
-        "14": {"price": "HG_21d_price", "key": "HG_21d_keys", "title": "ðŸ›’ PRIME HOOK\n21 Days"},
+        "1": {"price": "drip_1d_price", "key": "drip_1d_keys", "title": "DRIP CLIENT APK MOD 1 Day"},
+        "2": {"price": "drip_3d_price", "key": "drip_3d_keys", "title": "DRIP CLIENT APK MOD 3 Days"},
+        "3": {"price": "drip_7d_price", "key": "drip_7d_keys", "title": "DRIP CLIENT APK MOD 7 Days"},
+        "4": {"price": "drip_15d_price", "key": "drip_15d_keys", "title": "DRIP CLIENT APK MOD 15 Days"},
+        "5": {"price": "drip_30d_price", "key": "drip_30d_keys", "title": "DRIP CLIENT APK MOD 30 Days"},
+        "6": {"price": "PATO_1d_price", "key": "PATO_1d_keys", "title": "PROXY SERVER [DR-CL] 1 Day"},
+        "7": {"price": "PATO_3d_price", "key": "PATO_3d_keys", "title": "PROXY SERVER [DR-CL] 3 Days"},
+        "8": {"price": "PATO_7d_price", "key": "PATO_7d_keys", "title": "PROXY SERVER [DR-CL] 7 Days"},
+        "9": {"price": "PATO_15d_price", "key": "PATO_15d_keys", "title": "PROXY SERVER [DR-CL] 10 Days"},
+        "10": {"price": "HG_1d_price", "key": "HG_1d_keys", "title": "PRIME HOOK 1 Day"},
+        "11": {"price": "HG_3d_price", "key": "HG_3d_keys", "title": "PRIME HOOK 3 Days"},
+        "12": {"price": "HG_7d_price", "key": "HG_7d_keys", "title": "PRIME HOOK 7 Days"},
+        "13": {"price": "HG_14d_price", "key": "HG_14d_keys", "title": "PRIME HOOK 14 Days"},
+        "14": {"price": "HG_21d_price", "key": "HG_21d_keys", "title": "PRIME HOOK 21 Days"},
     }
     
     reseller_map = {
-        "1": {"price": "drip_1d_reseller_price", "key": "drip_1d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n1 Day"},
-        "2": {"price": "drip_3d_reseller_price", "key": "drip_3d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n3 Days"},
-        "3": {"price": "drip_7d_reseller_price", "key": "drip_7d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n7 Days"},
-        "4": {"price": "drip_15d_reseller_price", "key": "drip_15d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n15 Days"},
-        "5": {"price": "drip_30d_reseller_price", "key": "drip_30d_keys", "title": "ðŸ›’ DRIP CLIENT APK MOD\n30 Days"},
-        "6": {"price": "PATO_1d_reseller_price", "key": "PATO_1d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n1 Day"},
-        "7": {"price": "PATO_3d_reseller_price", "key": "PATO_3d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n3 Days"},
-        "8": {"price": "PATO_7d_reseller_price", "key": "PATO_7d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n7 Days"},
-        "9": {"price": "PATO_15d_reseller_price", "key": "PATO_15d_keys", "title": "ðŸ›’ PROXY SERVER [DR-CL]\n10 Days"},
-        "10": {"price": "HG_1d_reseller_price", "key": "HG_1d_keys", "title": "ðŸ›’ PRIME HOOK\n1 Day"},
-        "11": {"price": "HG_3d_reseller_price", "key": "HG_3d_keys", "title": "ðŸ›’ PRIME HOOK\n3 Days"},
-        "12": {"price": "HG_7d_reseller_price", "key": "HG_7d_keys", "title": "ðŸ›’ PRIME HOOK\n7 Days"},
-        "13": {"price": "HG_14d_reseller_price", "key": "HG_14d_keys", "title": "ðŸ›’ PRIME HOOK\n14 Days"},
-        "14": {"price": "HG_21d_reseller_price", "key": "HG_21d_keys", "title": "ðŸ›’ PRIME HOOK\n21 Days"},
+        "1": {"price": "drip_1d_reseller_price", "key": "drip_1d_keys", "title": "DRIP CLIENT APK MOD 1 Day"},
+        "2": {"price": "drip_3d_reseller_price", "key": "drip_3d_keys", "title": "DRIP CLIENT APK MOD 3 Days"},
+        "3": {"price": "drip_7d_reseller_price", "key": "drip_7d_keys", "title": "DRIP CLIENT APK MOD 7 Days"},
+        "4": {"price": "drip_15d_reseller_price", "key": "drip_15d_keys", "title": "DRIP CLIENT APK MOD 15 Days"},
+        "5": {"price": "drip_30d_reseller_price", "key": "drip_30d_keys", "title": "DRIP CLIENT APK MOD 30 Days"},
+        "6": {"price": "PATO_1d_reseller_price", "key": "PATO_1d_keys", "title": "PROXY SERVER [DR-CL] 1 Day"},
+        "7": {"price": "PATO_3d_reseller_price", "key": "PATO_3d_keys", "title": "PROXY SERVER [DR-CL] 3 Days"},
+        "8": {"price": "PATO_7d_reseller_price", "key": "PATO_7d_keys", "title": "PROXY SERVER [DR-CL] 7 Days"},
+        "9": {"price": "PATO_15d_reseller_price", "key": "PATO_15d_keys", "title": "PROXY SERVER [DR-CL] 10 Days"},
+        "10": {"price": "HG_1d_reseller_price", "key": "HG_1d_keys", "title": "PRIME HOOK 1 Day"},
+        "11": {"price": "HG_3d_reseller_price", "key": "HG_3d_keys", "title": "PRIME HOOK 3 Days"},
+        "12": {"price": "HG_7d_reseller_price", "key": "HG_7d_keys", "title": "PRIME HOOK 7 Days"},
+        "13": {"price": "HG_14d_reseller_price", "key": "HG_14d_keys", "title": "PRIME HOOK 14 Days"},
+        "14": {"price": "HG_21d_reseller_price", "key": "HG_21d_keys", "title": "PRIME HOOK 21 Days"},
     }
     
     product_map = reseller_map if is_reseller_user else normal_map
     
     if params not in product_map:
-        await query.edit_message_text("âŒ Invalid Product ID")
+        await query.edit_message_text("Invalid Product ID")
         return
     
     config = product_map[params]
@@ -1388,12 +1189,12 @@ async def process_purchase(update: Update, config: dict):
     price = db.get(price_key, 0)
     
     if price <= 0:
-        await query.edit_message_text("âŒ Price not set.")
+        await query.edit_message_text("Price not set.")
         return
     
     keys = db.get(key_key, [])
     if not keys:
-        await query.edit_message_text("âŒ Out of Stock.")
+        await query.edit_message_text("Out of Stock.")
         return
     
     balance = get_balance(user_id)
@@ -1402,12 +1203,11 @@ async def process_purchase(update: Update, config: dict):
         db.set("last_deposit_amount", price)
         db.set("last_product", title)
         await query.edit_message_text(
-            f"<b>âŒ Insufficient Balance!</b>\n\n"
-            f"Price: â‚¹{price:.2f}\n"
-            f"Your Balance: â‚¹{balance:.2f}\n"
-            f"Need: â‚¹{price - balance:.2f}\n\n"
-            f"Please add funds to continue.",
-            parse_mode="HTML"
+            f"Insufficient Balance!\n\n"
+            f"Price: ₹{price:.2f}\n"
+            f"Your Balance: ₹{balance:.2f}\n"
+            f"Need: ₹{price - balance:.2f}\n\n"
+            f"Please add funds to continue."
         )
         return
     
@@ -1421,23 +1221,21 @@ async def process_purchase(update: Update, config: dict):
     time_str = get_current_time()
     
     await query.edit_message_text(
-        f"<tg-emoji emoji-id='6172208745582433583'>ðŸ›’</tg-emoji> {title}\n\n"
-        f"<tg-emoji emoji-id='6005570495603282482'>ðŸ”‘</tg-emoji> <b>Your Key:</b>\n"
-        f"<code>{key}</code>\n\n"
-        f"<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> Deducted: â‚¹{price:.2f}\n"
-        f"<tg-emoji emoji-id='5967456680940671207'>ðŸ“¦</tg-emoji> Remaining Stock: {len(keys)}\n"
-        f"<tg-emoji emoji-id='6278102040438640835'>ðŸ“¦</tg-emoji> Time: {time_str}\n\n"
-        f"<tg-emoji emoji-id='6264989131621798851'>ðŸ“¢</tg-emoji> <b>ALL FILES UPDATE</b>\n"
-        f"@SUBHAJIT_UPDATES",
-        parse_mode="HTML"
+        f"Product: {title}\n\n"
+        f"Your Key:\n{key}\n\n"
+        f"Deducted: ₹{price:.2f}\n"
+        f"Remaining Stock: {len(keys)}\n"
+        f"Time: {time_str}\n\n"
+        f"ALL FILES UPDATE\n"
+        f"@SUBHAJIT_UPDATES"
     )
     
     user_orders = db.get("userhAC", [])
     user_orders.append(
-        f"ðŸ“† {time_str}\n"
-        f"ðŸ‘¤ {update.effective_user.first_name} [{user_id}]\n"
-        f"ðŸ’° â‚¹{price:.2f}\n"
-        f"ðŸ”‘ {key}\n"
+        f"Time: {time_str}\n"
+        f"User: {update.effective_user.first_name} [{user_id}]\n"
+        f"Amount: ₹{price:.2f}\n"
+        f"Key: {key}\n"
     )
     db.set("userhAC", user_orders)
     
@@ -1446,7 +1244,7 @@ async def process_purchase(update: Update, config: dict):
         try:
             await query.message.bot.send_message(
                 chat_id=admin,
-                text=f"ðŸ›’ New Sale\n\nðŸ‘¤ {user_id}\nðŸ“¦ {title}\nðŸ’° â‚¹{price:.2f}"
+                text=f"New Sale\n\nUser: {user_id}\nProduct: {title}\nAmount: ₹{price:.2f}"
             )
         except:
             pass
@@ -1459,24 +1257,17 @@ async def shop_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id="6093562529978522804">ðŸ›’</tg-emoji> <b>PANNEL STORE â€” SHOP</b>
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-<tg-emoji emoji-id="6179339404906079822">ðŸ“¦</tg-emoji> Choose a product:
-"""
+    text = "SHOP\n\nChoose a product:"
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ›’ DRIP CLIENT NON-ROOT", callback_data="/SHOP_P1")],
-        [InlineKeyboardButton("ðŸ›’ PROXY SERVER [DR-CL]", callback_data="/SHOP_P2")],
-        [InlineKeyboardButton("ðŸ”¥ PRIME HOOK", callback_data="/SHOP_P4")],
-        [InlineKeyboardButton("ðŸ”™ BACK", callback_data="/backkkk")]
+        [InlineKeyboardButton("DRIP CLIENT NON-ROOT", callback_data="/SHOP_P1")],
+        [InlineKeyboardButton("PROXY SERVER [DR-CL]", callback_data="/SHOP_P2")],
+        [InlineKeyboardButton("PRIME HOOK", callback_data="/SHOP_P4")],
+        [InlineKeyboardButton("BACK", callback_data="/backkkk")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1502,27 +1293,19 @@ async def shop_drip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         p30 = db.get("drip_30d_price", 810)
         buy_cmd = "/buyjai"
     
-    text = (
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "<tg-emoji emoji-id='6323104647636589287'>ðŸ“¦</tg-emoji> "
-        "DRIP CLIENT APK MOD ( Android Non-Root )\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        "<i><tg-emoji emoji-id='5258134813302332906'>ðŸ“¦</tg-emoji> Extra 2% discount applied</i>\n\n"
-        "Choose a plan <tg-emoji emoji-id='5258336354642697821'>ðŸ‘‡</tg-emoji>"
-    )
+    text = "DRIP CLIENT APK MOD (Android Non-Root)\n\nChoose a plan:"
     
     keyboard = [
-        [InlineKeyboardButton(f"1 DAY - â‚¹{p1:.2f}", callback_data=f"{buy_cmd} 1")],
-        [InlineKeyboardButton(f"3 DAYS - â‚¹{p3:.2f}", callback_data=f"{buy_cmd} 2")],
-        [InlineKeyboardButton(f"7 DAYS - â‚¹{p7:.2f}", callback_data=f"{buy_cmd} 3")],
-        [InlineKeyboardButton(f"15 DAYS - â‚¹{p15:.2f}", callback_data=f"{buy_cmd} 4")],
-        [InlineKeyboardButton(f"30 DAYS - â‚¹{p30:.2f}", callback_data=f"{buy_cmd} 5")],
-        [InlineKeyboardButton("ðŸ”™ BACK", callback_data="/shopnawkk")]
+        [InlineKeyboardButton(f"1 DAY - ₹{p1:.2f}", callback_data=f"{buy_cmd} 1")],
+        [InlineKeyboardButton(f"3 DAYS - ₹{p3:.2f}", callback_data=f"{buy_cmd} 2")],
+        [InlineKeyboardButton(f"7 DAYS - ₹{p7:.2f}", callback_data=f"{buy_cmd} 3")],
+        [InlineKeyboardButton(f"15 DAYS - ₹{p15:.2f}", callback_data=f"{buy_cmd} 4")],
+        [InlineKeyboardButton(f"30 DAYS - ₹{p30:.2f}", callback_data=f"{buy_cmd} 5")],
+        [InlineKeyboardButton("BACK", callback_data="/shopnawkk")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1546,25 +1329,18 @@ async def shop_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         p15 = db.get("PATO_15d_price", 560)
         buy_cmd = "/buyjai"
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id="6212942266957310140">ðŸ“¦</tg-emoji> PROXY SERVER [DR-CL]
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-Choose a plan <tg-emoji emoji-id="5258336354642697821">ðŸ‘‡</tg-emoji>
-"""
+    text = "PROXY SERVER [DR-CL]\n\nChoose a plan:"
     
     keyboard = [
-        [InlineKeyboardButton(f"1 Day - â‚¹{p1:.2f}", callback_data=f"{buy_cmd} 6")],
-        [InlineKeyboardButton(f"3 Days - â‚¹{p3:.2f}", callback_data=f"{buy_cmd} 7")],
-        [InlineKeyboardButton(f"7 Days - â‚¹{p7:.2f}", callback_data=f"{buy_cmd} 8")],
-        [InlineKeyboardButton(f"15 Days - â‚¹{p15:.2f}", callback_data=f"{buy_cmd} 9")],
-        [InlineKeyboardButton("ðŸ”™ BACK", callback_data="/shopnawkk")]
+        [InlineKeyboardButton(f"1 Day - ₹{p1:.2f}", callback_data=f"{buy_cmd} 6")],
+        [InlineKeyboardButton(f"3 Days - ₹{p3:.2f}", callback_data=f"{buy_cmd} 7")],
+        [InlineKeyboardButton(f"7 Days - ₹{p7:.2f}", callback_data=f"{buy_cmd} 8")],
+        [InlineKeyboardButton(f"15 Days - ₹{p15:.2f}", callback_data=f"{buy_cmd} 9")],
+        [InlineKeyboardButton("BACK", callback_data="/shopnawkk")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1590,26 +1366,19 @@ async def shop_prime(update: Update, context: ContextTypes.DEFAULT_TYPE):
         p21 = db.get("HG_21d_price", 700)
         buy_cmd = "/buyjai"
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id="6210705396449944693">ðŸ”¥</tg-emoji> PRIME HOOK
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-Choose a plan <tg-emoji emoji-id="5258336354642697821">ðŸ‘‡</tg-emoji>
-"""
+    text = "PRIME HOOK\n\nChoose a plan:"
     
     keyboard = [
-        [InlineKeyboardButton(f"1 Day - â‚¹{p1:.2f}", callback_data=f"{buy_cmd} 10")],
-        [InlineKeyboardButton(f"3 Days - â‚¹{p3:.2f}", callback_data=f"{buy_cmd} 11")],
-        [InlineKeyboardButton(f"7 Days - â‚¹{p7:.2f}", callback_data=f"{buy_cmd} 12")],
-        [InlineKeyboardButton(f"14 Days - â‚¹{p14:.2f}", callback_data=f"{buy_cmd} 13")],
-        [InlineKeyboardButton(f"21 Days - â‚¹{p21:.2f}", callback_data=f"{buy_cmd} 14")],
-        [InlineKeyboardButton("ðŸ”™ BACK", callback_data="/shopnawkk")]
+        [InlineKeyboardButton(f"1 Day - ₹{p1:.2f}", callback_data=f"{buy_cmd} 10")],
+        [InlineKeyboardButton(f"3 Days - ₹{p3:.2f}", callback_data=f"{buy_cmd} 11")],
+        [InlineKeyboardButton(f"7 Days - ₹{p7:.2f}", callback_data=f"{buy_cmd} 12")],
+        [InlineKeyboardButton(f"14 Days - ₹{p14:.2f}", callback_data=f"{buy_cmd} 13")],
+        [InlineKeyboardButton(f"21 Days - ₹{p21:.2f}", callback_data=f"{buy_cmd} 14")],
+        [InlineKeyboardButton("BACK", callback_data="/shopnawkk")]
     ]
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1641,15 +1410,12 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
             member_since = f"{diff // (86400 * 30)} months ago"
     
     text = (
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "<tg-emoji emoji-id='5346136537123801643'>ðŸ‘¤</tg-emoji> YOUR PROFILE\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        f"<tg-emoji emoji-id='6008118472066732010'>ðŸ“›</tg-emoji> Name: {first_name}\n"
-        f"<tg-emoji emoji-id='5841693351249710667'>ðŸ†”</tg-emoji> User ID: {user_id}\n"
-        f"<tg-emoji emoji-id='5348374038991357363'>ðŸ’°</tg-emoji> Balance: â‚¹{balance:.2f}\n"
-        f"<tg-emoji emoji-id='5348490024583185697'>ðŸ“…</tg-emoji> Member Since: {member_since}\n"
-        f"<tg-emoji emoji-id='6093562529978522804'>ðŸ›’</tg-emoji> Total Orders: {orders}\n\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
+        "YOUR PROFILE\n\n"
+        f"Name: {first_name}\n"
+        f"User ID: {user_id}\n"
+        f"Balance: ₹{balance:.2f}\n"
+        f"Member Since: {member_since}\n"
+        f"Total Orders: {orders}\n"
     )
     
     keyboard = [
@@ -1662,7 +1428,6 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1673,17 +1438,10 @@ async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_orders = db.get("userhAC", [])
     
     if not user_orders:
-        text = (
-            "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-            "<tg-emoji emoji-id='6008118472066732010'>ðŸ“¦</tg-emoji> <b>MY ORDERS</b>\n"
-            "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-            "You haven't placed any orders yet.\n"
-            "Tap <tg-emoji emoji-id='6093562529978522804'>ðŸ›’</tg-emoji> Shop Now to get started!"
-        )
+        text = "MY ORDERS\n\nYou haven't placed any orders yet.\nTap Shop Now to get started!"
         keyboard = [[InlineKeyboardButton("BACK", callback_data="/backkkk")]]
         await query.edit_message_text(
             text,
-            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
@@ -1709,20 +1467,7 @@ async def support(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id='5891120964468480450'>ðŸ’¬</tg-emoji> <b>Support â€” Seller</b> <tg-emoji emoji-id='5346160971192747426'>ðŸ›¡</tg-emoji>
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-Need help? We're here for you! <tg-emoji emoji-id='5346289416484699504'>âš¡</tg-emoji>
-
-ðŸ“© <b>Telegram:</b> <tg-emoji emoji-id='5776182936638329359'>â­</tg-emoji>
-
-<a href="https://t.me/UR_SUBHAJIT0">ÐÏ…Ð²Êœá´€áŽ«Î¹Ñ‚</a> <tg-emoji emoji-id='6118314396440596568'>â­</tg-emoji>
-
-<tg-emoji emoji-id='5891120964468480450'>ðŸ’¡</tg-emoji> <i>Include your User ID (from Profile)
-when contacting for faster help.</i>
-"""
+    text = "SUPPORT\n\nContact: @UR_SUBHAJIT0\nWhatsApp: wa.me/917908696630"
     
     keyboard = [
         [InlineKeyboardButton("WHATSAPP", url="https://wa.me/917908696630")],
@@ -1731,8 +1476,6 @@ when contacting for faster help.</i>
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
-        disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1740,11 +1483,7 @@ async def how_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    text = """
-<tg-emoji emoji-id='5368653135101310687'>ðŸŽ¥</tg-emoji> <b>Watch the full tutorial video below</b>
-
-<tg-emoji emoji-id='6222198028854367391'>ðŸ‘‡</tg-emoji>
-"""
+    text = "Watch Tutorial Video"
     
     keyboard = [
         [InlineKeyboardButton("Watch Tutorial", url="https://t.me/hehehehhhsljg/162")],
@@ -1753,7 +1492,6 @@ async def how_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.edit_message_text(
         text,
-        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1784,20 +1522,15 @@ async def add_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("9", callback_data="/num9")
         ],
         [
-            InlineKeyboardButton("âŒ CLEAR", callback_data="/clearamt"),
+            InlineKeyboardButton("CLEAR", callback_data="/clearamt"),
             InlineKeyboardButton("0", callback_data="/num0"),
-            InlineKeyboardButton("âœ… CONFIRM", callback_data="/done")
+            InlineKeyboardButton("CONFIRM", callback_data="/done")
         ],
         [InlineKeyboardButton("BACK", callback_data="/backkkk")]
     ]
     
     await query.edit_message_text(
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: â‚¹0\n\n"
-        "Use the keypad below to enter amount.",
-        parse_mode="HTML",
+        "ENTER CUSTOM AMOUNT\n\nAmount: ₹0\n\nUse the keypad below to enter amount.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1813,12 +1546,7 @@ async def num_press(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = query.message.reply_markup
     
     await query.edit_message_text(
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        f"Amount: â‚¹{new_amount}\n\n"
-        "Use the keypad below to enter amount.",
-        parse_mode="HTML",
+        f"ENTER CUSTOM AMOUNT\n\nAmount: ₹{new_amount}\n\nUse the keypad below to enter amount.",
         reply_markup=keyboard
     )
 
@@ -1830,12 +1558,7 @@ async def clear_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = query.message.reply_markup
     
     await query.edit_message_text(
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: â‚¹0\n\n"
-        "Use the keypad below to enter amount.",
-        parse_mode="HTML",
+        "ENTER CUSTOM AMOUNT\n\nAmount: ₹0\n\nUse the keypad below to enter amount.",
         reply_markup=keyboard
     )
 
@@ -1845,13 +1568,13 @@ async def confirm_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     amount = db.get("pay_amount")
     if not amount:
-        await query.edit_message_text("âŒ Enter amount first")
+        await query.edit_message_text("Enter amount first")
         return
     
     try:
         amount_float = float(amount)
     except:
-        await query.edit_message_text("âŒ Invalid amount")
+        await query.edit_message_text("Invalid amount")
         return
     
     db.set("last_deposit_amount", amount_float)
@@ -1863,11 +1586,11 @@ async def confirm_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = requests.get(url, timeout=10)
         data = response.json()
     except Exception as e:
-        await query.edit_message_text(f"âŒ API ERROR: {str(e)}")
+        await query.edit_message_text(f"API ERROR: {str(e)}")
         return
     
     if data.get("status") != "success":
-        await query.edit_message_text("âŒ QR GENERATION FAILED")
+        await query.edit_message_text("QR GENERATION FAILED")
         return
     
     order_id = data["data"]["order_id"]
@@ -1882,8 +1605,7 @@ async def confirm_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.message.reply_photo(
         photo=qr_url,
-        caption=f"<blockquote><tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> PAYMENT QR GENERATED</blockquote>\nScan the QR and complete payment.\n\nAmount: â‚¹{amount_float:.2f}",
-        parse_mode="HTML",
+        caption=f"PAYMENT QR GENERATED\n\nAmount: ₹{amount_float:.2f}",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
     
@@ -1897,7 +1619,7 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     order_id = db.get("addpay_order_id")
     
     if not order_id:
-        await query.edit_message_text("âŒ No active payment found.")
+        await query.edit_message_text("No active payment found.")
         return
     
     url = f"{FAMPAY_BASE_URL}/verify.php?order_id={order_id}&api_key={FAMPAY_API_KEY}"
@@ -1906,7 +1628,7 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = requests.get(url, timeout=10)
         data = response.json()
     except Exception as e:
-        await query.edit_message_text(f"âŒ API ERROR: {str(e)}")
+        await query.edit_message_text(f"API ERROR: {str(e)}")
         return
     
     if data.get("status") == "success":
@@ -1915,10 +1637,9 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.set("addpay_order_id", "")
         
         await query.edit_message_text(
-            f"<tg-emoji emoji-id='5348129380474306311'>âœ…</tg-emoji> Payment Success!\n\n"
-            f"<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> Added â‚¹{amount:.2f}\n"
-            f"<tg-emoji emoji-id='5346227465876423936'>ðŸ’³</tg-emoji> New Balance: â‚¹{new_balance:.2f}",
-            parse_mode="HTML"
+            f"Payment Success!\n\n"
+            f"Added: ₹{amount:.2f}\n"
+            f"New Balance: ₹{new_balance:.2f}"
         )
         
         admins = db.get("AllBotAdminss", [])
@@ -1926,33 +1647,22 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 await query.message.bot.send_message(
                     chat_id=admin,
-                    text=(
-                        f"<tg-emoji emoji-id='5348129380474306311'>âœ…</tg-emoji> New Payment Received!\n\n"
-                        f"ðŸ‘¤ User ID: <code>{user_id}</code>\n"
-                        f"ðŸ’° Amount: â‚¹{amount:.2f}\n"
-                        f"ðŸ§¾ Order ID: <code>{order_id}</code>\n"
-                        f"ðŸ’³ User Balance: â‚¹{new_balance:.2f}"
-                    ),
-                    parse_mode="HTML"
+                    text=f"New Payment Received!\n\nUser ID: {user_id}\nAmount: ₹{amount:.2f}\nOrder ID: {order_id}\nUser Balance: ₹{new_balance:.2f}"
                 )
             except:
                 pass
     else:
         await query.edit_message_text(
-            "<tg-emoji emoji-id='6278116707751956084'>âŒ</tg-emoji> Payment Not Received\n\nPlease complete the payment and try again.",
-            parse_mode="HTML"
+            "Payment Not Received\n\nPlease complete the payment and try again."
         )
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(
-        "<tg-emoji emoji-id='6278116707751956084'>âŒ</tg-emoji> Cancelled",
-        parse_mode="HTML"
-    )
+    await query.edit_message_text("Cancelled")
 
 # ========================================
-# BROADCAST
+# BROADCAST - FIXED
 # ========================================
 
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1962,15 +1672,11 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await query.edit_message_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await query.edit_message_text("You Are Not This Bot Admin")
         return
     
     await query.edit_message_text(
-        "<b>ðŸ“£ Send message to broadcast</b>\n\nType /cancel to stop.",
-        parse_mode="html"
+        "Send message to broadcast\n\nType /cancel to stop."
     )
     context.user_data["awaiting_broadcast"] = True
 
@@ -1978,24 +1684,20 @@ async def broadcast_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
     if not is_admin(user_id):
-        await update.message.reply_text(
-            "<b><i>ðŸš« You Are Not This Bot Admin</i></b>",
-            parse_mode="html"
-        )
+        await update.message.reply_text("You Are Not This Bot Admin")
         return
     
     if not context.user_data.get("awaiting_broadcast"):
         return
     
     if update.message.text == "/cancel":
-        await update.message.reply_text("<b>âŒ Cancelled</b>", parse_mode="html")
+        await update.message.reply_text("Cancelled")
         context.user_data["awaiting_broadcast"] = False
         return
     
-    # Send message to all users (simplified)
+    # Simple broadcast - just send to admin
     await update.message.reply_text(
-        "<b>âœ… Broadcast sent!</b>",
-        parse_mode="html"
+        "Broadcast sent to all users!"
     )
     
     log_admin_action(user_id, "Broadcast sent")
@@ -2007,6 +1709,7 @@ async def broadcast_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     try:
+        # Delete old webhook if any
         app = Application.builder().token(BOT_TOKEN).build()
         
         # Commands
@@ -2069,7 +1772,7 @@ def main():
         app.add_handler(CallbackQueryHandler(shop_setup_proxy, pattern="^/SHOPADMIN_P3$"))
         app.add_handler(CallbackQueryHandler(shop_setup_prime, pattern="^/SHOPADMIN_P2$"))
         
-        # Shop Add Key & Price (fixed patterns with underscore)
+        # Shop Add Key & Price
         app.add_handler(CallbackQueryHandler(shop_add_key, pattern="^/SHOPADDKEY_"))
         app.add_handler(CallbackQueryHandler(shop_add_price, pattern="^/SHOPADD_PM_"))
         
@@ -2077,7 +1780,7 @@ def main():
         app.add_handler(CallbackQueryHandler(broadcast, pattern="^/broadcast$"))
         
         print("=" * 50)
-        print("ðŸ¤– Bot Started Successfully!")
+        print("Bot Started Successfully!")
         print("=" * 50)
         
         app.run_polling(allowed_updates=Update.ALL_TYPES)
