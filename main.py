@@ -608,13 +608,15 @@ async def verify_payment_handler(update: Update, context: ContextTypes.DEFAULT_T
         )
 
 
-
-# ================= MAIN =================
+# ================= START =================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Welcome to bot"
     )
+
+
+# ================= MAIN =================
 
 def main():
 
@@ -631,60 +633,13 @@ def main():
     )
 
 
-    app.add_handler(
-        CallbackQueryHandler(
-            shop_handler,
-            pattern="^shop$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            profile_handler,
-            pattern="^profile$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            my_key_handler,
-            pattern="^mykey$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            add_fund_handler,
-            pattern="^addfund$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            product_handler,
-            pattern="^product"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            back_handler,
-            pattern="^back$"
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            verify_payment_handler,
-            pattern="^verify$"
-        )
-    )
+    app.add_handler(CallbackQueryHandler(shop_handler, pattern="^shop$"))
+    app.add_handler(CallbackQueryHandler(profile_handler, pattern="^profile$"))
+    app.add_handler(CallbackQueryHandler(my_key_handler, pattern="^mykey$"))
+    app.add_handler(CallbackQueryHandler(add_fund_handler, pattern="^addfund$"))
+    app.add_handler(CallbackQueryHandler(product_handler, pattern="^product"))
+    app.add_handler(CallbackQueryHandler(back_handler, pattern="^back$"))
+    app.add_handler(CallbackQueryHandler(verify_payment_handler, pattern="^verify$"))
 
 
     print("Bot Running...")
@@ -693,7 +648,5 @@ def main():
     app.run_polling()
 
 
-
 if __name__ == "__main__":
-
     main()
