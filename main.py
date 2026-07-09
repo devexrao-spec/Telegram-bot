@@ -305,7 +305,7 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
 # ============================================================
-# SHOP COMMANDS (Keep all existing shop functions)
+# SHOP COMMANDS
 # ============================================================
 
 async def shop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1347,7 +1347,7 @@ async def shop_admin_p3(update: Update, context: ContextTypes.DEFAULT_TYPE):
             raise e
 
 # ============================================================
-# SHOPADD HANDLERS - FIXED
+# SHOPADD HANDLERS - FIXED FOR MULTIPLE KEYS
 # ============================================================
 
 async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1417,7 +1417,7 @@ async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle adding a key for a product"""
+    """Handle adding a key for a product - FIXED for multiple keys"""
     query = update.callback_query
     await query.answer()
     
@@ -1475,15 +1475,17 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     title = title_map.get(option, "Product")
     
-    # Store in context
+    # Clear any existing key waiting state
     context.user_data['waiting_for_key'] = True
     context.user_data['key_name'] = key_name
     context.user_data['key_title'] = title
+    # Don't clear key_added flag so multiple keys can be added
     
     await query.message.reply_text(
         f"🛒 <b>{title}</b>\n\n"
         "Send the key (minimum 3 characters).\n\n"
-        "Type /cancel to stop.",
+        "You can add multiple keys one by one.\n"
+        "Type /done to finish or /cancel to stop.",
         parse_mode="HTML"
     )
 
@@ -1492,18 +1494,17 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ============================================================
 
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all text messages in one place"""
+    """Handle all text messages in one place - FIXED for multiple keys"""
     user_id = str(update.effective_user.id)
     text = update.message.text
-    
-    # Check if user is admin
-    is_admin_user = is_admin(user_id)
     
     # 1. Check for price input
     if context.user_data.get('waiting_for_price'):
         if text == "/cancel":
             await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
             context.user_data['waiting_for_price'] = False
+            context.user_data['price_key'] = None
+            context.user_data['price_title'] = None
             return
         
         try:
@@ -1529,10 +1530,13 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             
             await update.message.reply_text(
                 f"✅ <b>Successfully Set</b>\n\n"
-                f"{title} Price = ₹{price}",
+                f"{title} Price = ₹{price}\n\n"
+                f"Click 'Price' again to set another price.",
                 parse_mode="HTML"
             )
             context.user_data['waiting_for_price'] = False
+            context.user_data['price_key'] = None
+            context.user_data['price_title'] = None
             
         except ValueError:
             await update.message.reply_text(
@@ -1543,17 +1547,34 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
         return
     
-    # 2. Check for key input
+    # 2. Check for key input - FIXED for multiple keys
     if context.user_data.get('waiting_for_key'):
         if text == "/cancel":
             await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
             context.user_data['waiting_for_key'] = False
+            context.user_data['key_name'] = None
+            context.user_data['key_title'] = None
+            return
+        
+        if text == "/done":
+            await update.message.reply_text(
+                "✅ <b>Done adding keys!</b>\n\n"
+                "You can add more keys anytime by clicking 'Add Key' again.",
+                parse_mode="HTML"
+            )
+            context.user_data['waiting_for_key'] = False
+            context.user_data['key_name'] = None
+            context.user_data['key_title'] = None
             return
         
         key_value = text.strip()
         
         if len(key_value) < 3:
-            await update.message.reply_text("❌ Invalid Key. Minimum 3 characters.\n\nType /cancel to stop.", parse_mode="HTML")
+            await update.message.reply_text(
+                "❌ Invalid Key. Minimum 3 characters.\n\n"
+                "Type /cancel to stop or /done to finish.",
+                parse_mode="HTML"
+            )
             return
         
         key_name = context.user_data.get('key_name')
@@ -1580,10 +1601,11 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             f"✅ <b>Key Added Successfully</b>\n\n"
             f"{title}\n"
             f"🔑 <code>{key_value}</code>\n"
-            f"📦 Total Stock: {len(keys_list)}",
+            f"📦 Total Stock: {len(keys_list)}\n\n"
+            f"Send another key, or type /done to finish.",
             parse_mode="HTML"
         )
-        context.user_data['waiting_for_key'] = False
+        # Don't clear waiting_for_key - allow multiple keys
         return
     
     # 3. Check for admin input
@@ -2079,6 +2101,7 @@ async def main():
     print("🤖 Bot is running...")
     print("📁 Data saved to: bot_data.json")
     print("✅ All features are now working properly!")
+    print("📝 You can add multiple keys one by one!")
     
     await application.initialize()
     await application.start()
