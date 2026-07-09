@@ -1,43 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-ðŸš¨ðŸ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”  ðŸ”’  â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”ðŸ”ðŸš¨
-ðŸ‘‘ Â©ï¸ 2026  |  LICENSED â€¢ PRIVATE â€¢ CONFIDENTIAL
-
-ðŸ‘¨â€ðŸ’»ðŸ‘‘ Built by        : @TusharBairagi ðŸ§ ðŸ”¥
-ðŸ§ âš™ï¸ Architecture     : Custom TPY Logic ðŸ§©âš¡
-ðŸ¤–ðŸš€ Runtime Engine   : Telegram Bot Automation ðŸ¤–ðŸ’¥
-
-âš ï¸ðŸš« Copying lines âŒ wonâ€™t copy mindset ðŸ§ 
-ðŸ”¥ðŸ’ª Skill  >  Source Code  >  Tutorials ðŸ˜Ž
-ðŸ§©âš”ï¸ Think â€¢ Build â€¢ Dominate â€¢ Repeat ðŸ”
-
-ðŸš¨ðŸ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”  ðŸ”’  â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”ðŸ”ðŸš¨
-
-ðŸ“œâš–ï¸ LICENSE & LEGAL NOTICE âš–ï¸ðŸ“œ
-ðŸ”’ This source code is the intellectual property
-ðŸ‘‘ of Tushar Bairagi and is protected under law ðŸ›¡ï¸
-
-âœ…âœ”ï¸ Allowed:
-ðŸ’° Sale or licensing by the original author
-ðŸ‘€ Use by licensed buyer for personal / internal use
-
-âŒâ›” Strictly Prohibited:
-ðŸš« Claiming authorship or removing credits
-ðŸš« Reselling, redistributing, or sublicensing
-ðŸš« Public re-upload without written permission
-
-âš ï¸ðŸš¨ Violation of these terms may lead to legal action âš–ï¸ðŸ”¥
-
-ðŸ“©ðŸ“§ Permissions & licensing:
-âœ‰ï¸ bairagixd@gmail.com
-
-ðŸš¨ðŸ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”ðŸ”ðŸš¨
-##ðŸ‘‘TusharBairagi #ðŸ”¥EliteDev #ðŸ¤–TPYCode #ðŸ”LicensedCode
-##ðŸš«NoResale #ðŸ§ RealDeveloper #âš¡OwnerBuild #ðŸ’ŽOriginalMind
-"""
-
 import os
 import json
 import requests
@@ -71,7 +34,6 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = "8644946592:AAGqcXNTd0TRpYSkK3XkwGjXVQMwxTZKoao"
 FAMPAY_API_KEY = "FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8"
 FAMPAY_BASE_URL = "https://fampay.anujbots.xyz"
-ADMIN_IDS = ["6204125653", "8102646437"]
 
 # ========================================
 # DATA STORAGE
@@ -204,7 +166,7 @@ def log_admin_action(user_id: str, action: str):
     db.set("AdmAC", log)
 
 # ========================================
-# START COMMAND - FULL
+# START COMMAND
 # ========================================
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -217,24 +179,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = get_balance(user_id)
     
     text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>ðŸŒŸ</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>ðŸŒ™</tg-emoji>"
-        "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>âœ¨</tg-emoji> "
+        "<b>ðŸ‘‹ WELCOME TO HACK STORE</b>\n\n"
+        f"ðŸ’° Your Balance: â‚¹{balance:.2f}\n\n"
         "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>ðŸš€</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>âš¡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>ðŸ’³</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>ðŸ›¡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        f"<tg-emoji emoji-id='5348392971207194994'>ðŸ’°</tg-emoji> Your Balance: â‚¹{balance:.2f}"
-        "</blockquote>"
     )
     
     keyboard = [
@@ -276,24 +223,8 @@ async def back_to_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = get_balance(user_id)
     
     text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>ðŸŒŸ</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>ðŸŒ™</tg-emoji>"
-        "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>âœ¨</tg-emoji> "
-        "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>ðŸš€</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>âš¡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>ðŸ’³</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>ðŸ›¡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        f"<tg-emoji emoji-id='5348392971207194994'>ðŸ’°</tg-emoji> Your Balance: â‚¹{balance:.2f}"
-        "</blockquote>"
+        "<b>ðŸ‘‹ WELCOME TO HACK STORE</b>\n\n"
+        f"ðŸ’° Your Balance: â‚¹{balance:.2f}"
     )
     
     keyboard = [
@@ -324,7 +255,7 @@ async def back_to_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ========================================
-# ADMIN PANEL - FULL
+# ADMIN PANEL
 # ========================================
 
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -395,7 +326,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 # ========================================
-# ADMIN BALANCE - FULL
+# ADMIN ADD BALANCE
 # ========================================
 
 async def admin_add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -471,7 +402,7 @@ async def admin_add_balance_process(update: Update, context: ContextTypes.DEFAUL
     context.user_data["awaiting_balance"] = False
 
 # ========================================
-# ADMIN ACTIONS LOG
+# ADMIN ACTIONS
 # ========================================
 
 async def admin_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -501,7 +432,7 @@ async def admin_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ========================================
-# ADMIN BOT MODE TOGGLE
+# ADMIN BOT MODE
 # ========================================
 
 async def admin_bot_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -638,7 +569,7 @@ async def admin_remove_admin(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await admin_manage_admins(update, context)
 
 # ========================================
-# RESELLER MANAGEMENT - FULL
+# RESELLER MANAGEMENT
 # ========================================
 
 async def admin_add_reseller(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -785,7 +716,7 @@ async def admin_reseller_list(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.edit_message_text(text, parse_mode="html")
 
 # ========================================
-# SHOP SETUP - FULL
+# SHOP SETUP
 # ========================================
 
 async def shop_setup(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1086,7 +1017,7 @@ async def shop_setup_prime(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ========================================
-# SHOP ADD KEY - FULL
+# SHOP ADD KEY
 # ========================================
 
 async def shop_add_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1105,7 +1036,6 @@ async def shop_add_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
     product_id = data.replace("/SHOPADDKEY ", "") if " " in data else data.replace("/SHOPADDKEY", "")
     
-    # Map product IDs
     product_map = {
         "1": {"key": "drip_1d_keys", "title": "DRIP CLIENT APK MOD\n1d Key"},
         "2": {"key": "drip_3d_keys", "title": "DRIP CLIENT APK MOD\n3d Key"},
@@ -1185,7 +1115,7 @@ async def shop_add_key_process(update: Update, context: ContextTypes.DEFAULT_TYP
     context.user_data["awaiting_key_add"] = False
 
 # ========================================
-# SHOP ADD PRICE - FULL
+# SHOP ADD PRICE
 # ========================================
 
 async def shop_add_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1204,7 +1134,6 @@ async def shop_add_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
     product_id = data.replace("/SHOPADD_PM ", "") if " " in data else data.replace("/SHOPADD_PM", "")
     
-    # Map product IDs to price keys and titles
     product_map = {
         "1": {"key": "drip_1d_price", "title": "DRIP CLIENT APK MOD\n1 Days"},
         "2": {"key": "drip_3d_price", "title": "DRIP CLIENT APK MOD\n3 Days"},
@@ -1299,11 +1228,10 @@ async def shop_add_price_process(update: Update, context: ContextTypes.DEFAULT_T
     context.user_data["awaiting_price_add"] = False
 
 # ========================================
-# SHOP BUY - FULL
+# SHOP BUY
 # ========================================
 
 async def shop_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Buy product"""
     query = update.callback_query
     await query.answer()
     
@@ -1317,7 +1245,6 @@ async def shop_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     is_reseller_user = is_reseller(user_id)
     
-    # Product map for normal and reseller
     normal_map = {
         "1": {"price": "drip_1d_price", "key": "drip_1d_keys", "title": "DRIP CLIENT APK MOD\n1 Day"},
         "2": {"price": "drip_3d_price", "key": "drip_3d_keys", "title": "DRIP CLIENT APK MOD\n3 Days"},
@@ -1362,7 +1289,6 @@ async def shop_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await process_purchase(update, config)
 
 async def process_purchase(update: Update, config: dict):
-    """Process product purchase"""
     query = update.callback_query
     user_id = str(update.effective_user.id)
     
@@ -1396,33 +1322,25 @@ async def process_purchase(update: Update, config: dict):
         )
         return
     
-    # Deduct balance
     new_balance = deduct_balance(user_id, price)
-    
-    # Increment orders
     increment_orders(user_id)
     
-    # Get key
     key = keys[0]
     keys.pop(0)
     db.set(key_key, keys)
     
     time_str = get_current_time()
     
-    # Success message
     await query.edit_message_text(
-        f"<tg-emoji emoji-id='6172208745582433583'>ðŸ›’</tg-emoji> {title}\n\n"
-        f"<tg-emoji emoji-id='6005570495603282482'>ðŸ”‘</tg-emoji> <b>Your Key:</b>\n"
+        f"ðŸ›’ {title}\n\n"
+        f"<b>Your Key:</b>\n"
         f"<code>{key}</code>\n\n"
-        f"<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> Deducted: â‚¹{price:.2f}\n"
-        f"<tg-emoji emoji-id='5967456680940671207'>ðŸ“¦</tg-emoji> Remaining Stock: {len(keys)}\n"
-        f"<tg-emoji emoji-id='6278102040438640835'>ðŸ“¦</tg-emoji> Time: {time_str}\n\n"
-        f"<tg-emoji emoji-id='6264989131621798851'>ðŸ“¢</tg-emoji> <b>ALL FILES UPDATE</b>\n"
-        f"@SUBHAJIT_UPDATES",
+        f"ðŸ’° Deducted: â‚¹{price:.2f}\n"
+        f"ðŸ“¦ Remaining Stock: {len(keys)}\n"
+        f"ðŸ“¦ Time: {time_str}",
         parse_mode="HTML"
     )
     
-    # Log purchase
     user_orders = db.get("userhAC", [])
     user_orders.append(
         f"ðŸ“† {time_str}\n"
@@ -1432,7 +1350,6 @@ async def process_purchase(update: Update, config: dict):
     )
     db.set("userhAC", user_orders)
     
-    # Notify admins
     admins = db.get("AllBotAdminss", [])
     for admin in admins:
         try:
@@ -1444,24 +1361,18 @@ async def process_purchase(update: Update, config: dict):
             pass
 
 # ========================================
-# SHOP MENU - FULL
+# SHOP MENU
 # ========================================
 
 async def shop_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id="6093562529978522804">ðŸ›’</tg-emoji> <b>PANNEL STORE â€” SHOP</b>
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-<tg-emoji emoji-id="6179339404906079822">ðŸ“¦</tg-emoji> Choose a product:
-"""
+    text = "ðŸ›’ <b>SHOP</b>\n\nChoose a product:"
     
     keyboard = [
-        [InlineKeyboardButton("ðŸ›’ DRIP CLIENT NON-ROOT", callback_data="/SHOP_P1")],
-        [InlineKeyboardButton("ðŸ›’ PROXY SERVER [DR-CL]", callback_data="/SHOP_P2")],
+        [InlineKeyboardButton("ðŸ›’ DRIP CLIENT", callback_data="/SHOP_P1")],
+        [InlineKeyboardButton("ðŸ›’ PROXY SERVER", callback_data="/SHOP_P2")],
         [InlineKeyboardButton("ðŸ”¥ PRIME HOOK", callback_data="/SHOP_P4")],
         [InlineKeyboardButton("ðŸ”™ BACK", callback_data="/backkkk")]
     ]
@@ -1494,14 +1405,7 @@ async def shop_drip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         p30 = db.get("drip_30d_price", 810)
         buy_cmd = "/buyjai"
     
-    text = (
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "<tg-emoji emoji-id='6323104647636589287'>ðŸ“¦</tg-emoji> "
-        "DRIP CLIENT APK MOD ( Android Non-Root )\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        "<i><tg-emoji emoji-id='5258134813302332906'>ðŸ“¦</tg-emoji> Extra 2% discount applied</i>\n\n"
-        "Choose a plan <tg-emoji emoji-id='5258336354642697821'>ðŸ‘‡</tg-emoji>"
-    )
+    text = "DRIP CLIENT APK MOD\n\nChoose a plan:"
     
     keyboard = [
         [InlineKeyboardButton(f"1 DAY - â‚¹{p1:.2f}", callback_data=f"{buy_cmd} 1")],
@@ -1538,13 +1442,7 @@ async def shop_proxy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         p15 = db.get("PATO_15d_price", 560)
         buy_cmd = "/buyjai"
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id="6212942266957310140">ðŸ“¦</tg-emoji> PROXY SERVER [DR-CL]
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-Choose a plan <tg-emoji emoji-id="5258336354642697821">ðŸ‘‡</tg-emoji>
-"""
+    text = "PROXY SERVER [DR-CL]\n\nChoose a plan:"
     
     keyboard = [
         [InlineKeyboardButton(f"1 Day - â‚¹{p1:.2f}", callback_data=f"{buy_cmd} 6")],
@@ -1582,13 +1480,7 @@ async def shop_prime(update: Update, context: ContextTypes.DEFAULT_TYPE):
         p21 = db.get("HG_21d_price", 700)
         buy_cmd = "/buyjai"
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id="6210705396449944693">ðŸ”¥</tg-emoji> PRIME HOOK
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-Choose a plan <tg-emoji emoji-id="5258336354642697821">ðŸ‘‡</tg-emoji>
-"""
+    text = "PRIME HOOK\n\nChoose a plan:"
     
     keyboard = [
         [InlineKeyboardButton(f"1 Day - â‚¹{p1:.2f}", callback_data=f"{buy_cmd} 10")],
@@ -1606,7 +1498,7 @@ Choose a plan <tg-emoji emoji-id="5258336354642697821">ðŸ‘‡</tg-emoji>
     )
 
 # ========================================
-# PROFILE & ORDERS - FULL
+# PROFILE & ORDERS
 # ========================================
 
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1618,35 +1510,17 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = get_balance(user_id)
     orders = get_orders(user_id)
     
-    joined = get_joined_date(user_id)
-    if not joined:
-        member_since = "Today"
-    else:
-        diff = int(time.time()) - joined
-        if diff < 86400:
-            member_since = "Today"
-        elif diff < 86400 * 7:
-            member_since = f"{diff // 86400} days ago"
-        elif diff < 86400 * 30:
-            member_since = f"{diff // (86400 * 7)} weeks ago"
-        else:
-            member_since = f"{diff // (86400 * 30)} months ago"
-    
     text = (
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-        "<tg-emoji emoji-id='5346136537123801643'>ðŸ‘¤</tg-emoji> YOUR PROFILE\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-        f"<tg-emoji emoji-id='6008118472066732010'>ðŸ“›</tg-emoji> Name: {first_name}\n"
-        f"<tg-emoji emoji-id='5841693351249710667'>ðŸ†”</tg-emoji> User ID: {user_id}\n"
-        f"<tg-emoji emoji-id='5348374038991357363'>ðŸ’°</tg-emoji> Balance: â‚¹{balance:.2f}\n"
-        f"<tg-emoji emoji-id='5348490024583185697'>ðŸ“…</tg-emoji> Member Since: {member_since}\n"
-        f"<tg-emoji emoji-id='6093562529978522804'>ðŸ›’</tg-emoji> Total Orders: {orders}\n\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”"
+        "ðŸ‘¤ YOUR PROFILE\n\n"
+        f"Name: {first_name}\n"
+        f"User ID: {user_id}\n"
+        f"Balance: â‚¹{balance:.2f}\n"
+        f"Total Orders: {orders}\n"
     )
     
     keyboard = [
         [
-            InlineKeyboardButton("ðŸ›’ BUY HACK", callback_data="/shopnawkk"),
+            InlineKeyboardButton("ðŸ›’ SHOP", callback_data="/shopnawkk"),
             InlineKeyboardButton("ðŸ“¦ MY KEY", callback_data="/orderksk")
         ],
         [InlineKeyboardButton("ðŸ”™ BACK", callback_data="/backkkk")]
@@ -1665,17 +1539,10 @@ async def my_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_orders = db.get("userhAC", [])
     
     if not user_orders:
-        text = (
-            "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-            "<tg-emoji emoji-id='6008118472066732010'>ðŸ“¦</tg-emoji> <b>MY ORDERS</b>\n"
-            "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n\n"
-            "You haven't placed any orders yet.\n"
-            "Tap <tg-emoji emoji-id='6093562529978522804'>ðŸ›’</tg-emoji> Shop Now to get started!"
-        )
+        text = "No orders yet."
         keyboard = [[InlineKeyboardButton("ðŸ”™ BACK", callback_data="/backkkk")]]
         await query.edit_message_text(
             text,
-            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
@@ -1701,20 +1568,7 @@ async def support(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    text = """
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-<tg-emoji emoji-id='5891120964468480450'>ðŸ’¬</tg-emoji> <b>Support â€” Seller</b> <tg-emoji emoji-id='5346160971192747426'>ðŸ›¡</tg-emoji>
-â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
-
-Need help? We're here for you! <tg-emoji emoji-id='5346289416484699504'>âš¡</tg-emoji>
-
-ðŸ“© <b>Telegram:</b> <tg-emoji emoji-id='5776182936638329359'>â­</tg-emoji>
-
-<a href="https://t.me/UR_SUBHAJIT0">ÐÏ…Ð²Êœá´€áŽ«Î¹Ñ‚</a> <tg-emoji emoji-id='6118314396440596568'>â­</tg-emoji>
-
-<tg-emoji emoji-id='5891120964468480450'>ðŸ’¡</tg-emoji> <i>Include your User ID (from Profile)
-when contacting for faster help.</i>
-"""
+    text = "ðŸ’¬ Support\n\nContact: @UR_SUBHAJIT0\nWhatsApp: wa.me/917908696630"
     
     keyboard = [
         [InlineKeyboardButton("ðŸ’¬ WHATSAPP", url="https://wa.me/917908696630")],
@@ -1724,7 +1578,6 @@ when contacting for faster help.</i>
     await query.edit_message_text(
         text,
         parse_mode="HTML",
-        disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -1732,11 +1585,7 @@ async def how_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    text = """
-<tg-emoji emoji-id='5368653135101310687'>ðŸŽ¥</tg-emoji> <b>Watch the full tutorial video below</b>
-
-<tg-emoji emoji-id='6222198028854367391'>ðŸ‘‡</tg-emoji>
-"""
+    text = "ðŸŽ¥ Watch Tutorial Video"
     
     keyboard = [
         [InlineKeyboardButton("ðŸŽ¥ Watch Tutorial", url="https://t.me/hehehehhhsljg/162")],
@@ -1750,7 +1599,7 @@ async def how_to_use(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ========================================
-# PAYMENT - FULL
+# PAYMENT
 # ========================================
 
 async def add_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1784,11 +1633,7 @@ async def add_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     await query.edit_message_text(
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: â‚¹0\n\n"
-        "Use the keypad below to enter amount.",
+        "ðŸ’° ENTER AMOUNT\n\nAmount: â‚¹0",
         parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -1805,11 +1650,7 @@ async def num_press(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = query.message.reply_markup
     
     await query.edit_message_text(
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        f"Amount: â‚¹{new_amount}\n\n"
-        "Use the keypad below to enter amount.",
+        f"ðŸ’° ENTER AMOUNT\n\nAmount: â‚¹{new_amount}",
         parse_mode="HTML",
         reply_markup=keyboard
     )
@@ -1822,11 +1663,7 @@ async def clear_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = query.message.reply_markup
     
     await query.edit_message_text(
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: â‚¹0\n\n"
-        "Use the keypad below to enter amount.",
+        "ðŸ’° ENTER AMOUNT\n\nAmount: â‚¹0",
         parse_mode="HTML",
         reply_markup=keyboard
     )
@@ -1848,7 +1685,6 @@ async def confirm_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     db.set("last_deposit_amount", amount_float)
     
-    # Generate QR with Fam Pay
     upi = "bablu.xyztb@fam"
     url = f"{FAMPAY_BASE_URL}/qr.php?upi={upi}&amount={amount_float}"
     
@@ -1856,11 +1692,11 @@ async def confirm_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = requests.get(url, timeout=10)
         data = response.json()
     except Exception as e:
-        await query.edit_message_text(f"âŒ API ERROR: {str(e)}")
+        await query.edit_message_text(f"âŒ API Error: {str(e)}")
         return
     
     if data.get("status") != "success":
-        await query.edit_message_text("âŒ QR GENERATION FAILED")
+        await query.edit_message_text("âŒ QR Generation Failed")
         return
     
     order_id = data["data"]["order_id"]
@@ -1869,13 +1705,13 @@ async def confirm_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db.set("addpay_order_id", order_id)
     
     keyboard = [
-        [InlineKeyboardButton("âœ… VERIFY PAYMENT", callback_data="/verify_addpay")],
+        [InlineKeyboardButton("âœ… VERIFY", callback_data="/verify_addpay")],
         [InlineKeyboardButton("âŒ CANCEL", callback_data="/cancel")]
     ]
     
     await query.message.reply_photo(
         photo=qr_url,
-        caption=f"<blockquote><tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> PAYMENT QR GENERATED</blockquote>\nScan the QR and complete payment.\n\nAmount: â‚¹{amount_float:.2f}",
+        caption=f"ðŸ’° Payment QR\n\nAmount: â‚¹{amount_float:.2f}",
         parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -1890,7 +1726,7 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     order_id = db.get("addpay_order_id")
     
     if not order_id:
-        await query.edit_message_text("âŒ No active payment found.")
+        await query.edit_message_text("âŒ No active payment")
         return
     
     url = f"{FAMPAY_BASE_URL}/verify.php?order_id={order_id}&api_key={FAMPAY_API_KEY}"
@@ -1899,7 +1735,7 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = requests.get(url, timeout=10)
         data = response.json()
     except Exception as e:
-        await query.edit_message_text(f"âŒ API ERROR: {str(e)}")
+        await query.edit_message_text(f"âŒ API Error: {str(e)}")
         return
     
     if data.get("status") == "success":
@@ -1908,43 +1744,31 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         db.set("addpay_order_id", "")
         
         await query.edit_message_text(
-            f"<tg-emoji emoji-id='5348129380474306311'>âœ…</tg-emoji> Payment Success!\n\n"
-            f"<tg-emoji emoji-id='6089104607328342288'>ðŸ’°</tg-emoji> Added â‚¹{amount:.2f}\n"
-            f"<tg-emoji emoji-id='5346227465876423936'>ðŸ’³</tg-emoji> New Balance: â‚¹{new_balance:.2f}",
+            f"âœ… Payment Success!\n\n"
+            f"Added: â‚¹{amount:.2f}\n"
+            f"New Balance: â‚¹{new_balance:.2f}",
             parse_mode="HTML"
         )
         
-        # Notify admins
         admins = db.get("AllBotAdminss", [])
         for admin in admins:
             try:
                 await query.message.bot.send_message(
                     chat_id=admin,
-                    text=(
-                        f"<tg-emoji emoji-id='5348129380474306311'>âœ…</tg-emoji> New Payment Received!\n\n"
-                        f"ðŸ‘¤ User ID: <code>{user_id}</code>\n"
-                        f"ðŸ’° Amount: â‚¹{amount:.2f}\n"
-                        f"ðŸ§¾ Order ID: <code>{order_id}</code>\n"
-                        f"ðŸ’³ User Balance: â‚¹{new_balance:.2f}"
-                    ),
-                    parse_mode="HTML"
+                    text=f"âœ… New Payment!\n\nUser: {user_id}\nAmount: â‚¹{amount:.2f}"
                 )
             except:
                 pass
     else:
         await query.edit_message_text(
-            "<tg-emoji emoji-id='6278116707751956084'>âŒ</tg-emoji> Payment Not Received\n\nPlease complete the payment and try again.",
+            "âŒ Payment Not Received\n\nPlease try again.",
             parse_mode="HTML"
         )
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    
-    await query.edit_message_text(
-        "<tg-emoji emoji-id='6278116707751956084'>âŒ</tg-emoji> Cancelled",
-        parse_mode="HTML"
-    )
+    await query.edit_message_text("âŒ Cancelled")
 
 # ========================================
 # BROADCAST
@@ -1987,9 +1811,8 @@ async def broadcast_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["awaiting_broadcast"] = False
         return
     
-    # Get all users (simplified - in production you'd have a user list)
     await update.message.reply_text(
-        "<b>âœ… Broadcast sent to all users!</b>",
+        "<b>âœ… Broadcast sent!</b>",
         parse_mode="html"
     )
     
@@ -2001,81 +1824,40 @@ async def broadcast_process(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ========================================
 
 def main():
-    """Main entry point"""
     try:
         app = Application.builder().token(BOT_TOKEN).build()
         
-        # ========== COMMAND HANDLERS ==========
+        # Commands
         app.add_handler(CommandHandler("start", start_command))
         app.add_handler(CommandHandler("admin", admin_panel))
         
-        # ========== MESSAGE HANDLERS ==========
-        # Admin balance
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND & filters.Regex(r'^\d+\s+-?\d+\.?\d*$'),
-            admin_add_balance_process
-        ))
+        # Message handlers
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, admin_add_balance_process))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, admin_add_admin_process))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, admin_add_reseller_process))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, admin_remove_reseller_process))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, shop_add_key_process))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, shop_add_price_process))
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, broadcast_process))
         
-        # Admin add
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND & filters.Regex(r'^\d+$'),
-            admin_add_admin_process
-        ))
-        
-        # Reseller add
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND & filters.Regex(r'^\d+$'),
-            admin_add_reseller_process
-        ))
-        
-        # Reseller remove
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND & filters.Regex(r'^\d+$'),
-            admin_remove_reseller_process
-        ))
-        
-        # Shop add key
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            shop_add_key_process
-        ))
-        
-        # Shop add price
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            shop_add_price_process
-        ))
-        
-        # Broadcast
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            broadcast_process
-        ))
-        
-        # ========== CALLBACK QUERY HANDLERS ==========
-        # Navigation
+        # Callback handlers
         app.add_handler(CallbackQueryHandler(back_to_home, pattern="^/backkkk$"))
         app.add_handler(CallbackQueryHandler(admin_panel, pattern="^/admin$"))
         app.add_handler(CallbackQueryHandler(shop_menu, pattern="^/shopnawkk$"))
         
-        # Shop
         app.add_handler(CallbackQueryHandler(shop_drip, pattern="^/SHOP_P1$"))
         app.add_handler(CallbackQueryHandler(shop_proxy, pattern="^/SHOP_P2$"))
         app.add_handler(CallbackQueryHandler(shop_prime, pattern="^/SHOP_P4$"))
         
-        # Buy
         app.add_handler(CallbackQueryHandler(shop_buy, pattern="^/buyjai "))
         app.add_handler(CallbackQueryHandler(shop_buy, pattern="^/buyjai_reseller "))
         
-        # Profile
         app.add_handler(CallbackQueryHandler(profile, pattern="^/profilemmm$"))
         app.add_handler(CallbackQueryHandler(my_orders, pattern="^/orderksk$"))
         
-        # Support
         app.add_handler(CallbackQueryHandler(support, pattern="^/supportj$"))
         app.add_handler(CallbackQueryHandler(how_to_use, pattern="^/spinj$"))
         
-        # Payment
         app.add_handler(CallbackQueryHandler(add_payment, pattern="^/addpayment$"))
         app.add_handler(CallbackQueryHandler(num_press, pattern="^/num[0-9]$"))
         app.add_handler(CallbackQueryHandler(clear_amount, pattern="^/clearamt$"))
@@ -2083,7 +1865,6 @@ def main():
         app.add_handler(CallbackQueryHandler(verify_payment, pattern="^/verify_addpay$"))
         app.add_handler(CallbackQueryHandler(cancel, pattern="^/cancel$"))
         
-        # Admin
         app.add_handler(CallbackQueryHandler(admin_add_balance, pattern="^/ChangeAnyUserBal$"))
         app.add_handler(CallbackQueryHandler(admin_actions, pattern="^/TUSHAR_AdminAction$"))
         app.add_handler(CallbackQueryHandler(admin_bot_mode, pattern="^/admin_BotMode "))
@@ -2094,24 +1875,18 @@ def main():
         app.add_handler(CallbackQueryHandler(admin_remove_reseller, pattern="^/removereseller$"))
         app.add_handler(CallbackQueryHandler(admin_reseller_list, pattern="^/resellerlist$"))
         
-        # Shop Setup
         app.add_handler(CallbackQueryHandler(shop_setup, pattern="^/setshop_psue$"))
         app.add_handler(CallbackQueryHandler(shop_setup_drip, pattern="^/SHOPADMIN_P1$"))
         app.add_handler(CallbackQueryHandler(shop_setup_proxy, pattern="^/SHOPADMIN_P3$"))
         app.add_handler(CallbackQueryHandler(shop_setup_prime, pattern="^/SHOPADMIN_P2$"))
         
-        # Shop Add Key & Price
         app.add_handler(CallbackQueryHandler(shop_add_key, pattern="^/SHOPADDKEY"))
         app.add_handler(CallbackQueryHandler(shop_add_price, pattern="^/SHOPADD_PM"))
         
-        # Broadcast
         app.add_handler(CallbackQueryHandler(broadcast, pattern="^/broadcast$"))
         
-        # ========== START BOT ==========
         print("=" * 50)
         print("ðŸ¤– Bot Started Successfully!")
-        print(f"âš™ï¸ Bot Token: {BOT_TOKEN[:10]}...")
-        print(f"ðŸ”‘ FamPay API Key: {FAMPAY_API_KEY[:10]}...")
         print("=" * 50)
         
         app.run_polling(allowed_updates=Update.ALL_TYPES)
