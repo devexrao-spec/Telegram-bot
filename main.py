@@ -39,13 +39,7 @@ FAMPAY_API_KEY = os.getenv(
 )
 
 
-BOT_TOKEN = os.getenv(
-    "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
-)
-
-
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN missing")
+BOT_TOKEN = "8828131983:AAG66fQnd9Be1WiGRWKT0sqFYEZM510yWx4"
 
 
 # ================= USER DATABASE =================
