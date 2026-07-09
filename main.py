@@ -305,6 +305,41 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
 # ============================================================
+# CANCEL AND DONE COMMANDS - FIXED
+# ============================================================
+
+async def cancel_command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /cancel command"""
+    user_id = str(update.effective_user.id)
+    
+    # Clear all waiting states
+    context.user_data.clear()
+    
+    await update.message.reply_text(
+        "❌ <b>Cancelled</b>\n\nAll operations have been cancelled.",
+        parse_mode="HTML"
+    )
+
+async def done_command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /done command - finish adding keys"""
+    user_id = str(update.effective_user.id)
+    
+    if context.user_data.get('waiting_for_key'):
+        context.user_data['waiting_for_key'] = False
+        context.user_data['key_name'] = None
+        context.user_data['key_title'] = None
+        
+        await update.message.reply_text(
+            "✅ <b>Done!</b>\n\nYou have finished adding keys.\nYou can add more anytime.",
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            "ℹ️ You are not in 'Add Key' mode.\nUse 'Add Key' button first.",
+            parse_mode="HTML"
+        )
+
+# ============================================================
 # SHOP COMMANDS
 # ============================================================
 
@@ -1347,7 +1382,7 @@ async def shop_admin_p3(update: Update, context: ContextTypes.DEFAULT_TYPE):
             raise e
 
 # ============================================================
-# SHOPADD HANDLERS - FIXED FOR MULTIPLE KEYS
+# SHOPADD HANDLERS
 # ============================================================
 
 async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1404,7 +1439,6 @@ async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     price_key, title = price_map[option]
     
-    # Store in context
     context.user_data['waiting_for_price'] = True
     context.user_data['price_key'] = price_key
     context.user_data['price_title'] = title
@@ -1417,7 +1451,7 @@ async def shopadd_price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle adding a key for a product - FIXED for multiple keys"""
+    """Handle adding a key for a product"""
     query = update.callback_query
     await query.answer()
     
@@ -1475,11 +1509,9 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     title = title_map.get(option, "Product")
     
-    # Clear any existing key waiting state
     context.user_data['waiting_for_key'] = True
     context.user_data['key_name'] = key_name
     context.user_data['key_title'] = title
-    # Don't clear key_added flag so multiple keys can be added
     
     await query.message.reply_text(
         f"🛒 <b>{title}</b>\n\n"
@@ -1490,23 +1522,43 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ============================================================
-# SINGLE MESSAGE HANDLER - FIXED
+# SINGLE MESSAGE HANDLER - FIXED FOR /cancel AND /done
 # ============================================================
 
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all text messages in one place - FIXED for multiple keys"""
+    """Handle all text messages in one place"""
     user_id = str(update.effective_user.id)
     text = update.message.text
     
+    # ============================================================
+    # CHECK FOR /cancel AND /done COMMANDS FIRST
+    # ============================================================
+    if text == "/cancel":
+        context.user_data.clear()
+        await update.message.reply_text(
+            "❌ <b>Cancelled</b>\n\nAll operations have been cancelled.",
+            parse_mode="HTML"
+        )
+        return
+    
+    if text == "/done":
+        if context.user_data.get('waiting_for_key'):
+            context.user_data['waiting_for_key'] = False
+            context.user_data['key_name'] = None
+            context.user_data['key_title'] = None
+            await update.message.reply_text(
+                "✅ <b>Done!</b>\n\nYou have finished adding keys.\nYou can add more anytime.",
+                parse_mode="HTML"
+            )
+        else:
+            await update.message.reply_text(
+                "ℹ️ You are not in 'Add Key' mode.\nUse 'Add Key' button first.",
+                parse_mode="HTML"
+            )
+        return
+    
     # 1. Check for price input
     if context.user_data.get('waiting_for_price'):
-        if text == "/cancel":
-            await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
-            context.user_data['waiting_for_price'] = False
-            context.user_data['price_key'] = None
-            context.user_data['price_title'] = None
-            return
-        
         try:
             price = float(text.strip())
             price_key = context.user_data.get('price_key')
@@ -1547,26 +1599,8 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
         return
     
-    # 2. Check for key input - FIXED for multiple keys
+    # 2. Check for key input
     if context.user_data.get('waiting_for_key'):
-        if text == "/cancel":
-            await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
-            context.user_data['waiting_for_key'] = False
-            context.user_data['key_name'] = None
-            context.user_data['key_title'] = None
-            return
-        
-        if text == "/done":
-            await update.message.reply_text(
-                "✅ <b>Done adding keys!</b>\n\n"
-                "You can add more keys anytime by clicking 'Add Key' again.",
-                parse_mode="HTML"
-            )
-            context.user_data['waiting_for_key'] = False
-            context.user_data['key_name'] = None
-            context.user_data['key_title'] = None
-            return
-        
         key_value = text.strip()
         
         if len(key_value) < 3:
@@ -1605,16 +1639,10 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             f"Send another key, or type /done to finish.",
             parse_mode="HTML"
         )
-        # Don't clear waiting_for_key - allow multiple keys
         return
     
     # 3. Check for admin input
     if context.user_data.get('waiting_for_admin'):
-        if text == "/cancel":
-            await update.message.reply_text("❌ Cancelled", parse_mode="HTML")
-            context.user_data['waiting_for_admin'] = False
-            return
-        
         admin_id = text.strip()
         
         if not admin_id.isdigit():
@@ -1657,11 +1685,6 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # 4. Check for broadcast input
     if context.user_data.get('waiting_for_broadcast'):
-        if text == "/cancel":
-            await update.message.reply_text("❌ Broadcast cancelled", parse_mode="HTML")
-            context.user_data['waiting_for_broadcast'] = False
-            return
-        
         broadcast_msg = text
         
         users_data = BotData.get("users", {})
@@ -2102,6 +2125,8 @@ async def main():
     print("📁 Data saved to: bot_data.json")
     print("✅ All features are now working properly!")
     print("📝 You can add multiple keys one by one!")
+    print("🔴 Type /cancel to cancel any operation")
+    print("✅ Type /done to finish adding keys")
     
     await application.initialize()
     await application.start()
