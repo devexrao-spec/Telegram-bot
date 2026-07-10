@@ -464,7 +464,7 @@ Choose a plan 👇
     )
 
 # ============================================================
-# BUY COMMANDS
+# BUY COMMANDS - FIXED FOR OUT OF STOCK
 # ============================================================
 
 async def buy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -510,15 +510,23 @@ async def buy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await process_purchase(update, context, query.message, user_id, product)
 
 async def process_purchase(update, context, message, user_id: str, product: Dict):
-    price = BotData.get(product["price"], 0)
+    # FIXED: Check stock first
     keys = get_stock(product["key"])
+    
+    # FIXED: If no keys, show out of stock
+    if len(keys) == 0:
+        await message.reply_text(
+            "❌ <b>Out of Stock!</b>\n\n"
+            f"Sorry, {product['product']} is currently out of stock.\n"
+            "Please contact admin for restock.",
+            parse_mode="HTML"
+        )
+        return
+    
+    price = BotData.get(product["price"], 0)
     
     if price <= 0:
         await message.reply_text("❌ Price not set. Contact Admin.")
-        return
-    
-    if len(keys) == 0:
-        await message.reply_text("❌ Out of Stock.")
         return
     
     balance = UserResources.get_balance(user_id)
@@ -531,6 +539,18 @@ async def process_purchase(update, context, message, user_id: str, product: Dict
         await auto_buy(update, context, message, user_id, price, product)
         return
     
+    # FIXED: Double check stock before deducting balance
+    keys = get_stock(product["key"])
+    if len(keys) == 0:
+        await message.reply_text(
+            "❌ <b>Out of Stock!</b>\n\n"
+            f"Sorry, {product['product']} is currently out of stock.\n"
+            "Please contact admin for restock.",
+            parse_mode="HTML"
+        )
+        return
+    
+    # FIXED: Deduct balance only after confirming stock
     if not UserResources.cut_balance(user_id, price):
         await message.reply_text("❌ Insufficient balance.")
         return
@@ -1000,7 +1020,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ============================================================
-# ADMIN COMMANDS - FIXED FOR BALANCE
+# ADMIN COMMANDS
 # ============================================================
 
 async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1026,13 +1046,8 @@ async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         target_user = args[0].strip()
         amount = float(args[1].strip())
         
-        # Get current balance
         current_balance = UserResources.get_balance(target_user)
-        
-        # Calculate new balance
         new_balance = current_balance + amount
-        
-        # Set new balance
         UserResources.set_balance(target_user, new_balance)
         
         time_info = get_indian_time()
@@ -1052,7 +1067,6 @@ async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             parse_mode="HTML"
         )
         
-        # Log admin action
         admin_actions = BotData.get("AdmAC", [])
         admin_actions.append(
             f"<b>📆 Time:</b> {time_info['easy_time']}\n"
@@ -1539,7 +1553,7 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ============================================================
-# SINGLE MESSAGE HANDLER - FIXED FOR BALANCE
+# SINGLE MESSAGE HANDLER
 # ============================================================
 
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1575,10 +1589,9 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
     
     # ============================================================
-    # CHECK FOR BALANCE INPUT (Add Balance button se aaya hai)
+    # CHECK FOR BALANCE INPUT
     # ============================================================
     if context.user_data.get('waiting_for_balance'):
-        # Format: user_id amount
         parts = text.strip().split()
         
         if len(parts) < 2:
@@ -1598,13 +1611,8 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             target_user = parts[0].strip()
             amount = float(parts[1].strip())
             
-            # Get current balance
             current_balance = UserResources.get_balance(target_user)
-            
-            # Calculate new balance
             new_balance = current_balance + amount
-            
-            # Set new balance
             UserResources.set_balance(target_user, new_balance)
             
             time_info = get_indian_time()
@@ -1625,7 +1633,6 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
                 parse_mode="HTML"
             )
             
-            # Log admin action
             admin_actions = BotData.get("AdmAC", [])
             admin_actions.append(
                 f"<b>📆 Time:</b> {time_info['easy_time']}\n"
@@ -1634,7 +1641,6 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
             BotData.set("AdmAC", admin_actions)
             
-            # Clear waiting state
             context.user_data['waiting_for_balance'] = False
             
         except ValueError:
@@ -1969,7 +1975,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
 # ============================================================
-# ADMIN CALLBACKS - FIXED FOR BALANCE
+# ADMIN CALLBACKS
 # ============================================================
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1981,11 +1987,10 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("<b><i>🚫 You Are Not This Bot Admin</i></b>", parse_mode="HTML")
         return
     
-    # Check for BotMode toggle
     if query.data and "BotMode" in query.data:
         parts = query.data.split()
         if len(parts) >= 2:
-            mode = parts[1]  # "ON" or "OFF"
+            mode = parts[1]
             BotData.set("BotMode", mode)
             time_info = get_indian_time()
             admin_actions = BotData.get("AdmAC", [])
@@ -2128,7 +2133,7 @@ async def admin_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
     await query.message.reply_text("\n\n".join(latest), parse_mode="HTML")
 
 async def add_balance_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle Add Balance button click - FIXED"""
+    """Handle Add Balance button click"""
     query = update.callback_query
     await query.answer()
     
@@ -2137,7 +2142,6 @@ async def add_balance_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         await query.message.reply_text("<b><i>🚫 You Are Not This Bot Admin</i></b>", parse_mode="HTML")
         return
     
-    # Set waiting for balance input
     context.user_data['waiting_for_balance'] = True
     
     await query.message.reply_text(
@@ -2232,6 +2236,7 @@ async def main():
     print("🔴 Type /cancel to cancel any operation")
     print("✅ Type /done to finish adding keys")
     print("💰 Click 'Add Balance' in admin panel to add/deduct balance")
+    print("📦 Out of Stock message fixed!")
     
     await application.initialize()
     await application.start()
