@@ -305,14 +305,13 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
 # ============================================================
-# CANCEL AND DONE COMMANDS - FIXED
+# CANCEL AND DONE COMMANDS
 # ============================================================
 
 async def cancel_command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /cancel command"""
     user_id = str(update.effective_user.id)
     
-    # Clear all waiting states
     context.user_data.clear()
     
     await update.message.reply_text(
@@ -1016,7 +1015,10 @@ async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             await update.message.reply_text(
                 "💡 Send User Telegram Id & Amount\n\n"
                 "⚠️ Use Format: `/ChangeAnyUserBal 123456789 100`\n\n"
-                "Add - Before Amount To Deduct Balance Like `-10`",
+                "Add - Before Amount To Deduct Balance Like `-10`\n\n"
+                "Example:\n"
+                "➕ Add: `/ChangeAnyUserBal 123456789 100`\n"
+                "➖ Deduct: `/ChangeAnyUserBal 123456789 -50`",
                 parse_mode="HTML"
             )
             return
@@ -1037,12 +1039,14 @@ async def add_balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         
         if amount > 0:
             action = "Added"
+            emoji = "➕"
         else:
             action = "Deducted"
+            emoji = "➖"
         
         await update.message.reply_text(
             f"<b>✅ Account Updated!</b>\n\n"
-            f"💰 {action}: ₹{abs(amount)}\n"
+            f"{emoji} {action}: ₹{abs(amount)}\n"
             f"💳 Previous Balance: ₹{current_balance}\n"
             f"💳 New Balance: ₹{UserResources.get_balance(target_user)}",
             parse_mode="HTML"
@@ -1535,11 +1539,11 @@ async def shopadd_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ============================================================
-# SINGLE MESSAGE HANDLER - FINAL FIXED
+# SINGLE MESSAGE HANDLER - FIXED FOR BALANCE
 # ============================================================
 
 async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all text messages in one place - FINAL FIXED"""
+    """Handle all text messages in one place"""
     user_id = str(update.effective_user.id)
     text = update.message.text
     
@@ -1568,6 +1572,82 @@ async def handle_all_messages(update: Update, context: ContextTypes.DEFAULT_TYPE
                 "ℹ️ You are not in 'Add Key' mode.\nUse 'Add Key' button first.",
                 parse_mode="HTML"
             )
+        return
+    
+    # ============================================================
+    # CHECK FOR BALANCE INPUT (Add Balance button se aaya hai)
+    # ============================================================
+    if context.user_data.get('waiting_for_balance'):
+        # Format: user_id amount
+        parts = text.strip().split()
+        
+        if len(parts) < 2:
+            await update.message.reply_text(
+                "❌ <b>Invalid Format!</b>\n\n"
+                "Please send in this format:\n"
+                "<code>user_id amount</code>\n\n"
+                "Example:\n"
+                "➕ Add: <code>123456789 100</code>\n"
+                "➖ Deduct: <code>123456789 -50</code>\n\n"
+                "Type /cancel to stop.",
+                parse_mode="HTML"
+            )
+            return
+        
+        try:
+            target_user = parts[0].strip()
+            amount = float(parts[1].strip())
+            
+            # Get current balance
+            current_balance = UserResources.get_balance(target_user)
+            
+            # Calculate new balance
+            new_balance = current_balance + amount
+            
+            # Set new balance
+            UserResources.set_balance(target_user, new_balance)
+            
+            time_info = get_indian_time()
+            
+            if amount > 0:
+                action = "Added"
+                emoji = "➕"
+            else:
+                action = "Deducted"
+                emoji = "➖"
+            
+            await update.message.reply_text(
+                f"<b>✅ Account Updated!</b>\n\n"
+                f"👤 User ID: <code>{target_user}</code>\n"
+                f"{emoji} {action}: ₹{abs(amount)}\n"
+                f"💳 Previous Balance: ₹{current_balance}\n"
+                f"💳 New Balance: ₹{UserResources.get_balance(target_user)}",
+                parse_mode="HTML"
+            )
+            
+            # Log admin action
+            admin_actions = BotData.get("AdmAC", [])
+            admin_actions.append(
+                f"<b>📆 Time:</b> {time_info['easy_time']}\n"
+                f"👥 <b>By {update.effective_user.first_name}</b> [ID: <code>{user_id}</code>]\n"
+                f"🔍<b> Action: </b> {action} {abs(amount)} Rs To {target_user} Account"
+            )
+            BotData.set("AdmAC", admin_actions)
+            
+            # Clear waiting state
+            context.user_data['waiting_for_balance'] = False
+            
+        except ValueError:
+            await update.message.reply_text(
+                "❌ <b>Invalid Amount!</b>\n\n"
+                "Please send a valid number.\n\n"
+                "Example:\n"
+                "➕ Add: <code>123456789 100</code>\n"
+                "➖ Deduct: <code>123456789 -50</code>",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
         return
     
     # 1. Check for price input
@@ -1889,7 +1969,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
 # ============================================================
-# ADMIN CALLBACKS - FIXED FOR BOT ON/OFF
+# ADMIN CALLBACKS - FIXED FOR BALANCE
 # ============================================================
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2048,6 +2128,7 @@ async def admin_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
     await query.message.reply_text("\n\n".join(latest), parse_mode="HTML")
 
 async def add_balance_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle Add Balance button click - FIXED"""
     query = update.callback_query
     await query.answer()
     
@@ -2056,10 +2137,17 @@ async def add_balance_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         await query.message.reply_text("<b><i>🚫 You Are Not This Bot Admin</i></b>", parse_mode="HTML")
         return
     
+    # Set waiting for balance input
+    context.user_data['waiting_for_balance'] = True
+    
     await query.message.reply_text(
-        "💡 Send User Telegram Id & Amount\n\n"
-        "⚠️ Use Format: `user_id 10`\n\n"
-        "Add - Before Amount To Deduct Balance Like `-10`",
+        "💳 <b>Add/Deduct Balance</b>\n\n"
+        "Please send in this format:\n"
+        "<code>user_id amount</code>\n\n"
+        "Examples:\n"
+        "➕ <b>Add Balance:</b> <code>123456789 100</code>\n"
+        "➖ <b>Deduct Balance:</b> <code>123456789 -50</code>\n\n"
+        "Type /cancel to stop.",
         parse_mode="HTML"
     )
 
@@ -2143,7 +2231,7 @@ async def main():
     print("📝 You can add multiple keys one by one!")
     print("🔴 Type /cancel to cancel any operation")
     print("✅ Type /done to finish adding keys")
-    print("💰 Use /ChangeAnyUserBal user_id amount to add/deduct balance")
+    print("💰 Click 'Add Balance' in admin panel to add/deduct balance")
     
     await application.initialize()
     await application.start()
