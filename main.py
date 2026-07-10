@@ -47,24 +47,23 @@ from datetime import datetime
 import requests
 import telebot
 from telebot import types
-from telebot.formatting import apply_html_entities  # noqa: F401  (used by command code)
+from telebot.formatting import apply_html_entities
 
 import firebase_admin
 from firebase_admin import credentials, db
 
 try:
     from zoneinfo import ZoneInfo
-except ImportError:  # py<3.9 fallback
+except ImportError:
     from backports.zoneinfo import ZoneInfo
 
 
 # --------------------------------------------------------------------------- #
-# CONFIG (env vars first, hardcoded fallback kept for quick local testing)
+# CONFIG (YOUR VALUES - DO NOT SHARE!)
 # --------------------------------------------------------------------------- #
 BOT_TOKEN = "8644946592:AAGqcXNTd0TRpYSkK3XkwGjXVQMwxTZKoao"
-FIREBASE_DB_URL = os.environ.get("FIREBASE_DB_URL", "https://your-project-default-rtdb.firebaseio.com/")
-FIREBASE_CRED_JSON = os.environ.get("FIREBASE_CRED_JSON")  # raw JSON string (optional)
-FIREBASE_CRED_PATH = os.environ.get("FIREBASE_CRED_PATH", "/home/claude/bot/serviceAccountKey.json")
+FIREBASE_DB_URL = "https://subhajit-selling-bot-default-rtdb.asia-southeast1.firebasedatabase.app/"
+FIREBASE_CRED_PATH = "serviceAccountKey.json"  # Same folder mein rakho
 
 bot_client = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 
@@ -72,18 +71,13 @@ bot_client = telebot.TeleBot(BOT_TOKEN, parse_mode=None)
 # FIREBASE INIT
 # --------------------------------------------------------------------------- #
 if not firebase_admin._apps:
-    if FIREBASE_CRED_JSON:
-        cred = credentials.Certificate(json.loads(FIREBASE_CRED_JSON))
-    elif os.path.exists(FIREBASE_CRED_PATH):
+    if os.path.exists(FIREBASE_CRED_PATH):
         cred = credentials.Certificate(FIREBASE_CRED_PATH)
-    else:
-        cred = None
-
-    if cred:
         firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_DB_URL})
+        print("✅ Firebase Connected Successfully!")
     else:
-        # allow module import / syntax-check without real Firebase creds present
-        firebase_admin.initialize_app(options={"databaseURL": FIREBASE_DB_URL}, name="uninit")
+        print(f"❌ ERROR: serviceAccountKey.json not found at {FIREBASE_CRED_PATH}")
+        print("⚠️ Bot will run in LIMITED mode (no data save)")
 
 
 def _safe_ref(path):
@@ -179,8 +173,6 @@ class _BroadcastResultData:
 
 
 class _BroadcastOptions:
-    """Mimics the original webhook payload shape used by /broadResult:
-    options.json.total / .total_success / .total_errors"""
     def __init__(self, total, success, errors):
         self.json = _BroadcastResultData(total, success, errors)
 
@@ -251,6 +243,15 @@ class _Resource:
                 pass
         return new_val
 
+    def cut(self, amount):
+        new_val = float(self.value()) - float(amount)
+        if self.ref is not None:
+            try:
+                self.ref.set(new_val)
+            except Exception:
+                pass
+        return new_val
+
 
 class _Resources:
     @staticmethod
@@ -299,10 +300,6 @@ InlineKeyboardButton = types.InlineKeyboardButton
 
 
 def _dict_markup_to_telebot(markup_dict):
-    """Convert the platform's raw dict reply_markup (which may include the
-    non-standard 'style' / 'icon_custom_emoji_id' keys) into a real
-    telebot InlineKeyboardMarkup. Unsupported keys are simply dropped since
-    plain Telegram Bot API has no button-color / icon concept."""
     kb = types.InlineKeyboardMarkup()
     for row in markup_dict.get("inline_keyboard", []):
         buttons = []
@@ -322,11 +319,11 @@ def _normalize_markup(reply_markup):
         return None
     if isinstance(reply_markup, dict):
         return _dict_markup_to_telebot(reply_markup)
-    return reply_markup  # already a real telebot InlineKeyboardMarkup object
+    return reply_markup
 
 
 # --------------------------------------------------------------------------- #
-# bot.* wrapper  (bound to whichever chat the current update belongs to)
+# bot.* wrapper
 # --------------------------------------------------------------------------- #
 def _bot_send(chat_id, text, parse_mode=None, reply_markup=None, disable_web_page_preview=None, **kw):
     try:
@@ -338,7 +335,6 @@ def _bot_send(chat_id, text, parse_mode=None, reply_markup=None, disable_web_pag
             disable_web_page_preview=disable_web_page_preview,
         )
     except Exception as e:
-        # Never let a broadcast/notification crash the whole handler
         print(f"[bot.sendMessage error] chat={chat_id}: {e}")
         return None
 
@@ -350,9 +346,6 @@ def _fix_parse_mode(parse_mode):
 
 
 class BotProxy:
-    """Per-update proxy exposing replyText / sendMessage / editMessageText /
-    deleteMessage / sendPhoto / sendVideo / ... matching the original DSL."""
-
     def __init__(self, default_chat_id):
         self.default_chat_id = default_chat_id
 
@@ -392,13 +385,6 @@ class BotProxy:
     def deleteMessage(self, chat_id=None, message_id=None, **kw):
         chat_id = chat_id or self.default_chat_id
         return bot_client.delete_message(chat_id, message_id)
-
-    def _send_media(self, method_name, chat_id=None, caption=None, parse_mode=None,
-                     reply_markup=None, **kw):
-        chat_id = chat_id or self.default_chat_id
-        fn = getattr(bot_client, method_name)
-        return fn(chat_id, caption=caption, parse_mode=_fix_parse_mode(parse_mode),
-                   reply_markup=_normalize_markup(reply_markup), **kw)
 
     def sendPhoto(self, chat_id=None, photo=None, caption=None, parse_mode=None, reply_markup=None, **kw):
         chat_id = chat_id or self.default_chat_id
@@ -529,11 +515,6 @@ def cmd__ChangeAnyUserBal2(ctx):
 
 
     AdmAC=Bot.getData("AdmAC") or []
-
-
-
- 
-
 
 
     P=message.text.split(" ")
@@ -1100,11 +1081,10 @@ def cmd__SHOPADDKEY1(ctx):
         # Get existing data
         existing_data = Bot.getData(stock_key)
 
-        # 🔥 FIX PART
+        # FIX PART
         if not existing_data:
             keys_list = []
         elif isinstance(existing_data, str):
-            # Convert old single string into list
             keys_list = [existing_data]
         else:
             keys_list = existing_data
@@ -1365,7 +1345,7 @@ def cmd__SHOPADMIN_P1(ctx):
     message = ctx["message"]
     params = ctx["params"]
     options = ctx["options"]
-    # 🔘 BUTTONS (same as before)
+    # BUTTONS (same as before)
     markup = InlineKeyboardMarkup()
 
     # 1D
@@ -1405,7 +1385,7 @@ def cmd__SHOPADMIN_P1(ctx):
 
     markup.add(InlineKeyboardButton('🔙 Back', callback_data='/setshop_psue'))
 
-    # 📦 GET OLD DATA
+    # GET OLD DATA
     def get_old(day):
 
         price = Bot.getData("drip_" + str(day) + "d_price") or 0
@@ -1422,14 +1402,14 @@ def cmd__SHOPADMIN_P1(ctx):
         return price, reseller, st
 
 
-    # 📊 DATA
+    # DATA
     p1, r1, s1 = get_old(1)
     p3, r3, s3 = get_old(3)
     p7, r7, s7 = get_old(7)
     p15, r15, s15 = get_old(15)
     p30, r30, s30 = get_old(30)
 
-    # 📝 TEXT
+    # TEXT
     TXT = (
         "🎮 🛒  𝗗𝗥𝗜𝗣 𝗖𝗟𝗜𝗘𝗡𝗧 𝗠𝗢𝗗✅\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -1469,7 +1449,7 @@ def cmd__SHOPADMIN_P2(ctx):
     message = ctx["message"]
     params = ctx["params"]
     options = ctx["options"]
-    # 🔘 BUTTONS
+    # BUTTONS
 
     markup = InlineKeyboardMarkup()
 
@@ -1575,7 +1555,7 @@ def cmd__SHOPADMIN_P2(ctx):
         )
     )
 
-    # 📦 GET DATA
+    # GET DATA
 
     def get_old(day):
 
@@ -1592,7 +1572,7 @@ def cmd__SHOPADMIN_P2(ctx):
 
         return price, reseller, st
 
-    # 📊 DATA
+    # DATA
 
     p1, r1, s1 = get_old(1)
     p3, r3, s3 = get_old(3)
@@ -1600,7 +1580,7 @@ def cmd__SHOPADMIN_P2(ctx):
     p10, r10, s10 = get_old(14)
     p21, r21, s21 = get_old(21)
 
-    # 📝 TEXT
+    # TEXT
 
     TXT = (
         "📦 𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀\n"
@@ -1646,7 +1626,7 @@ def cmd__SHOPADMIN_P3(ctx):
     message = ctx["message"]
     params = ctx["params"]
     options = ctx["options"]
-    # 🔘 BUTTONS (same as before)
+    # BUTTONS (same as before)
     markup = InlineKeyboardMarkup()
 
     # 3D
@@ -1679,7 +1659,7 @@ def cmd__SHOPADMIN_P3(ctx):
 
     markup.add(InlineKeyboardButton('🔙 Back', callback_data='/setshop_psue'))
 
-    # 📦 GET OLD DATA
+    # GET OLD DATA
     def get_old(day):
 
         price = Bot.getData("PATO_" + str(day) + "d_price") or 0
@@ -1696,7 +1676,7 @@ def cmd__SHOPADMIN_P3(ctx):
         return price, reseller, st
 
 
-    # 📊 DATA
+    # DATA
 
     p1, r1, s1 = get_old(1)
     p3, r3, s3 = get_old(3)
@@ -1704,7 +1684,7 @@ def cmd__SHOPADMIN_P3(ctx):
     p15, r15, s15 = get_old(15)
 
 
-    # 📝 TEXT
+    # TEXT
     TXT = (
         "🎮 PROXY SERVER [DR-CL]\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -1741,7 +1721,7 @@ def cmd__SHOPADMIN_P4(ctx):
     message = ctx["message"]
     params = ctx["params"]
     options = ctx["options"]
-    # 🔘 BUTTONS (same as before)
+    # BUTTONS (same as before)
     markup = InlineKeyboardMarkup()
 
     # 5D
@@ -1761,7 +1741,7 @@ def cmd__SHOPADMIN_P4(ctx):
 
     markup.add(InlineKeyboardButton('🔙 Back', callback_data='/setshop_psue'))
 
-    # 📦 GET OLD DATA
+    # GET OLD DATA
     def get_old(day):
 
         price = Bot.getData("PRIME_" + str(day) + "d_price") or 0
@@ -1778,11 +1758,11 @@ def cmd__SHOPADMIN_P4(ctx):
         return price, reseller, st
 
 
-    # 📊 DATA
+    # DATA
     p5, r5, s5 = get_old(5)
     p10, r10, s10 = get_old(10)
 
-    # 📝 TEXT
+    # TEXT
     TXT = (
         "🎮 🛒 PRIME-HOOK-MOD APK\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -1813,7 +1793,7 @@ def cmd__SHOPADMIN_P5(ctx):
     message = ctx["message"]
     params = ctx["params"]
     options = ctx["options"]
-    # 🔘 BUTTONS (same as before)
+    # BUTTONS (same as before)
     markup = InlineKeyboardMarkup()
 
     # 10D
@@ -1833,7 +1813,7 @@ def cmd__SHOPADMIN_P5(ctx):
 
     markup.add(InlineKeyboardButton('🔙 Back', callback_data='/setshop_psue'))
 
-    # 📦 GET OLD DATA
+    # GET OLD DATA
     def get_old(day):
 
         price = Bot.getData("ROOT_" + str(day) + "d_price") or 0
@@ -1850,11 +1830,11 @@ def cmd__SHOPADMIN_P5(ctx):
         return price, reseller, st
 
 
-    # 📊 DATA
+    # DATA
     p10, r10, s10 = get_old(10)
     p20, r20, s20 = get_old(20)
 
-    # 📝 TEXT
+    # TEXT
     TXT = (
         "🎮 🛒 BR MOD ROOT\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -5264,20 +5244,15 @@ CURRENT_USER = contextvars.ContextVar("CURRENT_USER", default=None)
 
 
 class _MessageProxy:
-    """Normalizes text-message and callback-query updates into one shape:
-    from_user is always the ACTING human, chat/message_id point at the
-    message to edit/reply to, and .text mirrors the triggering string."""
-
     def __init__(self, chat, message_id, from_user, text, date=None, real_message=None):
         self.chat = chat
         self.message_id = message_id
         self.from_user = from_user
         self.text = text
         self.date = date
-        self._real = real_message  # underlying telebot Message, for photo/video/etc access
+        self._real = real_message
 
     def __getattr__(self, item):
-        # fall through to the real underlying message for photo/video/document/etc.
         if self._real is not None:
             return getattr(self._real, item)
         raise AttributeError(item)
@@ -5339,9 +5314,6 @@ def _invoke(cmd_name, uid, message_proxy, params, options):
 
 
 def run_command_now(cmd_name, options=None):
-    """Used by Bot.runCommand()/Bot.broadcast() to invoke a command outside
-    the normal update flow. `options` may itself carry a target chat id via
-    the caller's context; here we fall back to the currently-set user."""
     uid = CURRENT_USER.get()
     if uid is None:
         return
@@ -5388,7 +5360,6 @@ def on_message(message):
         _invoke(cmd, uid, proxy, params, None)
         return
 
-    # Not a command -> check for a pending "next command" state
     pending = _get_pending(uid)
     if pending and pending.get("cmd"):
         _clear_pending(uid)
@@ -5424,7 +5395,11 @@ def on_callback(call):
 
 import time
 def main():
-    print("Bot starting (long polling)...")
+    print("🤖 Bot Starting...")
+    print(f"📡 Bot Token: {BOT_TOKEN[:10]}...")
+    print(f"🔥 Firebase URL: {FIREBASE_DB_URL}")
+    print("📁 Service Account: " + ("✅ Found" if os.path.exists(FIREBASE_CRED_PATH) else "❌ NOT FOUND!"))
+    print("🔄 Starting Long Polling...")
     while True:
         try:
             bot_client.infinity_polling(timeout=30, long_polling_timeout=30)
