@@ -307,24 +307,68 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = (
         "<blockquote>"
-        "🌟 WELCOME TO HACK STORE 🌙"
+        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
+        "WELCOME TO HACK STORE "
+        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
         "</blockquote>\n\n"
-        "✨ Your ultimate destination for premium mods, cheats & clients!\n\n"
+        "<i>"
+        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
+        "Your ultimate destination for premium mods, cheats & clients!"
+        "</i>\n\n"
         "<blockquote>"
-        "🚀 PREMIUM FEATURES\n\n"
-        "⚡ Instant Key Delivery\n"
-        "💳 Secure Auto-Payment System\n"
-        "🛡 100% Anti-Ban Support"
+        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
+        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
+        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
+        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
         "</blockquote>\n\n"
-        f"<blockquote>💰 Your Balance: ₹{balance}</blockquote>"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
+        "</blockquote>"
     )
     
     keyboard = [
-        [InlineKeyboardButton("🛒 BUY HACK", callback_data="shopnawkk")],
-        [InlineKeyboardButton("📦 MY KEY", callback_data="orderksk"), InlineKeyboardButton("👤 PROFILE", callback_data="profilemmm")],
-        [InlineKeyboardButton("📖 HOW TO USE", callback_data="spinj"), InlineKeyboardButton("💬 SUPPORT", callback_data="supportj")],
-        [InlineKeyboardButton("💰 ADD FUND", callback_data="addpayment")],
-        [InlineKeyboardButton("📩 PAY PROOF", url="https://t.me/subhajit_feedback"), InlineKeyboardButton("📥 DOWNLOAD APK", url="https://t.me/+hasTLSVjzaZjZGVl")]
+        [
+            InlineKeyboardButton(
+                "BUY HACK",
+                callback_data="shopnawkk"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "MY KEY",
+                callback_data="orderksk"
+            ),
+            InlineKeyboardButton(
+                "PROFILE",
+                callback_data="profilemmm"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "HOW TO USE",
+                callback_data="spinj"
+            ),
+            InlineKeyboardButton(
+                "SUPPORT",
+                callback_data="supportj"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "ADD FUND",
+                callback_data="addpayment"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "PAY PROOF",
+                url="https://t.me/subhajit_feedback"
+            ),
+            InlineKeyboardButton(
+                "DOWNLOAD APK",
+                url="https://t.me/+hasTLSVjzaZjZGVl"
+            )
+        ]
     ]
     
     await update.message.reply_text(
@@ -347,19 +391,27 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     bot_mode = BotData.get("BotMode", "ON")
     bot_status = "🟢 On"
-    toggle_text = "OFF"
+    toggle_text = "BotMode OFF"
     
     if bot_mode == "OFF":
         bot_status = "🔴 Off"
-        toggle_text = "ON"
+        toggle_text = "BotMode ON"
     
     keyboard = [
-        [InlineKeyboardButton("👑 Admins", callback_data="TUSHAR_Admins")],
-        [InlineKeyboardButton("📣 Broadcast", callback_data="broadcast")],
-        [InlineKeyboardButton(f"🤖 Bot: {bot_status}", callback_data=f"admin BotMode {toggle_text}")],
-        [InlineKeyboardButton("💰 Add Balance", callback_data="ChangeAnyUserBal"), InlineKeyboardButton("📝 Recent Actions", callback_data="TUSHAR_AdminAction")],
-        [InlineKeyboardButton("📊 Shop Setup", callback_data="setshop_psue")],
-        [InlineKeyboardButton("💰 Add Reseller", callback_data="addreseller"), InlineKeyboardButton("⛔ Remove Reseller", callback_data="removereseller")],
+        [InlineKeyboardButton("👑 Aᴅᴍɪɴs", callback_data="TUSHAR_Admins")],
+        [
+            InlineKeyboardButton("📣 Bʀᴏᴀᴅᴄᴀsᴛ", callback_data="broadcast"),
+            InlineKeyboardButton("🤖 Bᴏᴛ: " + str(bot_status), callback_data="admin " + toggle_text)
+        ],
+        [
+            InlineKeyboardButton("💰 Aᴅᴅ Bᴀʟᴀɴᴄᴇ", callback_data="ChangeAnyUserBal"),
+            InlineKeyboardButton("📝 Rᴇᴄᴇɴᴛ Aᴅᴍɪɴ Aᴄᴛɪᴏɴs", callback_data="TUSHAR_AdminAction")
+        ],
+        [InlineKeyboardButton("📊 Shop setup", callback_data="setshop_psue")],
+        [
+            InlineKeyboardButton("💰 Aᴅᴅ Reseller", callback_data="addreseller"),
+            InlineKeyboardButton("⛔ Remove Reseller", callback_data="removereseller")
+        ],
         [InlineKeyboardButton("📝 Reseller List", callback_data="resellerlist")]
     ]
     
@@ -367,7 +419,7 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 👋 Welcome {update.effective_user.first_name} 🎉
 
 ━━━━━━━━━━━━━━━
-🤖 Bot Status : {bot_status}
+🤖 Bᴏᴛ Sᴛᴀᴛᴜs : {bot_status}
 ━━━━━━━━━━━━━━━
 </b>"""
     
@@ -384,7 +436,7 @@ async def cancel_command_handler(update: Update, context: ContextTypes.DEFAULT_T
     context.user_data.clear()
     
     await update.message.reply_text(
-        "❌ <b>Cancelled</b>\n\nAll operations have been cancelled.",
+        "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> <b>Cancelled</b>",
         parse_mode="HTML"
     )
 
@@ -417,17 +469,37 @@ async def shop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = """
 ━━━━━━━━━━━━━━━━━━━━
-🛒 <b>PANNEL STORE — SHOP</b>
+<tg-emoji emoji-id="6093562529978522804">🛒</tg-emoji> <b>PANNEL STORE — SHOP</b>
 ━━━━━━━━━━━━━━━━━━━━
 
-📦 Choose a product:
+<tg-emoji emoji-id="6179339404906079822">📦</tg-emoji> Choose a product:
 """
     
     keyboard = [
-        [InlineKeyboardButton("📦 DRIP CLIENT NON-ROOT", callback_data="SHOP_P1")],
-        [InlineKeyboardButton("📦 PROXY SERVER [DR-CL]", callback_data="SHOP_P2")],
-        [InlineKeyboardButton("🔥 PRIME HOOK", callback_data="SHOP_P4")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]
+        [
+            InlineKeyboardButton(
+                "DRIP CLIENT NON-ROOT",
+                callback_data="SHOP_P1"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "PROXY SERVER [DR-CL]",
+                callback_data="SHOP_P2"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "PRIME HOOK",
+                callback_data="SHOP_P4"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "BACK",
+                callback_data="backkkk"
+            )
+        ]
     ]
     
     try:
@@ -450,10 +522,14 @@ async def shop_p1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = (
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "📦 𝗗𝗥𝗜𝗣 𝗖𝗟𝗜𝗘𝗡𝗧 𝗠𝗢𝗗✅ ( 𝘉𝘌𝘚𝘛 𝘚𝘌𝘓𝘓𝘌𝘙 💫 )\n"
+        "<tg-emoji emoji-id='6323104647636589287'>📦</tg-emoji> "
+        "𝗗𝗥𝗜𝗣 𝗖𝗟𝗜𝗘𝗡𝗧 𝗠𝗢𝗗"
+        "<tg-emoji emoji-id='6179339404906079822'>✅</tg-emoji> "
+        "( 𝘉𝘌𝘚𝘛 𝘚𝘌𝘓𝘓𝘌𝘙"
+        "<tg-emoji emoji-id='5841693351249710667'>💫</tg-emoji> )\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        "<i>📦 Extra 2% discount applied</i>\n"
-        "Choose a plan 👇"
+        "<i><tg-emoji emoji-id='5258134813302332906'>📦</tg-emoji> Extra 2% discount applied</i>\n"
+        "Choose a plan <tg-emoji emoji-id='5258336354642697821'>👇</tg-emoji>"
     )
     
     keyboard = [
@@ -462,7 +538,7 @@ async def shop_p1(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton(f"7 DAYS - ₹{prices['7d']}", callback_data=f"{buy_cmd} 3")],
         [InlineKeyboardButton(f"15 DAYS - ₹{prices['15d']}", callback_data=f"{buy_cmd} 4")],
         [InlineKeyboardButton(f"30 DAYS - ₹{prices['30d']}", callback_data=f"{buy_cmd} 5")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="shopnawkk")]
+        [InlineKeyboardButton("BACK", callback_data="shopnawkk")]
     ]
     
     await query.edit_message_text(
@@ -481,10 +557,10 @@ async def shop_p2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = """
 ━━━━━━━━━━━━━━━━━━━━
-📦 PROXY SERVER [DR-CL]
+<tg-emoji emoji-id="6212942266957310140">📦</tg-emoji> PROXY SERVER [DR-CL]
 ━━━━━━━━━━━━━━━━━━━━
 
-Choose a plan 👇
+Choose a plan <tg-emoji emoji-id="5258336354642697821">👇</tg-emoji>
 """
     
     keyboard = [
@@ -492,7 +568,7 @@ Choose a plan 👇
         [InlineKeyboardButton(f"3 Days - ₹{prices['3d']}", callback_data=f"{buy_cmd} 7")],
         [InlineKeyboardButton(f"7 Days - ₹{prices['7d']}", callback_data=f"{buy_cmd} 8")],
         [InlineKeyboardButton(f"15 Days - ₹{prices['15d']}", callback_data=f"{buy_cmd} 9")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="shopnawkk")]
+        [InlineKeyboardButton("BACK", callback_data="shopnawkk")]
     ]
     
     await query.edit_message_text(
@@ -511,10 +587,10 @@ async def shop_p4(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = """
 ━━━━━━━━━━━━━━━━━━━━
-🔥 PRIME HOOK
+<tg-emoji emoji-id="6210705396449944693">🔥</tg-emoji> PRIME HOOK
 ━━━━━━━━━━━━━━━━━━━━
 
-Choose a plan 👇
+Choose a plan <tg-emoji emoji-id="5258336354642697821">👇</tg-emoji>
 """
     
     keyboard = [
@@ -523,7 +599,7 @@ Choose a plan 👇
         [InlineKeyboardButton(f"7 Days - ₹{prices['7d']}", callback_data=f"{buy_cmd} 12")],
         [InlineKeyboardButton(f"14 Days - ₹{prices['14d']}", callback_data=f"{buy_cmd} 13")],
         [InlineKeyboardButton(f"21 Days - ₹{prices['21d']}", callback_data=f"{buy_cmd} 14")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="shopnawkk")]
+        [InlineKeyboardButton("BACK", callback_data="shopnawkk")]
     ]
     
     await query.edit_message_text(
@@ -634,12 +710,13 @@ async def process_purchase(update, context, message, user_id: str, product: Dict
     BotData.set(product["key"], keys)
     
     success_text = (
-        f"🛒 {product['title']}\n\n"
-        f"🔑 <b>Your Key:</b>\n<code>{key}</code>\n\n"
-        f"💰 Deducted: ₹{price}\n"
-        f"📦 Remaining Stock: {len(keys)}\n"
-        f"📦 Time: {time_info['easy_time']}\n\n"
-        f"📢 <b>ALL FILES UPDATE</b>\n@SUBHAJIT_UPDATES"
+        f"<tg-emoji emoji-id='6172208745582433583'>🛒</tg-emoji> {product['title']}\n\n"
+        f"<tg-emoji emoji-id='6005570495603282482'>🔑</tg-emoji> <b>Your Key:</b>\n<code>{key}</code>\n\n"
+        f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Deducted: ₹{price}\n"
+        f"<tg-emoji emoji-id='5967456680940671207'>📦</tg-emoji> Remaining Stock: {len(keys)}\n"
+        f"<tg-emoji emoji-id='6278102040438640835'>📦</tg-emoji> Time: {time_info['easy_time']}\n\n"
+        f"<tg-emoji emoji-id='6264989131621798851'>📢</tg-emoji> <b>ALL FILES UPDATE</b>\n"
+        f"@SUBHAJIT_UPDATES"
     )
     
     await message.reply_text(success_text, parse_mode="HTML")
@@ -676,7 +753,7 @@ async def auto_buy(update, context, message, user_id: str, price: float, product
     UserData.set("last_order_id", order_id, user_id)
     
     caption = (
-        f"<blockquote>💰 INSUFFICIENT BALANCE</blockquote>\n\n"
+        f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> INSUFFICIENT BALANCE</blockquote>\n\n"
         f"┣ Product: {product['product']}\n"
         f"┣ Plan: {product['plan']}\n"
         f"┣ Price: ₹{price}\n"
@@ -685,8 +762,8 @@ async def auto_buy(update, context, message, user_id: str, price: float, product
     )
     
     keyboard = [
-        [InlineKeyboardButton("✅ VERIFY PAYMENT", callback_data="autobuyi")],
-        [InlineKeyboardButton("❌ CANCEL", callback_data="cancel")]
+        [InlineKeyboardButton("VERIFY PAYMENT", callback_data="autobuyi")],
+        [InlineKeyboardButton("CANCEL", callback_data="cancel")]
     ]
     
     await message.reply_photo(
@@ -722,9 +799,9 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         UserData.set("last_order_id", "", user_id)
         
         await query.message.reply_text(
-            f"✅ Payment Success!\n\n"
-            f"💰 Added ₹{amount}\n"
-            f"💳 New Balance: ₹{UserResources.get_balance(user_id)}",
+            f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> Payment Success!\n\n"
+            f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Added ₹{amount}\n"
+            f"<tg-emoji emoji-id='5346227465876423936'>💳</tg-emoji> New Balance: ₹{UserResources.get_balance(user_id)}",
             parse_mode="HTML"
         )
         
@@ -734,7 +811,7 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(
                     chat_id=admin,
                     text=(
-                        f"✅ New Payment Received!\n\n"
+                        f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> New Payment Received!\n\n"
                         f"👤 User ID: <code>{user_id}</code>\n"
                         f"💰 Amount: ₹{amount}\n"
                         f"🧾 Order ID: <code>{order_id}</code>\n"
@@ -746,7 +823,7 @@ async def verify_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 pass
     else:
         await query.message.reply_text(
-            "❌ Payment Not Received\n\nPlease complete the payment and try again.",
+            "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Payment Not Received\n\nPlease complete the payment and try again.",
             parse_mode="HTML"
         )
 
@@ -761,17 +838,37 @@ async def add_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     UserData.set("pay_amount", "", query.from_user.id)
     
     text = (
-        "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
         "Amount: ₹0\n\n"
         "Use the keypad below to enter amount."
     )
     
     keyboard = [
-        [InlineKeyboardButton("1", callback_data="num1"), InlineKeyboardButton("2", callback_data="num2"), InlineKeyboardButton("3", callback_data="num3")],
-        [InlineKeyboardButton("4", callback_data="num4"), InlineKeyboardButton("5", callback_data="num5"), InlineKeyboardButton("6", callback_data="num6")],
-        [InlineKeyboardButton("7", callback_data="num7"), InlineKeyboardButton("8", callback_data="num8"), InlineKeyboardButton("9", callback_data="num9")],
-        [InlineKeyboardButton("❌ CLEAR", callback_data="clearamt"), InlineKeyboardButton("0", callback_data="num0"), InlineKeyboardButton("✅ CONFIRM", callback_data="done")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]
+        [
+            InlineKeyboardButton("1", callback_data="num1"),
+            InlineKeyboardButton("2", callback_data="num2"),
+            InlineKeyboardButton("3", callback_data="num3")
+        ],
+        [
+            InlineKeyboardButton("4", callback_data="num4"),
+            InlineKeyboardButton("5", callback_data="num5"),
+            InlineKeyboardButton("6", callback_data="num6")
+        ],
+        [
+            InlineKeyboardButton("7", callback_data="num7"),
+            InlineKeyboardButton("8", callback_data="num8"),
+            InlineKeyboardButton("9", callback_data="num9")
+        ],
+        [
+            InlineKeyboardButton("❌ CLEAR", callback_data="clearamt"),
+            InlineKeyboardButton("0", callback_data="num0"),
+            InlineKeyboardButton("✅ CONFIRM", callback_data="done")
+        ],
+        [
+            InlineKeyboardButton("BACK", callback_data="backkkk")
+        ]
     ]
     
     try:
@@ -793,7 +890,9 @@ async def num_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, num: s
     UserData.set("pay_amount", amt, user_id)
     
     text = (
-        "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
         f"Amount: ₹{amt}\n\n"
         "Use the keypad below to enter amount."
     )
@@ -812,7 +911,9 @@ async def clear_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     UserData.set("pay_amount", "", user_id)
     
     text = (
-        "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
         "Amount: ₹0\n\n"
         "Use the keypad below to enter amount."
     )
@@ -865,13 +966,13 @@ async def add_payment_qr(update: Update, context: ContextTypes.DEFAULT_TYPE):
     UserData.set("addpay_order_id", order_id, user_id)
     
     caption = (
-        "<blockquote>💰 PAYMENT QR GENERATED</blockquote>\n"
+        "<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED</blockquote>\n"
         f"Scan the QR and complete payment.\n\nAmount: ₹{amount}"
     )
     
     keyboard = [
-        [InlineKeyboardButton("✅ VERIFY PAYMENT", callback_data="verify_addpay")],
-        [InlineKeyboardButton("❌ CANCEL", callback_data="cancel")]
+        [InlineKeyboardButton("VERIFY PAYMENT", callback_data="verify_addpay")],
+        [InlineKeyboardButton("CANCEL", callback_data="cancel")]
     ]
     
     await query.message.reply_photo(
@@ -910,19 +1011,22 @@ async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = (
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "👤 YOUR PROFILE\n"
+        "<tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> YOUR PROFILE\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"📛 Name: {first_name}\n"
-        f"🆔 User ID: {user_id}\n"
-        f"💰 Balance: ₹{balance}\n"
-        f"📅 Member Since: {member_since}\n"
-        f"🛒 Total Orders: {orders}\n\n"
+        f"<tg-emoji emoji-id='6008118472066732010'>📛</tg-emoji> Name: {first_name}\n"
+        f"<tg-emoji emoji-id='5841693351249710667'>🆔</tg-emoji> User ID: {user_id}\n"
+        f"<tg-emoji emoji-id='5348374038991357363'>💰</tg-emoji> Balance: ₹{balance}\n"
+        f"<tg-emoji emoji-id='5348490024583185697'>📅</tg-emoji> Member Since: {member_since}\n"
+        f"<tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Total Orders: {orders}\n\n"
         "━━━━━━━━━━━━━━━━━━━━"
     )
     
     keyboard = [
-        [InlineKeyboardButton("🛒 BUY HACK", callback_data="shopnawkk"), InlineKeyboardButton("📦 MY KEY", callback_data="orderksk")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]
+        [
+            InlineKeyboardButton("BUY HACK", callback_data="shopnawkk"),
+            InlineKeyboardButton("MY KEY", callback_data="orderksk")
+        ],
+        [InlineKeyboardButton("BACK", callback_data="backkkk")]
     ]
     
     try:
@@ -945,12 +1049,12 @@ async def orders_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user_actions:
         text = (
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "📦 <b>MY ORDERS</b>\n"
+            "<tg-emoji emoji-id='6008118472066732010'>📦</tg-emoji> <b>MY ORDERS</b>\n"
             "━━━━━━━━━━━━━━━━━━━━\n\n"
             "You haven't placed any orders yet.\n"
-            "Tap 🛒 Shop Now to get started!"
+            "Tap <tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Shop Now to get started!"
         )
-        keyboard = [[InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]]
+        keyboard = [[InlineKeyboardButton("BACK", callback_data="backkkk")]]
         
         try:
             await query.edit_message_text(
@@ -964,7 +1068,7 @@ async def orders_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         latest = user_actions[-10:][::-1]
         text = "\n\n".join([str(item) for item in latest if item])
-        keyboard = [[InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]]
+        keyboard = [[InlineKeyboardButton("BACK", callback_data="backkkk")]]
         
         try:
             await query.edit_message_text(
@@ -990,21 +1094,45 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = UserResources.get_balance(user_id)
     
     text = (
-        "<blockquote>🌟 WELCOME TO HACK STORE 🌙</blockquote>\n\n"
-        "✨ Your ultimate destination for premium mods, cheats & clients!\n\n"
-        "<blockquote>🚀 PREMIUM FEATURES\n\n"
-        "⚡ Instant Key Delivery\n"
-        "💳 Secure Auto-Payment System\n"
-        "🛡 100% Anti-Ban Support</blockquote>\n\n"
-        f"<blockquote>💰 Your Balance: ₹{balance}</blockquote>"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
+        "WELCOME TO HACK STORE "
+        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
+        "</blockquote>\n\n"
+        "<i>"
+        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
+        "Your ultimate destination for premium mods, cheats & clients!"
+        "</i>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
+        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
+        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
+        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
+        "</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
+        "</blockquote>"
     )
     
     keyboard = [
-        [InlineKeyboardButton("🛒 BUY HACK", callback_data="shopnawkk")],
-        [InlineKeyboardButton("📦 MY KEY", callback_data="orderksk"), InlineKeyboardButton("👤 PROFILE", callback_data="profilemmm")],
-        [InlineKeyboardButton("📖 HOW TO USE", callback_data="spinj"), InlineKeyboardButton("💬 SUPPORT", callback_data="supportj")],
-        [InlineKeyboardButton("💰 ADD FUND", callback_data="addpayment")],
-        [InlineKeyboardButton("📩 PAY PROOF", url="https://t.me/subhajit_feedback"), InlineKeyboardButton("📥 DOWNLOAD APK", url="https://t.me/+hasTLSVjzaZjZGVl")]
+        [
+            InlineKeyboardButton("BUY HACK", callback_data="shopnawkk")
+        ],
+        [
+            InlineKeyboardButton("MY KEY", callback_data="orderksk"),
+            InlineKeyboardButton("PROFILE", callback_data="profilemmm")
+        ],
+        [
+            InlineKeyboardButton("HOW TO USE", callback_data="spinj"),
+            InlineKeyboardButton("SUPPORT", callback_data="supportj")
+        ],
+        [
+            InlineKeyboardButton("ADD FUND", callback_data="addpayment")
+        ],
+        [
+            InlineKeyboardButton("PAY PROOF", url="https://t.me/subhajit_feedback"),
+            InlineKeyboardButton("DOWNLOAD APK", url="https://t.me/+hasTLSVjzaZjZGVl")
+        ]
     ]
     
     try:
@@ -1024,22 +1152,22 @@ async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = """
 ━━━━━━━━━━━━━━━━━━━━
-💬 <b>Support — Seller</b> 🛡
+<tg-emoji emoji-id='5891120964468480450'>💬</tg-emoji> <b>Support — Seller</b> <tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji>
 ━━━━━━━━━━━━━━━━━━━━
 
-Need help? We're here for you! ⚡
+Need help? We're here for you! <tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji>
 
-📩 <b>Telegram:</b> ⭐
+📩 <b>Telegram:</b> <tg-emoji emoji-id='5776182936638329359'>⭐</tg-emoji>
 
-<a href="https://t.me/UR_SUBHAJIT0">𝐒υвʜᴀᎫιт</a> ⭐
+<a href="https://t.me/UR_SUBHAJIT0">𝐒υʜᴀᎫιт</a> <tg-emoji emoji-id='6118314396440596568'>⭐</tg-emoji>
 
-💡 <i>Include your User ID (from Profile)
+<tg-emoji emoji-id='5891120964468480450'>💡</tg-emoji> <i>Include your User ID (from Profile)
 when contacting for faster help.</i>
 """
     
     keyboard = [
-        [InlineKeyboardButton("💬 WHATSAPP", url="https://wa.me/917908696630")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]
+        [InlineKeyboardButton("WHATSAPP", url="https://wa.me/917908696630")],
+        [InlineKeyboardButton("BACK", callback_data="backkkk")]
     ]
     
     try:
@@ -1058,14 +1186,14 @@ async def spinj_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     text = """
-🎥 <b>Watch the full tutorial video below</b>
+<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> <b>Watch the full tutorial video below</b>
 
-👇
+<tg-emoji emoji-id='6222198028854367391'>👇</tg-emoji>
 """
     
     keyboard = [
-        [InlineKeyboardButton("▶️ Watch Tutorial", url="https://t.me/hehehehhhsljg/162")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="backkkk")]
+        [InlineKeyboardButton("Watch Tutorial", url="https://t.me/hehehehhhsljg/162")],
+        [InlineKeyboardButton("BACK", callback_data="backkkk")]
     ]
     
     try:
@@ -1088,7 +1216,7 @@ async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass
     
     await query.message.reply_text(
-        "❌ Cancelled",
+        "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Cancelled",
         parse_mode="HTML"
     )
 
@@ -1275,10 +1403,10 @@ SHOP 🛍️ MOOD
 </b>"""
     
     keyboard = [
-        [InlineKeyboardButton("📦 𝗗𝗥𝗜𝗣 𝗖𝗟𝗜𝗘𝗡𝗧 𝗠𝗢𝗗✅", callback_data="SHOPADMIN_P1")],
-        [InlineKeyboardButton("📦 PROXY SERVER [DR-CL]", callback_data="SHOPADMIN_P3")],
-        [InlineKeyboardButton("🔥 𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀", callback_data="SHOPADMIN_P2")],
-        [InlineKeyboardButton("🔙 BACK", callback_data="admin")]
+        [InlineKeyboardButton(" 𝗗𝗥𝗜𝗣 𝗖𝗟𝗜𝗘𝗡𝗧 𝗠𝗢𝗗✅", callback_data="SHOPADMIN_P1")],
+        [InlineKeyboardButton("PROXY SERVER [DR-CL]", callback_data="SHOPADMIN_P3")],
+        [InlineKeyboardButton("𝗣𝗥𝗜𝗠𝗘 𝗠𝗢𝗗 💀", callback_data="SHOPADMIN_P2")],
+        [InlineKeyboardButton("🔙 Back", callback_data="admin")]
     ]
     
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
