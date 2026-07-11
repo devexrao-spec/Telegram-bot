@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-TEST BOT - Sirf Premium Emoji Check Karne Ke Liye
+TEST BOT - Premium Emoji Everywhere (Text + Buttons)
 """
 
 import telebot
 from telebot import types
+import time
 
 # ======================================================================
 # CONFIG
@@ -12,49 +13,37 @@ from telebot import types
 BOT_TOKEN = "8644946592:AAGqcXNTd0TRpYSkK3XkwGjXVQMwxTZKoao"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
-print("🤖 Test Bot Starting...")
+print("🤖 Premium Emoji Test Bot Starting...")
 
 # ======================================================================
-# /start COMMAND
+# /start COMMAND - Premium Emoji in TEXT + BUTTONS
 # ======================================================================
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
     user_id = message.from_user.id
+    first_name = message.from_user.first_name or "User"
     
-    # Premium Emoji Test
-    text = """
-<b>🌟 PREMIUM EMOJI TEST 🌟</b>
+    # TEXT mein premium emoji
+    text = f"""
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> <b>WELCOME {first_name}</b> <tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>
 
-<b>1️⃣ Premium Emoji (Sirf Premium Users):</b>
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Star
-<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Moon
-<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Sparkle
-<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> Rocket
-<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Lightning
-<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Card
-<tg-emoji emoji-id='5346160971192747426'>🛡️</tg-emoji> Shield
-<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Money
+<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Premium Store
 
-<b>2️⃣ Normal Emoji (Sabko Dikhega):</b>
-🌟 ⭐ 🔥 💎
-✅ ❌ ⚠️ 💰
-📦 🛒 🎥 📱
-💬 👤 🔙 ➡️
-🚀 ⚡ 🛡️ 💳
+<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> Features:
+<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Delivery
+<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Payment
+<tg-emoji emoji-id='5346160971192747426'>🛡️</tg-emoji> Anti-Ban
 
-<b>3️⃣ Mixed Emoji:</b>
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Welcome ⭐
-<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Night 🌙
-<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> Launch 🚀
+<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Balance: ₹0
 
 ━━━━━━━━━━━━━━━━━━━━
-👇 Buttons Test:
+<tg-emoji emoji-id='5258336354642697821'>👇</tg-emoji> Select:
     """
     
+    # BUTTONS mein premium emoji
     markup = types.InlineKeyboardMarkup(row_width=2)
     
-    # Buttons with premium emoji
     btn1 = types.InlineKeyboardButton(
         "<tg-emoji emoji-id='6093739864883207194'>🛒</tg-emoji> BUY", 
         callback_data="buy"
@@ -68,12 +57,22 @@ def start_command(message):
         callback_data="profile"
     )
     btn4 = types.InlineKeyboardButton(
-        "🔙 BACK", 
-        callback_data="back"
+        "<tg-emoji emoji-id='5345783284653636765'>🎥</tg-emoji> TUTORIAL", 
+        callback_data="tutorial"
+    )
+    btn5 = types.InlineKeyboardButton(
+        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> SUPPORT", 
+        callback_data="support"
+    )
+    btn6 = types.InlineKeyboardButton(
+        "<tg-emoji emoji-id='6278302366303260172'>💰</tg-emoji> ADD FUND", 
+        callback_data="addfund"
     )
     
-    markup.add(btn1, btn2)
-    markup.add(btn3, btn4)
+    markup.add(btn1)
+    markup.add(btn2, btn3)
+    markup.add(btn4, btn5)
+    markup.add(btn6)
     
     bot.send_message(
         chat_id=user_id,
@@ -83,87 +82,79 @@ def start_command(message):
     )
 
 # ======================================================================
-# /test COMMAND - Sirf Normal Emoji
-# ======================================================================
-
-@bot.message_handler(commands=['test'])
-def test_command(message):
-    text = """
-✅ <b>NORMAL EMOJI TEST</b>
-
-Ye sabhi emoji <b>sabko dikhenge</b>:
-
-🌟 ⭐ 🔥 💎 
-✅ ❌ ⚠️ 💰
-📦 🛒 🎥 📱
-💬 👤 🔙 ➡️
-🚀 ⚡ 🛡️ 💳
-❤️ 💙 💚 💛
-🎉 🎊 🎈 🎁
-
-<b>🔑 Key Features:</b>
-⚡ Instant Delivery
-💳 Secure Payment
-🛡️ 100% Safe
-💰 Best Prices
-
-<b>✅ All emojis working!</b>
-    """
-    
-    bot.reply_to(message, text, parse_mode="HTML")
-
-# ======================================================================
-# /premium COMMAND - Sirf Premium Emoji
+# /premium COMMAND - Only Premium Emoji
 # ======================================================================
 
 @bot.message_handler(commands=['premium'])
 def premium_command(message):
+    user_id = message.from_user.id
+    
     text = """
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> <b>PREMIUM EMOJI TEST</b>
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> <b>PREMIUM EMOJI TEST</b> <tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>
 
-Ye emoji <b>sirf Premium users</b> ko dikhenge:
+<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> All emojis are premium!
 
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Premium Star
-<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Premium Moon
-<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Premium Sparkle
 <tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> Premium Rocket
 <tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Premium Lightning
 <tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Premium Card
 <tg-emoji emoji-id='5346160971192747426'>🛡️</tg-emoji> Premium Shield
 <tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Premium Money
 
-<b>✅ Premium emoji test complete!</b>
+<tg-emoji emoji-id='6179339404906079822'>✅</tg-emoji> Premium Test Complete!
     """
     
-    bot.reply_to(message, text, parse_mode="HTML")
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton(
+            "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+            callback_data="back"
+        )
+    )
+    
+    bot.reply_to(
+        message, 
+        text, 
+        parse_mode="HTML", 
+        reply_markup=markup
+    )
 
 # ======================================================================
-# /mixed COMMAND - Premium + Normal Mix
+# /normal COMMAND - Only Normal Emoji (For Comparison)
 # ======================================================================
 
-@bot.message_handler(commands=['mixed'])
-def mixed_command(message):
+@bot.message_handler(commands=['normal'])
+def normal_command(message):
     text = """
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> <b>MIXED EMOJI TEST</b>
+🌟 <b>NORMAL EMOJI TEST</b> 🌙
 
-<b>Premium + Normal Mix:</b>
+✨ All emojis are normal!
 
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Premium Star ⭐ Normal Star
-<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Premium Moon 🌙 Normal Moon
-<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Premium Sparkle ✨ Normal Sparkle
-<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> Premium Rocket 🚀 Normal Rocket
+🚀 Normal Rocket
+⚡ Normal Lightning
+💳 Normal Card
+🛡️ Normal Shield
+💰 Normal Money
 
-<b>Normal Users:</b> Sirf normal emoji dikhenge
-<b>Premium Users:</b> Dono dikhenge (premium + normal)
-
-━━━━━━━━━━━━━━━━━━━━
-<tg-emoji emoji-id='6179339404906079822'>✅</tg-emoji> Test Complete!
+✅ Normal Test Complete!
     """
     
-    bot.reply_to(message, text, parse_mode="HTML")
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton(
+            "🔙 BACK", 
+            callback_data="back"
+        )
+    )
+    
+    bot.reply_to(
+        message, 
+        text, 
+        parse_mode="HTML", 
+        reply_markup=markup
+    )
 
 # ======================================================================
-# CALLBACK HANDLER
+# CALLBACK HANDLER - Premium Emoji in ALL messages
 # ======================================================================
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -177,22 +168,27 @@ def callback_handler(call):
     
     if call.data == "buy":
         text = """
-<tg-emoji emoji-id='6093739864883207194'>🛒</tg-emoji> <b>BUY PRODUCT</b>
+<tg-emoji emoji-id='6093739864883207194'>🛒</tg-emoji> <b>PURCHASE</b>
 
 <tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Premium Product
-💰 Price: ₹108
+<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Price: ₹108
 
 <tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Delivery
 <tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Payment
 
-🔑 <b>Your Key:</b>
-<code>ABC123XYZ</code>
+<tg-emoji emoji-id='6179339404906079822'>✅</tg-emoji> <b>Success!</b>
 
-<tg-emoji emoji-id='6179339404906079822'>✅</tg-emoji> Purchase Successful!
+🔑 <b>Key:</b>
+<code>ABC123XYZ</code>
         """
         
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔙 BACK", callback_data="back"))
+        markup.add(
+            types.InlineKeyboardButton(
+                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+                callback_data="back"
+            )
+        )
         
         bot.edit_message_text(
             chat_id=user_id,
@@ -208,14 +204,19 @@ def callback_handler(call):
 
 <tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> No keys yet!
 
-<tg-emoji emoji-id='6093739864883207194'>🛒</tg-emoji> Buy a product to get keys!
+<tg-emoji emoji-id='6093739864883207194'>🛒</tg-emoji> Buy a product!
 
 ━━━━━━━━━━━━━━━━━━━━
 <tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Balance: ₹0
         """
         
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔙 BACK", callback_data="back"))
+        markup.add(
+            types.InlineKeyboardButton(
+                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+                callback_data="back"
+            )
+        )
         
         bot.edit_message_text(
             chat_id=user_id,
@@ -229,17 +230,120 @@ def callback_handler(call):
         text = f"""
 <tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> <b>PROFILE</b>
 
-📛 Name: {call.from_user.first_name}
-🆔 ID: <code>{user_id}</code>
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Name: {call.from_user.first_name}
 <tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Balance: ₹0
 <tg-emoji emoji-id='5967456680940671207'>📦</tg-emoji> Orders: 0
+<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Member Since: Today
 
 ━━━━━━━━━━━━━━━━━━━━
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Premium User: No
+<tg-emoji emoji-id='5346160971192747426'>🛡️</tg-emoji> Premium: No
         """
         
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔙 BACK", callback_data="back"))
+        markup.add(
+            types.InlineKeyboardButton(
+                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+                callback_data="back"
+            )
+        )
+        
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=call.message.message_id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+    
+    elif call.data == "tutorial":
+        text = """
+<tg-emoji emoji-id='5345783284653636765'>🎥</tg-emoji> <b>HOW TO USE</b>
+
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Step 1: Buy product
+<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Step 2: Get key
+<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Step 3: Use key
+
+<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> <a href="https://t.me/hehehehhhsljg/162">Watch Tutorial</a>
+        """
+        
+        markup = types.InlineKeyboardMarkup()
+        markup.add(
+            types.InlineKeyboardButton(
+                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+                callback_data="back"
+            )
+        )
+        
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=call.message.message_id,
+            text=text,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=markup
+        )
+    
+    elif call.data == "support":
+        text = """
+<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> <b>SUPPORT</b>
+
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Need help?
+
+<tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> <a href="https://t.me/UR_SUBHAJIT0">Subhajit</a>
+<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> <a href="https://wa.me/917908696630">WhatsApp</a>
+
+<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Include your User ID!
+        """
+        
+        markup = types.InlineKeyboardMarkup()
+        markup.add(
+            types.InlineKeyboardButton(
+                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+                callback_data="back"
+            )
+        )
+        
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=call.message.message_id,
+            text=text,
+            parse_mode="HTML",
+            disable_web_page_preview=True,
+            reply_markup=markup
+        )
+    
+    elif call.data == "addfund":
+        text = """
+<tg-emoji emoji-id='6278302366303260172'>💰</tg-emoji> <b>ADD FUND</b>
+
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Enter amount:
+
+Amount: ₹0
+
+<tg-emoji emoji-id='5258336354642697821'>👇</tg-emoji> Use keypad:
+        """
+        
+        markup = types.InlineKeyboardMarkup(row_width=3)
+        markup.add(
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>1️⃣</tg-emoji>", callback_data="num1"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>2️⃣</tg-emoji>", callback_data="num2"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>3️⃣</tg-emoji>", callback_data="num3"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>4️⃣</tg-emoji>", callback_data="num4"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>5️⃣</tg-emoji>", callback_data="num5"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>6️⃣</tg-emoji>", callback_data="num6"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>7️⃣</tg-emoji>", callback_data="num7"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>8️⃣</tg-emoji>", callback_data="num8"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>9️⃣</tg-emoji>", callback_data="num9"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> CLEAR", callback_data="clear"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='5258134813302332906'>0️⃣</tg-emoji>", callback_data="num0"),
+            types.InlineKeyboardButton("<tg-emoji emoji-id='6179339404906079822'>✅</tg-emoji> DONE", callback_data="done")
+        )
+        markup.add(
+            types.InlineKeyboardButton(
+                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+                callback_data="back"
+            )
+        )
         
         bot.edit_message_text(
             chat_id=user_id,
@@ -251,23 +355,46 @@ def callback_handler(call):
     
     elif call.data == "back":
         start_command(call.message)
+    
+    elif call.data.startswith("num"):
+        bot.answer_callback_query(
+            call.id, 
+            text="<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Number added!", 
+            show_alert=False
+        )
+    
+    elif call.data == "clear":
+        bot.answer_callback_query(
+            call.id, 
+            text="<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> Cleared!", 
+            show_alert=False
+        )
+    
+    elif call.data == "done":
+        bot.answer_callback_query(
+            call.id, 
+            text="<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Processing payment...", 
+            show_alert=True
+        )
 
 # ======================================================================
 # MAIN
 # ======================================================================
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("🤖 TEST BOT STARTED!")
-    print("=" * 50)
+    print("=" * 60)
+    print("🤖 PREMIUM EMOJI TEST BOT STARTED!")
+    print("=" * 60)
     print("📌 Commands:")
-    print("  /start    - Premium + Normal Emoji")
-    print("  /test     - Sirf Normal Emoji")
-    print("  /premium  - Sirf Premium Emoji")
-    print("  /mixed    - Premium + Normal Mix")
-    print("=" * 50)
+    print("  /start    - Premium emoji everywhere (text + buttons)")
+    print("  /premium  - Only premium emoji")
+    print("  /normal   - Only normal emoji (for comparison)")
+    print("=" * 60)
+    print("📱 Premium Users → Sab emoji dikhenge")
+    print("📱 Normal Users → Sirf normal emoji dikhenge")
+    print("=" * 60)
     print("🔄 Polling...")
-    print("=" * 50)
+    print("=" * 60)
     
     while True:
         try:
