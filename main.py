@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-TEST BOT - Premium Emoji Everywhere (Text + Buttons)
+TEST BOT - Premium Emoji Everywhere (Text + Buttons) + Profile Photo
 """
 
 import telebot
 from telebot import types
 import time
+import requests
+from io import BytesIO
 
 # ======================================================================
 # CONFIG
@@ -154,6 +156,92 @@ def normal_command(message):
     )
 
 # ======================================================================
+# GET USER PROFILE PHOTO
+# ======================================================================
+
+def get_profile_photo(user_id):
+    """Get user's profile photo URL"""
+    try:
+        photos = bot.get_user_profile_photos(user_id, limit=1)
+        if photos.total_count > 0:
+            # Get largest photo (last in list)
+            file_id = photos.photos[0][-1].file_id
+            file_info = bot.get_file(file_id)
+            file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_info.file_path}"
+            return file_url
+        return None
+    except Exception as e:
+        print(f"Error getting photo: {e}")
+        return None
+
+# ======================================================================
+# SHOW PROFILE WITH PHOTO
+# ======================================================================
+
+def show_profile(chat_id, message_id, user_id, user_first_name):
+    """Show profile with photo at top and details below"""
+    
+    # Get profile photo URL
+    photo_url = get_profile_photo(user_id)
+    
+    # Profile text with premium emojis
+    text = f"""
+<tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> <b>PROFILE</b>
+
+<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Name: {user_first_name}
+<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Balance: ₹0
+<tg-emoji emoji-id='5967456680940671207'>📦</tg-emoji> Orders: 0
+<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Member Since: Today
+
+━━━━━━━━━━━━━━━━━━━━
+<tg-emoji emoji-id='5346160971192747426'>🛡️</tg-emoji> Premium: No
+    """
+    
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton(
+            "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
+            callback_data="back"
+        )
+    )
+    
+    try:
+        if photo_url:
+            # Send profile photo as separate message (with caption)
+            bot.send_photo(
+                chat_id=chat_id,
+                photo=photo_url,
+                caption=text,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            
+            # Delete the old message (where button was clicked)
+            try:
+                bot.delete_message(chat_id, message_id)
+            except:
+                pass
+        else:
+            # If no photo, just edit the existing message
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+    except Exception as e:
+        print(f"Error showing profile: {e}")
+        # Fallback: edit message with text only
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=markup
+        )
+
+# ======================================================================
 # CALLBACK HANDLER - Premium Emoji in ALL messages
 # ======================================================================
 
@@ -227,32 +315,12 @@ def callback_handler(call):
         )
     
     elif call.data == "profile":
-        text = f"""
-<tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> <b>PROFILE</b>
-
-<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> Name: {call.from_user.first_name}
-<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Balance: ₹0
-<tg-emoji emoji-id='5967456680940671207'>📦</tg-emoji> Orders: 0
-<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji> Member Since: Today
-
-━━━━━━━━━━━━━━━━━━━━
-<tg-emoji emoji-id='5346160971192747426'>🛡️</tg-emoji> Premium: No
-        """
-        
-        markup = types.InlineKeyboardMarkup()
-        markup.add(
-            types.InlineKeyboardButton(
-                "<tg-emoji emoji-id='6039539366177541657'>🔙</tg-emoji> BACK", 
-                callback_data="back"
-            )
-        )
-        
-        bot.edit_message_text(
+        # Call the profile function with photo
+        show_profile(
             chat_id=user_id,
             message_id=call.message.message_id,
-            text=text,
-            parse_mode="HTML",
-            reply_markup=markup
+            user_id=user_id,
+            user_first_name=call.from_user.first_name or "User"
         )
     
     elif call.data == "tutorial":
@@ -392,6 +460,8 @@ if __name__ == "__main__":
     print("=" * 60)
     print("📱 Premium Users → Sab emoji dikhenge")
     print("📱 Normal Users → Sirf normal emoji dikhenge")
+    print("=" * 60)
+    print("📸 Profile Photo → Jab PROFILE dabayenge toh photo dikhegi")
     print("=" * 60)
     print("🔄 Polling...")
     print("=" * 60)
