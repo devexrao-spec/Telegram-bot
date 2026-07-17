@@ -1363,31 +1363,53 @@ _TRYCLOUDFLARE_RE = re.compile(r"https?://[a-z0-9-]+\.trycloudflare\.com", re.I)
 
 
 def _start_tunnel(bot_id: str, port: int) -> Dict[str, Any]:
+def _start_tunnel(bot_id: str, port: int) -> Dict[str, Any]:
+    """Spin up `cloudflared tunnel --url http://localhost:<port>` and
+    capture the public trycloudflare URL from its stderr."""
     if not (1 <= port <= 65535):
         return {"ok": False, "error": "Port must be between 1 and 65535"}
+
     with _tunnel_lock:
         existing = TUNNELS.get(bot_id)
         if existing and existing.get("proc") and existing["proc"].poll() is None:
             return {"ok": False, "error": "Tunnel already running for this bot. Stop it first."}
+
     if not _port_in_use(port):
-        return {"ok": False, "error": f"Nothing is listening on port {port}."}
+        return {"ok": False,
+                "error": f"Nothing is listening on port {port}. "
+                         f"Start your bot's web server on that port first, "
+                         f"or pick another port."}
+
     bin_path = _ensure_cloudflared()
     if not bin_path:
-        return {"ok": False, "error": "Could not download cloudflared binary on this host."}
+        return {"ok": False,
+                "error": "Could not download cloudflared binary on this host. "
+                         "Please install cloudflared manually."}
+
     log_buf: Deque[str] = deque(maxlen=200)
     try:
         proc = subprocess.Popen(
-            [str(bin_path), "tunnel", "--no-autoupdate", "--url", f"http://localhost:{port}"],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            [str(bin_path), "tunnel", "--no-autoupdate",
+             "--url", f"http://localhost:{port}"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
             preexec_fn=os.setsid if os.name == "posix" else None,
         )
     except Exception as e:
         return {"ok": False, "error": f"Failed to launch cloudflared: {e}"}
-    rec = {"proc": proc, "port": port, "url": None, "started": int(time.time()), "log": log_buf}
+
+    rec: Dict[str, Any] = {
+        "proc":    proc,
+        "port":    port,
+        "url":     None,
+        "started": int(time.time()),
+        "log":     log_buf,
+    }
     with _tunnel_lock:
         TUNNELS[bot_id] = rec
 
-    def _drain():
+    def _drain() -> None:
         assert proc.stdout is not None
         for line in proc.stdout:
             line = line.rstrip()
@@ -1396,16 +1418,24 @@ def _start_tunnel(bot_id: str, port: int) -> Dict[str, Any]:
                 m = _TRYCLOUDFLARE_RE.search(line)
                 if m:
                     rec["url"] = m.group(0)
+
     threading.Thread(target=_drain, daemon=True, name=f"cf-{bot_id}").start()
+
+    # Wait up to ~15s for the URL to appear
     deadline = time.time() + 15
     while time.time() < deadline and rec["url"] is None and proc.poll() is None:
         time.sleep(0.3)
+
     if proc.poll() is not None and rec["url"] is None:
+        # process died early — usually port issue or network
         tail = "\n".join(list(log_buf)[-6:]) or "(no output)"
         with _tunnel_lock:
             TUNNELS.pop(bot_id, None)
         return {"ok": False, "error": f"cloudflared exited early.\n{tail}"}
+
     if rec["url"] is None:
+        # No URL within 15s and process still alive — kill it so we don't
+        # leave an orphan cloudflared process running forever.
         try:
             if os.name == "posix":
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
@@ -1416,10 +1446,13 @@ def _start_tunnel(bot_id: str, port: int) -> Dict[str, Any]:
             except Exception:
                 proc.kill()
         except Exception:
-            pass        with _tunnel_lock:
+            pass
+        with _tunnel_lock:
             TUNNELS.pop(bot_id, None)
         tail = "\n".join(list(log_buf)[-6:]) or "(no output)"
-        return {"ok": False, "error": f"Tunnel timed out — no URL after 15s.\n{tail}"}
+        return {"ok": False,
+                "error": f"Tunnel timed out — no URL after 15s.\n{tail}"}
+
     return {"ok": True, "url": rec["url"], "port": port}
 
 
