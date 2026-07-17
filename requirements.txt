@@ -1,3 +1,9 @@
 pyTelegramBotAPI
-firebase-admin
 requests
+cryptography
+flask
+APScheduler
+PyGithub
+psutil
+Pillow
+curl_cffi
