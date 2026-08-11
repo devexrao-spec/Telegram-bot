@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FIXED WITH ORDER-ID -> USER-ID MAPPING
+# tusharbot.py - COMPLETE FIXED VERSION (USER-SPECIFIC PAYMENT)
 import requests
 import json
 import time
@@ -6,7 +6,7 @@ from datetime import datetime
 import threading
 from pymongo import MongoClient
 
-BOT_TOKEN = "8856781249:AAFxh7E65tpu_bzMlTv2vSbFld_WGS1nl24"
+BOT_TOKEN = "8856781249:AAGdDzOkkxo5cSB2u_e65XWxhxbrgs5f3Ps"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 FAMPAY_API_KEY = "FAM_4F0288181BA4D5F83D16AF7EF1F06A1FA4362C5D"
@@ -37,7 +37,6 @@ class MongoDB:
         self.db.pending_payments.create_index("user_id", unique=True)
         self.db.processed_payments.create_index("order_id", unique=True)
         self.db.processed_payments.create_index("user_id")
-        # NEW: Payment orders index for fast lookup
         self.db.payment_orders.create_index("order_id", unique=True)
         self.db.payment_orders.create_index("user_id")
     
@@ -195,7 +194,7 @@ class PaymentOrdersStore:
             "amount": amount,
             "product_name": product_name,
             "created_at": datetime.now(),
-            "status": "pending"  # pending, verified, expired
+            "status": "pending"
         }
         self.collection.update_one(
             {"order_id": order_id},
@@ -223,13 +222,10 @@ class PaymentOrdersStore:
             {"$set": {"status": "verified", "verified_at": datetime.now()}}
         )
     
-    def get_user_orders(self, user_id):
-        """Get all orders for a user"""
-        return list(self.collection.find({"user_id": str(user_id)}))
-    
     def delete(self, order_id):
         """Delete an order mapping (for cancellation)"""
         self.collection.delete_one({"order_id": order_id})
+        print(f"🗑️ Deleted order mapping for {order_id}")
 
 payment_orders_store = PaymentOrdersStore()
 
@@ -390,7 +386,7 @@ PLAN_NAMES = {
     "15": "28 Days",
 }
 
-# ====== FIXED: VERIFY PAYMENT - USER SPECIFIC WITH ORDER MAPPING ======
+# ====== FIXED: VERIFY PAYMENT - USER SPECIFIC ======
 def verify_payment(user_id, order_id, msg_id=None):
     try:
         user_id = str(user_id)
@@ -402,10 +398,8 @@ def verify_payment(user_id, order_id, msg_id=None):
         
         if not order_owner:
             print(f"❌ Order {order_id} not found in payment_orders mapping")
-            # Check if it might be already processed
             if processed_payments_store.exists(order_id):
                 print(f"❌ Order {order_id} already processed but no mapping found")
-                # Clean up
                 pending_payments.pop(user_id, None)
                 pending_payments_store.delete(user_id)
                 return False, 0, None
@@ -427,6 +421,17 @@ def verify_payment(user_id, order_id, msg_id=None):
         pending = pending_payments_store.get(user_id)
         if not pending:
             print(f"❌ No pending payment for user {user_id}")
+            return False, 0, None
+        
+        if isinstance(pending, dict):
+            stored_order_id = pending.get("order_id")
+            stored_user_id = pending.get("user_id")
+        else:
+            stored_order_id = pending
+            stored_user_id = user_id
+            
+        if stored_order_id != order_id:
+            print(f"❌ Order mismatch: user {user_id} has {stored_order_id}, trying {order_id}")
             return False, 0, None
         
         # ========== STEP 5: Verify with API ==========
@@ -461,11 +466,9 @@ def verify_payment(user_id, order_id, msg_id=None):
                 bal.add(amount)
                 print(f"✅ Added ₹{amount} to user {user_id}, new balance: ₹{bal.value()}")
                 
-                # Clear user's pending data
                 User.save_data(user_id, "last_order_id", "")
                 User.save_data(user_id, "addpay_order_id", "")
                 
-                # Remove from pending
                 pending_payments.pop(user_id, None)
                 pending_payments_store.delete(user_id)
                 
@@ -475,7 +478,6 @@ def verify_payment(user_id, order_id, msg_id=None):
                     except:
                         pass
                 
-                # Send success message to the user who paid
                 send_message(
                     user_id,
                     f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> <b>Payment Success!</b>\n\n"
@@ -485,7 +487,6 @@ def verify_payment(user_id, order_id, msg_id=None):
                     "HTML"
                 )
                 
-                # Notify admins
                 admins = bot_data.get_data("AllBotAdminss") or []
                 for admin in admins:
                     send_message(
@@ -883,7 +884,7 @@ def cmd_buybahha(message, params, options):
     User.save_data(user_id, "userhAC", adm_ac)
     return True
 
-# ====== FIXED: AUTOBUY1 - USER-SPECIFIC QR WITH ORDER MAPPING ======
+# ====== FIXED: AUTOBUY1 - USER-SPECIFIC QR ======
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
@@ -924,10 +925,8 @@ def cmd_autobuy1(message, params, options=None):
     )
     print(f"📝 Stored mapping: order {order_id} -> user {user_id}")
     
-    # Store order_id for this user
     User.save_data(user_id, "last_order_id", order_id)
     
-    # Store pending payment
     pending_data = {
         "order_id": order_id,
         "msg_id": message.get("message_id"),
@@ -1008,7 +1007,6 @@ def cmd_verify_payment(message, params, options=None):
     
     send_message(user_id, "<tg-emoji emoji-id='5348374038991357363'>⏳</tg-emoji> Checking payment status...", "HTML")
     
-    # Pass user_id explicitly to verify_payment
     success, amount, new_balance = verify_payment(user_id, order_id, msg_id)
     
     if not success:
@@ -1032,7 +1030,6 @@ def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
     msg_id = message.get("message_id")
     
-    # Get order_id from pending payment
     pending = pending_payments_store.get(user_id)
     if pending:
         if isinstance(pending, dict):
@@ -1040,7 +1037,6 @@ def cmd_cancel(message, params, options=None):
         else:
             order_id = pending
         if order_id:
-            # Delete order mapping
             payment_orders_store.delete(order_id)
             print(f"🗑️ Deleted order mapping for {order_id}")
     
@@ -1323,7 +1319,7 @@ def cmd_done(message, params, options=None):
     cmd_addpayment_qr(message)
     return True
 
-# ====== FIXED: ADDPAYMENT QR WITH ORDER MAPPING ======
+# ====== FIXED: ADDPAYMENT QR - USER-SPECIFIC ======
 def cmd_addpayment_qr(message):
     user_id = str(message.get("from", {}).get("id"))
     amount = User.get_data(user_id, "last_deposit_amount")
@@ -1390,7 +1386,6 @@ def cmd_verify_addpay(message, params, options=None):
         send_message(user_id, "No active payment found.")
         return True
     
-    # Verify order belongs to this user
     order_owner = payment_orders_store.get_user_by_order(order_id)
     if str(order_owner) != str(user_id):
         send_message(user_id, "This order does not belong to you!")
@@ -1546,8 +1541,6 @@ when contacting for faster help.</i>
     return True
 
 # ====== ADMIN COMMANDS ======
-# (All admin commands remain the same as original, keep them unchanged)
-# I'm including all admin commands from original code below...
 
 @command("/admin")
 def cmd_admin(message, params, options=None):
