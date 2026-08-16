@@ -2,7 +2,7 @@
 import requests
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 from pymongo import MongoClient
 
@@ -39,6 +39,7 @@ class MongoDB:
         self.db.processed_payments.create_index("user_id")
         self.db.payment_orders.create_index("order_id", unique=True)
         self.db.payment_orders.create_index("user_id")
+        self.db.payment_orders.create_index("status")
     
     def get_collection(self, name):
         return self.db[name]
@@ -176,7 +177,7 @@ class ProcessedPaymentsStore:
 
 processed_payments_store = ProcessedPaymentsStore()
 
-# ========== NEW: Payment Orders Store ==========
+# ========== PAYMENT ORDERS STORE - USER SPECIFIC ==========
 class PaymentOrdersStore:
     """
     This stores the mapping between order_id and user_id.
@@ -186,13 +187,14 @@ class PaymentOrdersStore:
     def __init__(self):
         self.collection = mongo.get_collection('payment_orders')
     
-    def create(self, order_id, user_id, amount, product_name=None):
+    def create(self, order_id, user_id, amount, product_name=None, plan=None):
         """Create a new payment order mapping"""
         doc = {
             "order_id": order_id,
             "user_id": str(user_id),
-            "amount": amount,
+            "amount": float(amount),
             "product_name": product_name,
+            "plan": plan,
             "created_at": datetime.now(),
             "status": "pending"
         }
@@ -222,10 +224,24 @@ class PaymentOrdersStore:
             {"$set": {"status": "verified", "verified_at": datetime.now()}}
         )
     
+    def get_user_orders(self, user_id):
+        """Get all orders for a user"""
+        return list(self.collection.find({"user_id": str(user_id)}))
+    
     def delete(self, order_id):
         """Delete an order mapping (for cancellation)"""
         self.collection.delete_one({"order_id": order_id})
         print(f"🗑️ Deleted order mapping for {order_id}")
+    
+    def cleanup_old_orders(self, minutes=30):
+        """Delete pending orders older than specified minutes"""
+        cutoff = datetime.now() - timedelta(minutes=minutes)
+        result = self.collection.delete_many({
+            "status": "pending",
+            "created_at": {"$lt": cutoff}
+        })
+        if result.deleted_count > 0:
+            print(f"🧹 Cleaned {result.deleted_count} old pending orders")
 
 payment_orders_store = PaymentOrdersStore()
 
@@ -921,7 +937,8 @@ def cmd_autobuy1(message, params, options=None):
         order_id=order_id,
         user_id=user_id,
         amount=amount,
-        product_name=pt
+        product_name=pt,
+        plan=plan_display
     )
     print(f"📝 Stored mapping: order {order_id} -> user {user_id}")
     
@@ -951,7 +968,7 @@ def cmd_autobuy1(message, params, options=None):
     reply_markup = {
         "inline_keyboard": [
             [{"text": "VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [{"text": "CANCEL", "callback_data": "/cancel", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
+            [{"text": "CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
         ]
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
@@ -974,13 +991,21 @@ def cmd_verify_payment(message, params, options=None):
     # ========== STEP 1: Check if order exists in payment_orders ==========
     order_data = payment_orders_store.get_order(order_id)
     if not order_data:
-        send_message(user_id, "Invalid order ID.", "HTML")
+        send_message(user_id, "Invalid order ID. Please generate QR again.", "HTML")
         return True
     
     # ========== STEP 2: Check if order belongs to this user ==========
     order_owner = order_data.get("user_id")
     if str(order_owner) != str(user_id):
-        send_message(user_id, "❌ This order does not belong to you!", "HTML")
+        send_message(
+            user_id, 
+            f"❌ <b>SECURITY ERROR!</b>\n\n"
+            f"This order <code>{order_id}</code> belongs to user: <code>{order_owner}</code>\n"
+            f"You are: <code>{user_id}</code>\n\n"
+            f"<b>You cannot verify someone else's payment!</b>",
+            "HTML"
+        )
+        print(f"❌ SECURITY: User {user_id} tried to verify order {order_id} belonging to {order_owner}")
         return True
     
     # ========== STEP 3: Check if already processed ==========
@@ -1030,15 +1055,30 @@ def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
     msg_id = message.get("message_id")
     
-    pending = pending_payments_store.get(user_id)
-    if pending:
-        if isinstance(pending, dict):
-            order_id = pending.get("order_id")
+    # Get order_id from params or pending
+    if params:
+        order_id = params
+    else:
+        pending = pending_payments_store.get(user_id)
+        if pending:
+            if isinstance(pending, dict):
+                order_id = pending.get("order_id")
+            else:
+                order_id = pending
         else:
-            order_id = pending
-        if order_id:
-            payment_orders_store.delete(order_id)
-            print(f"🗑️ Deleted order mapping for {order_id}")
+            order_id = None
+    
+    if order_id:
+        # Check if order belongs to this user
+        order_data = payment_orders_store.get_order(order_id)
+        if order_data:
+            order_owner = order_data.get("user_id")
+            if str(order_owner) == str(user_id):
+                payment_orders_store.delete(order_id)
+                print(f"🗑️ Deleted order mapping for {order_id}")
+            else:
+                send_message(user_id, "❌ You cannot cancel someone else's order!", "HTML")
+                return True
     
     delete_message(user_id, msg_id)
     pending_payments.pop(user_id, None)
@@ -1373,7 +1413,7 @@ def cmd_addpayment_qr(message):
     reply_markup = {
         "inline_keyboard": [
             [{"text": "VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [{"text": "CANCEL", "callback_data": "/cancel", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
+            [{"text": "CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
         ]
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
@@ -2337,6 +2377,9 @@ def main():
     print("Bot Started with MongoDB!")
     print(f"Connected to MongoDB: {DB_NAME}")
     print(f"Registered commands: {list(commands.keys())}")
+    
+    # Cleanup old pending orders
+    payment_orders_store.cleanup_old_orders(30)
     
     last_update_id = 0
     while True:
