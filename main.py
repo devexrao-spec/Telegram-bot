@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FIXED VERSION (USER-SPECIFIC PAYMENT)
+# tusharbot.py - COMPLETE WITH PREMIUM EMOJIS & STYLES
 import requests
 import json
 import time
@@ -177,18 +177,12 @@ class ProcessedPaymentsStore:
 
 processed_payments_store = ProcessedPaymentsStore()
 
-# ========== PAYMENT ORDERS STORE - USER SPECIFIC ==========
+# ========== PAYMENT ORDERS STORE ==========
 class PaymentOrdersStore:
-    """
-    This stores the mapping between order_id and user_id.
-    When a payment is verified, we check this mapping to ensure
-    the order belongs to the user who is verifying it.
-    """
     def __init__(self):
         self.collection = mongo.get_collection('payment_orders')
     
     def create(self, order_id, user_id, amount, product_name=None, plan=None):
-        """Create a new payment order mapping"""
         doc = {
             "order_id": order_id,
             "user_id": str(user_id),
@@ -203,38 +197,27 @@ class PaymentOrdersStore:
             {"$set": doc},
             upsert=True
         )
-        print(f"📝 Created payment order mapping: order={order_id} -> user={user_id}")
+        print(f"📝 STORED: order={order_id} -> user={user_id}")
         return doc
     
     def get_user_by_order(self, order_id):
-        """Get the user_id for a given order_id"""
         doc = self.collection.find_one({"order_id": order_id})
-        if doc:
-            return doc.get("user_id")
-        return None
+        return doc.get("user_id") if doc else None
     
     def get_order(self, order_id):
-        """Get full order data"""
         return self.collection.find_one({"order_id": order_id})
     
     def mark_verified(self, order_id):
-        """Mark order as verified"""
         self.collection.update_one(
             {"order_id": order_id},
             {"$set": {"status": "verified", "verified_at": datetime.now()}}
         )
     
-    def get_user_orders(self, user_id):
-        """Get all orders for a user"""
-        return list(self.collection.find({"user_id": str(user_id)}))
-    
     def delete(self, order_id):
-        """Delete an order mapping (for cancellation)"""
         self.collection.delete_one({"order_id": order_id})
         print(f"🗑️ Deleted order mapping for {order_id}")
     
     def cleanup_old_orders(self, minutes=30):
-        """Delete pending orders older than specified minutes"""
         cutoff = datetime.now() - timedelta(minutes=minutes)
         result = self.collection.delete_many({
             "status": "pending",
@@ -402,133 +385,93 @@ PLAN_NAMES = {
     "15": "28 Days",
 }
 
-# ====== FIXED: VERIFY PAYMENT - USER SPECIFIC ======
+# ========== VERIFY PAYMENT FUNCTION ==========
 def verify_payment(user_id, order_id, msg_id=None):
     try:
         user_id = str(user_id)
-        
         print(f"🔍 Verifying: User={user_id}, Order={order_id}")
         
-        # ========== STEP 1: Check if order belongs to this user from payment_orders ==========
-        order_owner = payment_orders_store.get_user_by_order(order_id)
-        
-        if not order_owner:
-            print(f"❌ Order {order_id} not found in payment_orders mapping")
-            if processed_payments_store.exists(order_id):
-                print(f"❌ Order {order_id} already processed but no mapping found")
-                pending_payments.pop(user_id, None)
-                pending_payments_store.delete(user_id)
-                return False, 0, None
+        order_data = payment_orders_store.get_order(order_id)
+        if not order_data:
+            print(f"❌ Order {order_id} not found")
             return False, 0, None
         
-        # ========== STEP 2: Verify the user is the owner of this order ==========
+        order_owner = order_data.get("user_id")
         if str(order_owner) != str(user_id):
-            print(f"❌ CRITICAL: Order {order_id} belongs to user {order_owner}, but {user_id} is trying to verify it!")
+            print(f"❌ SECURITY: Order {order_id} belongs to {order_owner}, not {user_id}")
             return False, 0, None
         
-        # ========== STEP 3: Check if already processed ==========
         if processed_payments_store.exists(order_id):
-            print(f"❌ Order {order_id} already processed globally")
-            pending_payments.pop(user_id, None)
-            pending_payments_store.delete(user_id)
+            print(f"❌ Order {order_id} already processed")
             return False, 0, None
         
-        # ========== STEP 4: Check if user has pending payment ==========
-        pending = pending_payments_store.get(user_id)
-        if not pending:
-            print(f"❌ No pending payment for user {user_id}")
-            return False, 0, None
-        
-        if isinstance(pending, dict):
-            stored_order_id = pending.get("order_id")
-            stored_user_id = pending.get("user_id")
-        else:
-            stored_order_id = pending
-            stored_user_id = user_id
-            
-        if stored_order_id != order_id:
-            print(f"❌ Order mismatch: user {user_id} has {stored_order_id}, trying {order_id}")
-            return False, 0, None
-        
-        # ========== STEP 5: Verify with API ==========
         url = f"{FAMPAY_BASE_URL}verify.php?order_id={order_id}&api_key={FAMPAY_API_KEY}"
-        print(f"📡 Checking API for user {user_id}: {url}")
+        print(f"📡 Checking API: {url}")
         
         try:
             response = requests.get(url, timeout=30)
-        except requests.Timeout:
-            print(f"⏰ Timeout for user {user_id}, order {order_id}")
+            data = response.json()
+            print(f"📊 API Response: {data}")
+        except Exception as e:
+            print(f"⚠️ API Error: {e}")
             return False, 0, None
         
-        if response.status_code == 200:
-            try:
-                data = response.json()
-                print(f"📊 API Response for user {user_id}: {data}")
-            except:
-                return False, 0, None
-                
-            if data.get("status") == "success":
-                amount = float(data["data"]["amount"])
-                actual_order_id = data["data"].get("order_id", order_id)
-                
-                # ========== STEP 6: Mark as processed for THIS SPECIFIC USER ==========
-                processed_payments_store.add(actual_order_id, user_id, amount)
-                
-                # ========== STEP 7: Mark order as verified in payment_orders ==========
-                payment_orders_store.mark_verified(actual_order_id)
-                
-                # ========== STEP 8: Add balance to THIS SPECIFIC USER ==========
-                bal = Resources.another_res("Balance", user=user_id)
-                bal.add(amount)
-                print(f"✅ Added ₹{amount} to user {user_id}, new balance: ₹{bal.value()}")
-                
-                User.save_data(user_id, "last_order_id", "")
-                User.save_data(user_id, "addpay_order_id", "")
-                
-                pending_payments.pop(user_id, None)
-                pending_payments_store.delete(user_id)
-                
-                if msg_id:
-                    try:
-                        delete_message(user_id, msg_id)
-                    except:
-                        pass
-                
+        if data.get("status") == "success":
+            amount = float(data["data"]["amount"])
+            
+            bal = Resources.another_res("Balance", user=user_id)
+            bal.add(amount)
+            print(f"✅ Added ₹{amount} to user {user_id}")
+            
+            processed_payments_store.add(order_id, user_id, amount)
+            payment_orders_store.mark_verified(order_id)
+            
+            User.save_data(user_id, "last_order_id", "")
+            User.save_data(user_id, "addpay_order_id", "")
+            pending_payments.pop(user_id, None)
+            pending_payments_store.delete(user_id)
+            
+            if msg_id:
+                try:
+                    delete_message(user_id, msg_id)
+                except:
+                    pass
+            
+            send_message(
+                user_id,
+                f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> <b>Payment Success!</b>\n\n"
+                f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Added: ₹{amount}\n"
+                f"<tg-emoji emoji-id='5346227465876423936'>💳</tg-emoji> New Balance: ₹{bal.value()}\n\n"
+                f"<i>Thank you for your payment!</i>",
+                "HTML"
+            )
+            
+            admins = bot_data.get_data("AllBotAdminss") or []
+            for admin in admins:
                 send_message(
-                    user_id,
-                    f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> <b>Payment Success!</b>\n\n"
-                    f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Added: ₹{amount}\n"
-                    f"<tg-emoji emoji-id='5346227465876423936'>💳</tg-emoji> New Balance: ₹{bal.value()}\n\n"
-                    f"<i>Thank you for your payment!</i>",
+                    admin,
+                    f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> New Payment Received!\n\n"
+                    f"👤 User ID: <code>{user_id}</code>\n"
+                    f"💰 Amount: ₹{amount}\n"
+                    f"🧾 Order ID: <code>{order_id}</code>\n"
+                    f"💳 User Balance: ₹{bal.value()}",
                     "HTML"
                 )
-                
-                admins = bot_data.get_data("AllBotAdminss") or []
-                for admin in admins:
-                    send_message(
-                        admin,
-                        f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> New Payment Received!\n\n"
-                        f"👤 User ID: <code>{user_id}</code>\n"
-                        f"💰 Amount: ₹{amount}\n"
-                        f"🧾 Order ID: <code>{actual_order_id}</code>\n"
-                        f"💳 User Balance: ₹{bal.value()}",
-                        "HTML"
-                    )
-                
-                return True, amount, bal.value()
-            else:
-                print(f"⚠️ API said not success for user {user_id}")
-                return False, 0, None
+            
+            return True, amount, bal.value()
         else:
-            print(f"⚠️ API status code: {response.status_code}")
+            print(f"⚠️ API said not success")
             return False, 0, None
+            
     except Exception as e:
-        print(f"❌ Verify payment error for user {user_id}: {e}")
+        print(f"❌ Error: {e}")
         import traceback
         traceback.print_exc()
         return False, 0, None
 
-# ====== COMMANDS ======
+# ============================================
+# ========== COMMANDS WITH EMOJIS ==========
+# ============================================
 
 @command("/start")
 @command("/Start")
@@ -653,24 +596,29 @@ def cmd_backkkk(message, params, options=None):
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
+# ========== SHOP PRODUCTS WITH EMOJIS ==========
 @command("/SHOP_P1")
 def cmd_shop_p1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     resellers = bot_data.get_data("resellers_list") or []
     is_reseller = str(user_id) in [str(u) for u in resellers]
+    
     p1 = bot_data.get_data("drip_1d_price") or 108
     p3 = bot_data.get_data("drip_3d_price") or 260
     p7 = bot_data.get_data("drip_7d_price") or 360
     p15 = bot_data.get_data("drip_15d_price") or 560
     p30 = bot_data.get_data("drip_30d_price") or 810
+    
     if is_reseller:
         p1 = bot_data.get_data("drip_1d_reseller_price") or 95
         p3 = bot_data.get_data("drip_3d_reseller_price") or 220
         p7 = bot_data.get_data("drip_7d_reseller_price") or 320
         p15 = bot_data.get_data("drip_15d_reseller_price") or 480
         p30 = bot_data.get_data("drip_30d_reseller_price") or 750
+    
     buy_cmd = "/buyjai_reseller" if is_reseller else "/buyjai"
+    
     text = (
         "━━━━━━━━━━━━━━━━━━━━\n"
         "<tg-emoji emoji-id='6323104647636589287'>📦</tg-emoji> "
@@ -704,18 +652,22 @@ def cmd_shop_p2(message, params, options=None):
     msg_id = message.get("message_id")
     resellers = bot_data.get_data("resellers_list") or []
     is_reseller = str(user_id) in [str(u) for u in resellers]
+    
     p1 = bot_data.get_data("SILENT_1d_price") or 108
     p3 = bot_data.get_data("SILENT_3d_price") or 260
     p7 = bot_data.get_data("SILENT_7d_price") or 360
     p14 = bot_data.get_data("SILENT_14d_price") or 560
     p28 = bot_data.get_data("SILENT_28d_price") or 810
+    
     if is_reseller:
         p1 = bot_data.get_data("SILENT_1d_reseller_price") or 95
         p3 = bot_data.get_data("SILENT_3d_reseller_price") or 220
         p7 = bot_data.get_data("SILENT_7d_reseller_price") or 320
         p14 = bot_data.get_data("SILENT_14d_reseller_price") or 480
         p28 = bot_data.get_data("SILENT_28d_reseller_price") or 750
+    
     buy_cmd = "/buyjai_reseller" if is_reseller else "/buyjai"
+    
     text = """
 ━━━━━━━━━━━━━━━━━━━━
 <tg-emoji emoji-id="6325561995995126107">📦</tg-emoji> SILENT CHEATS ANDROID
@@ -745,18 +697,22 @@ def cmd_shop_p4(message, params, options=None):
     msg_id = message.get("message_id")
     resellers = bot_data.get_data("resellers_list") or []
     is_reseller = str(user_id) in [str(u) for u in resellers]
+    
     p1 = bot_data.get_data("HG_1d_price") or 108
     p3 = bot_data.get_data("HG_3d_price") or 200
     p7 = bot_data.get_data("HG_7d_price") or 360
     p14 = bot_data.get_data("HG_14d_price") or 600
     p21 = bot_data.get_data("HG_21d_price") or 700
+    
     if is_reseller:
         p1 = bot_data.get_data("HG_1d_reseller_price") or 95
         p3 = bot_data.get_data("HG_3d_reseller_price") or 180
         p7 = bot_data.get_data("HG_7d_reseller_price") or 320
         p14 = bot_data.get_data("HG_14d_reseller_price") or 550
         p21 = bot_data.get_data("HG_21d_reseller_price") or 650
+    
     buy_cmd = "/buyjai_reseller" if is_reseller else "/buyjai"
+    
     text = """
 ━━━━━━━━━━━━━━━━━━━━
 <tg-emoji emoji-id="6210705396449944693">🔥</tg-emoji> PRIME HOOK
@@ -780,12 +736,14 @@ Choose a plan <tg-emoji emoji-id="5258336354642697821">👇</tg-emoji>
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
+# ========== BUY COMMANDS ==========
 @command("/buyjai")
 def cmd_buyjai(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     if not params:
         send_message(user_id, "Invalid Product")
         return True
+    
     product_map = {
         "1": ("drip_1d_price", "drip_1d_keys", "DRIP CLIENT APK MOD\n1 Day"),
         "2": ("drip_3d_price", "drip_3d_keys", "DRIP CLIENT APK MOD\n3 Days"),
@@ -803,6 +761,7 @@ def cmd_buyjai(message, params, options=None):
         "14": ("HG_21d_price", "HG_21d_keys", "PRIME-HOOK\n21 Days"),
         "15": ("SILENT_28d_price", "SILENT_28d_keys", "SILENT CHEATS ANDROID\n28 Days"),
     }
+    
     if params in product_map:
         price_key, key_key, title = product_map[params]
         User.save_data(user_id, "last_product1", title)
@@ -818,6 +777,7 @@ def cmd_buyjai_reseller(message, params, options=None):
     if not params:
         send_message(user_id, "Invalid Product")
         return True
+    
     product_map = {
         "1": ("drip_1d_reseller_price", "drip_1d_keys", "DRIP CLIENT APK MOD\n1 Day"),
         "2": ("drip_3d_reseller_price", "drip_3d_keys", "DRIP CLIENT APK MOD\n3 Days"),
@@ -835,6 +795,7 @@ def cmd_buyjai_reseller(message, params, options=None):
         "14": ("HG_21d_reseller_price", "HG_21d_keys", "PRIME-HOOK\n21 Days"),
         "15": ("SILENT_28d_reseller_price", "SILENT_28d_keys", "SILENT CHEATS ANDROID\n28 Days"),
     }
+    
     if params in product_map:
         price_key, key_key, title = product_map[params]
         cmd_buybahha(message, None, {"price": price_key, "key": key_key, "title": title})
@@ -848,37 +809,45 @@ def cmd_buybahha(message, params, options):
     if not options:
         send_message(user_id, "Product configuration error.")
         return True
+    
     price_key = options.get("price")
     key_key = options.get("key")
     title = options.get("title")
+    
     if not price_key or not key_key or not title:
         send_message(user_id, "Product configuration error.")
         return True
+    
     price = bot_data.get_data(price_key) or 0
     try:
         price = float(price)
     except:
         send_message(user_id, "Invalid price.")
         return True
+    
     if price <= 0:
         send_message(user_id, "Price not set.")
         return True
+    
     keys = bot_data.get_data(key_key) or []
     if len(keys) == 0:
         send_message(user_id, "Out of Stock.")
         return True
+    
     balance = Resources.another_res("Balance", user=user_id)
     if balance.value() < price:
         User.save_data(user_id, "last_deposit_amount", price)
         User.save_data(user_id, "last_product", title)
         cmd_autobuy1(message, None)
         return True
+    
     balance.cut(price)
     Resources.another_res("Order", user=user_id).add(1)
     key = str(keys[0])
     keys.pop(0)
     bot_data.save_data(key_key, keys)
     easy_time = get_easy_time()
+    
     send_message(
         user_id,
         f"<tg-emoji emoji-id='6172208745582433583'>🛒</tg-emoji> {title}\n\n"
@@ -890,6 +859,7 @@ def cmd_buybahha(message, params, options):
         f"@SUBHAJIT_UPDATES",
         "HTML"
     )
+    
     adm_ac = User.get_data(user_id, "userhAC") or []
     adm_ac.append(
         f"📆 {easy_time}\n"
@@ -900,16 +870,18 @@ def cmd_buybahha(message, params, options):
     User.save_data(user_id, "userhAC", adm_ac)
     return True
 
-# ====== FIXED: AUTOBUY1 - USER-SPECIFIC QR ======
+# ========== FIXED: AUTOBUY1 ==========
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
     amount = User.get_data(user_id, "last_deposit_amount")
     pt = User.get_data(user_id, "last_product1") or "Unknown"
     plan = User.get_data(user_id, "last_plan") or "Unknown"
+    
     if not amount:
         send_message(user_id, "Amount missing")
         return True
+    
     balance = Resources.another_res("Balance", user=user_id).value()
     need = float(amount) - float(balance)
     if need < 0:
@@ -917,8 +889,8 @@ def cmd_autobuy1(message, params, options=None):
     plan_display = PLAN_NAMES.get(str(plan), plan)
     
     url = f"{FAMPAY_BASE_URL}create_order.php?amount={amount}&api_key={FAMPAY_API_KEY}"
+    
     try:
-        print(f"📡 Creating order for user {user_id}: {url}")
         response = requests.get(url, timeout=30)
         data = response.json()
     except Exception as e:
@@ -926,13 +898,13 @@ def cmd_autobuy1(message, params, options=None):
         return True
         
     if not data or data.get("status") != "success":
-        send_message(user_id, f"QR GENERATION FAILED")
+        send_message(user_id, "QR GENERATION FAILED")
         return True
         
     order_id = data["data"]["order_id"]
     qr_url = data["data"]["qr_url"]
     
-    # ========== CRITICAL: Store order_id -> user_id mapping ==========
+    # STORE order_id -> user_id
     payment_orders_store.create(
         order_id=order_id,
         user_id=user_id,
@@ -940,7 +912,7 @@ def cmd_autobuy1(message, params, options=None):
         product_name=pt,
         plan=plan_display
     )
-    print(f"📝 Stored mapping: order {order_id} -> user {user_id}")
+    print(f"✅ STORED: Order {order_id} -> User {user_id}")
     
     User.save_data(user_id, "last_order_id", order_id)
     
@@ -951,8 +923,6 @@ def cmd_autobuy1(message, params, options=None):
     }
     pending_payments[user_id] = pending_data
     pending_payments_store.set(user_id, pending_data)
-    
-    print(f"✅ Created order {order_id} for user {user_id}")
     
     caption = (
         f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> INSUFFICIENT BALANCE</blockquote>\n\n"
@@ -965,16 +935,18 @@ def cmd_autobuy1(message, params, options=None):
         f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b> <code>{order_id}</code>\n\n"
         f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
     )
+    
     reply_markup = {
         "inline_keyboard": [
             [{"text": "VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
             [{"text": "CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
         ]
     }
+    
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
     return True
 
-# ====== FIXED: VERIFY PAYMENT COMMAND ======
+# ========== FIXED: VERIFY PAYMENT ==========
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
@@ -988,17 +960,15 @@ def cmd_verify_payment(message, params, options=None):
     
     print(f"🔍 User {user_id} verifying order {order_id}")
     
-    # ========== STEP 1: Check if order exists in payment_orders ==========
     order_data = payment_orders_store.get_order(order_id)
     if not order_data:
         send_message(user_id, "Invalid order ID. Please generate QR again.", "HTML")
         return True
     
-    # ========== STEP 2: Check if order belongs to this user ==========
     order_owner = order_data.get("user_id")
     if str(order_owner) != str(user_id):
         send_message(
-            user_id, 
+            user_id,
             f"❌ <b>SECURITY ERROR!</b>\n\n"
             f"This order <code>{order_id}</code> belongs to user: <code>{order_owner}</code>\n"
             f"You are: <code>{user_id}</code>\n\n"
@@ -1008,14 +978,12 @@ def cmd_verify_payment(message, params, options=None):
         print(f"❌ SECURITY: User {user_id} tried to verify order {order_id} belonging to {order_owner}")
         return True
     
-    # ========== STEP 3: Check if already processed ==========
-    if processed_payments_store.exists(order_id):
+    if order_data.get("status") == "verified":
         send_message(user_id, "This payment has already been processed.", "HTML")
         pending_payments.pop(user_id, None)
         pending_payments_store.delete(user_id)
         return True
     
-    # ========== STEP 4: Check if user has pending payment ==========
     pending = pending_payments_store.get(user_id)
     if not pending:
         send_message(user_id, "No pending payment found for you.", "HTML")
@@ -1049,27 +1017,22 @@ def cmd_verify_payment(message, params, options=None):
     
     return True
 
-# ====== FIXED: CANCEL COMMAND ======
+# ========== FIXED: CANCEL ==========
 @command("/cancel")
 def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
     msg_id = message.get("message_id")
     
-    # Get order_id from params or pending
     if params:
         order_id = params
     else:
         pending = pending_payments_store.get(user_id)
         if pending:
-            if isinstance(pending, dict):
-                order_id = pending.get("order_id")
-            else:
-                order_id = pending
+            order_id = pending.get("order_id") if isinstance(pending, dict) else pending
         else:
             order_id = None
     
     if order_id:
-        # Check if order belongs to this user
         order_data = payment_orders_store.get_order(order_id)
         if order_data:
             order_owner = order_data.get("user_id")
@@ -1077,7 +1040,7 @@ def cmd_cancel(message, params, options=None):
                 payment_orders_store.delete(order_id)
                 print(f"🗑️ Deleted order mapping for {order_id}")
             else:
-                send_message(user_id, "❌ You cannot cancel someone else's order!", "HTML")
+                send_message(user_id, "❌ You cannot cancel someone else's order!")
                 return True
     
     delete_message(user_id, msg_id)
@@ -1088,6 +1051,7 @@ def cmd_cancel(message, params, options=None):
     send_message(user_id, "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Cancelled", "HTML")
     return True
 
+# ========== ADD PAYMENT WITH EMOJIS ==========
 current_amount = {}
 
 @command("/addpayment")
@@ -1095,6 +1059,7 @@ def cmd_addpayment(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
+    
     reply_markup = {
         "inline_keyboard": [
             [
@@ -1120,6 +1085,7 @@ def cmd_addpayment(message, params, options=None):
             [{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]
         ]
     }
+    
     text = (
         "<blockquote>"
         "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
@@ -1127,29 +1093,22 @@ def cmd_addpayment(message, params, options=None):
         "Amount: ₹0\n\n"
         "Use the keypad below to enter amount."
     )
+    
     try:
         edit_message(user_id, msg_id, text, "HTML", reply_markup)
     except:
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
+# Number buttons
 @command("/num0")
 def cmd_num0(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "0"
-    else:
-        amt += "0"
+    amt = "0" if amt == "0" else amt + "0"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1158,18 +1117,9 @@ def cmd_num1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "1"
-    else:
-        amt += "1"
+    amt = "1" if amt == "0" else amt + "1"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1178,18 +1128,9 @@ def cmd_num2(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "2"
-    else:
-        amt += "2"
+    amt = "2" if amt == "0" else amt + "2"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1198,18 +1139,9 @@ def cmd_num3(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "3"
-    else:
-        amt += "3"
+    amt = "3" if amt == "0" else amt + "3"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1218,18 +1150,9 @@ def cmd_num4(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "4"
-    else:
-        amt += "4"
+    amt = "4" if amt == "0" else amt + "4"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1238,18 +1161,9 @@ def cmd_num5(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "5"
-    else:
-        amt += "5"
+    amt = "5" if amt == "0" else amt + "5"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1258,18 +1172,9 @@ def cmd_num6(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "6"
-    else:
-        amt += "6"
+    amt = "6" if amt == "0" else amt + "6"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1278,18 +1183,9 @@ def cmd_num7(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "7"
-    else:
-        amt += "7"
+    amt = "7" if amt == "0" else amt + "7"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1298,18 +1194,9 @@ def cmd_num8(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "8"
-    else:
-        amt += "8"
+    amt = "8" if amt == "0" else amt + "8"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1318,18 +1205,9 @@ def cmd_num9(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
-    if amt == "0":
-        amt = "9"
-    else:
-        amt += "9"
+    amt = "9" if amt == "0" else amt + "9"
     current_amount[user_id] = amt
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹" + amt +
-        "\n\nUse the keypad below to enter amount."
-    )
+    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1338,13 +1216,7 @@ def cmd_clearamt(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹0\n\n"
-        "Use the keypad below to enter amount."
-    )
+    text = "<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below to enter amount."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1359,7 +1231,7 @@ def cmd_done(message, params, options=None):
     cmd_addpayment_qr(message)
     return True
 
-# ====== FIXED: ADDPAYMENT QR - USER-SPECIFIC ======
+# ========== ADDPAYMENT QR ==========
 def cmd_addpayment_qr(message):
     user_id = str(message.get("from", {}).get("id"))
     amount = User.get_data(user_id, "last_deposit_amount")
@@ -1376,20 +1248,19 @@ def cmd_addpayment_qr(message):
         return
         
     if data.get("status") != "success":
-        send_message(user_id, f"QR GENERATION FAILED")
+        send_message(user_id, "QR GENERATION FAILED")
         return
         
     order_id = data["data"]["order_id"]
     qr_url = data["data"]["qr_url"]
     
-    # ========== CRITICAL: Store order_id -> user_id mapping ==========
     payment_orders_store.create(
         order_id=order_id,
         user_id=user_id,
         amount=amount,
         product_name="Add Funds"
     )
-    print(f"📝 Stored mapping: order {order_id} -> user {user_id} (addfunds)")
+    print(f"✅ STORED: Order {order_id} -> User {user_id} (Add Funds)")
     
     User.save_data(user_id, "addpay_order_id", order_id)
     
@@ -1401,8 +1272,6 @@ def cmd_addpayment_qr(message):
     pending_payments[user_id] = pending_data
     pending_payments_store.set(user_id, pending_data)
     
-    print(f"✅ Created order {order_id} for user {user_id} (addpayment)")
-    
     caption = (
         f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED</blockquote>\n"
         f"Scan the QR and complete payment.\n\n"
@@ -1410,45 +1279,22 @@ def cmd_addpayment_qr(message):
         f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b> <code>{order_id}</code>\n\n"
         f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
     )
+    
     reply_markup = {
         "inline_keyboard": [
             [{"text": "VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
             [{"text": "CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
         ]
     }
+    
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
 
-@command("/verify_addpay")
-def cmd_verify_addpay(message, params, options=None):
-    user_id = str(message.get("from", {}).get("id"))
-    order_id = User.get_data(user_id, "addpay_order_id")
-    if not order_id:
-        send_message(user_id, "No active payment found.")
-        return True
-    
-    order_owner = payment_orders_store.get_user_by_order(order_id)
-    if str(order_owner) != str(user_id):
-        send_message(user_id, "This order does not belong to you!")
-        User.save_data(user_id, "addpay_order_id", "")
-        return True
-    
-    if processed_payments_store.exists(order_id):
-        send_message(user_id, "This payment has already been processed.")
-        User.save_data(user_id, "addpay_order_id", "")
-        pending_payments.pop(user_id, None)
-        pending_payments_store.delete(user_id)
-        return True
-    
-    success, amount, new_balance = verify_payment(user_id, order_id, message.get("message_id"))
-    
-    if not success:
-        send_message(user_id, "Payment Not Received")
-    return True
-
+# ========== OTHER COMMANDS WITH EMOJIS ==========
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
+    
     textn = (
         "━━━━━━━━━━━━━━━━━━━━\n"
         "<tg-emoji emoji-id='6008118472066732010'>📦</tg-emoji> <b>MY ORDERS</b>\n"
@@ -1456,6 +1302,7 @@ def cmd_orderksk(message, params, options=None):
         "You haven't placed any orders yet.\n"
         "Tap <tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Shop Now to get started!"
     )
+    
     adm_ac = User.get_data(user_id, "userhAC") or []
     if not adm_ac:
         reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]]}
@@ -1479,6 +1326,7 @@ def cmd_orderksk(message, params, options=None):
 def cmd_profilemmm(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
+    
     first_name = message.get("from", {}).get("first_name", "User")
     balance = Resources.another_res("Balance", user=user_id).value()
     orders = Resources.another_res("Order", user=user_id).value()
@@ -1526,13 +1374,13 @@ def cmd_profilemmm(message, params, options=None):
         pass
     
     send_message(user_id, text, "HTML", reply_markup)
-    
     return True
 
 @command("/spinj")
 def cmd_spinj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
+    
     text = """
 <tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> <b>Watch the full tutorial video below</b>
 
@@ -1554,6 +1402,7 @@ def cmd_spinj(message, params, options=None):
 def cmd_supportj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
+    
     text = """
 ━━━━━━━━━━━━━━━━━━━━
 <tg-emoji emoji-id='5891120964468480450'>💬</tg-emoji> <b>Support — Seller</b> <tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji>
@@ -1580,26 +1429,29 @@ when contacting for faster help.</i>
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# ====== ADMIN COMMANDS ======
-
+# ========== ADMIN COMMANDS (BASIC) ==========
 @command("/admin")
 def cmd_admin(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
+    
     admins = bot_data.get_data("AllBotAdminss") or []
     if not admins:
         admins = [str(user_id)]
         bot_data.save_data("AllBotAdminss", admins)
+    
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
         send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
         return True
+    
     bot_mode = bot_data.get_data("BotMode") or "ON"
     bot_sta = "🟢 On"
     bot_change = "BotMode OFF"
     if bot_mode == "OFF":
         bot_sta = "🔴 Off"
         bot_change = "BotMode ON"
+    
     markup = {
         "inline_keyboard": [
             [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
@@ -1610,6 +1462,7 @@ def cmd_admin(message, params, options=None):
             [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
         ]
     }
+    
     txt = f"""<b>
 👋 Welcome {message.get('from', {}).get('first_name', 'Admin')} 🎉
 
@@ -1617,6 +1470,7 @@ def cmd_admin(message, params, options=None):
 🤖 Bot Status : {bot_sta}
 ━━━━━━━━━━━━━━━
 </b>"""
+    
     if str(message.get("text")) == "/admin":
         send_message(user_id, txt, "HTML", markup)
     else:
@@ -1626,707 +1480,7 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
-@command("/TUSHAR_Admins")
-def cmd_tushar_admins(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    if params and params in admins:
-        admins.remove(params)
-        bot_data.save_data("AllBotAdminss", admins)
-    markup = {"inline_keyboard": []}
-    for admin in admins:
-        markup["inline_keyboard"].append([
-            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
-            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
-        ])
-    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
-    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin AP", "style": "danger"}])
-    text = "<b>Here You Can Manage Your Admins</b>"
-    if options:
-        text = options
-    try:
-        edit_message(user_id, msg_id, text, "HTML", markup)
-    except:
-        send_message(user_id, text, "HTML", markup)
-    return True
-
-@command("/TUSHAR_AddAdmin")
-def cmd_tushar_addadmin(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
-    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
-    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
-    return True
-
-@command("/TUSHAR_AddAdmin1")
-def cmd_tushar_addadmin1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    new_admin = message.get("text")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    if new_admin in admins:
-        send_message(user_id, "Admin Already Exists")
-    else:
-        admins.append(new_admin)
-        bot_data.save_data("AllBotAdminss", admins)
-        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/TUSHAR_AdminAction")
-def cmd_tushar_adminaction(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    adm_ac = bot_data.get_data("AdmAC") or []
-    latest_10 = adm_ac[-10:][::-1]
-    if latest_10:
-        send_message(user_id, "\n\n".join(latest_10), "HTML")
-    else:
-        send_message(user_id, "No admin actions recorded yet.")
-    return True
-
-@command("/ChangeAnyUserBal")
-def cmd_change_balance(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    send_message(
-        user_id,
-        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format : <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
-        "HTML"
-    )
-    pending_commands[user_id] = "/ChangeAnyUserBal2"
-    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
-    return True
-
-@command("/ChangeAnyUserBal2")
-def cmd_change_balance2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    parts = text.split(" ")
-    if len(parts) < 2:
-        send_message(user_id, "Invalid format. Use: user_id amount")
-        return True
-    target_user = parts[0]
-    try:
-        amount = float(parts[1])
-    except:
-        send_message(user_id, "Invalid amount")
-        return True
-    bal = Resources.another_res("Balance", user=target_user)
-    bal.add(amount)
-    easy_time = get_easy_time()
-    act = f"Added {amount} Rs To {target_user} Account"
-    adm_ac = bot_data.get_data("AdmAC") or []
-    adm_ac.append(
-        f"<b>📆 Time:</b> {easy_time}\n"
-        f"👥 <b>By {message.get('from', {}).get('first_name', 'Admin')}</b> [ID: <code>{user_id}</code>]\n"
-        f"🔍<b> Action: </b> {act}"
-    )
-    bot_data.save_data("AdmAC", adm_ac)
-    send_message(
-        user_id,
-        f"<b>💴 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\n💰 Final Balance = {bal.value()}</b>",
-        "HTML"
-    )
-    send_message(
-        target_user,
-        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/addreseller")
-def cmd_addreseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    send_message(user_id, "📩 Send me id reseller", "HTML")
-    pending_commands[user_id] = "/add_reseller_process"
-    pending_commands_store.set(user_id, "/add_reseller_process")
-    return True
-
-@command("/add_reseller_process")
-def cmd_add_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user in [str(u) for u in resellers]:
-        send_message(user_id, "User already a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers.append(target_user)
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
-    try:
-        send_message(target_user, "You are now a Reseller", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/removereseller")
-def cmd_removereseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    send_message(user_id, "Send me reseller id to remove", "HTML")
-    pending_commands[user_id] = "/remove_reseller_process"
-    pending_commands_store.set(user_id, "/remove_reseller_process")
-    return True
-
-@command("/remove_reseller_process")
-def cmd_remove_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user not in [str(u) for u in resellers]:
-        send_message(user_id, "User is not a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = [u for u in resellers if str(u) != target_user]
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
-    try:
-        send_message(target_user, "You are no longer a Reseller.", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/resellerlist")
-def cmd_resellerlist(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    resellers = bot_data.get_data("resellers_list") or []
-    if not resellers:
-        send_message(user_id, "No resellers found.")
-        return True
-    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
-    count = 1
-    for res in resellers:
-        text += f"{count}. ID: <code>{res}</code>\n"
-        count += 1
-    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
-    send_message(user_id, text, "HTML")
-    return True
-
-@command("/setshop_psue")
-def cmd_setshop_psue(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    markup = {
-        "inline_keyboard": [
-            [{"text": "DRIP CLIENT MOD", "callback_data": "/SHOPADMIN_P1", "style": "success"}],
-            [{"text": "SILENT CHEATS ANDROID", "callback_data": "/SHOPADMIN_P3", "style": "success"}],
-            [{"text": "PRIME MOD", "callback_data": "/SHOPADMIN_P2", "style": "success"}],
-            [{"text": "Back", "callback_data": "/admin AP", "style": "danger"}]
-        ]
-    }
-    txt = f"""<b>
-Welcome {message.get('from', {}).get('first_name', 'Admin')}
-
-━━━━━━━━━━━━━━━
-SHOP MOOD
-━━━━━━━━━━━━━━━
-</b>"""
-    try:
-        edit_message(user_id, msg_id, txt, "HTML", markup)
-    except:
-        send_message(user_id, txt, "HTML", markup)
-    return True
-
-@command("/SHOPADMIN_P1")
-def cmd_shopadmin_p1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        return True
-    def get_old(day):
-        price = bot_data.get_data(f"drip_{day}d_price") or 0
-        reseller = bot_data.get_data(f"drip_{day}d_reseller_price") or 0
-        stock = bot_data.get_data(f"drip_{day}d_keys") or []
-        if not stock:
-            st = "Out of Stock"
-        elif len(stock) <= 2:
-            st = f"Only {len(stock)} left!"
-        else:
-            st = "In Stock"
-        return price, reseller, st
-    p1, r1, s1 = get_old(1)
-    p3, r3, s3 = get_old(3)
-    p7, r7, s7 = get_old(7)
-    p15, r15, s15 = get_old(15)
-    p30, r30, s30 = get_old(30)
-    txt = (
-        "DRIP CLIENT MOD\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"1D Reseller: ₹{r1}\n1D Price: ₹{p1}\n{s1}\n\n"
-        f"3D Reseller: ₹{r3}\n3D Price: ₹{p3}\n{s3}\n\n"
-        f"7D Reseller: ₹{r7}\n7D Price: ₹{p7}\n{s7}\n\n"
-        f"15D Reseller: ₹{r15}\n15D Price: ₹{p15}\n{s15}\n\n"
-        f"30D Reseller: ₹{r30}\n30D Price: ₹{p30}\n{s30}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\nSelect duration below:"
-    )
-    markup = {
-        "inline_keyboard": [
-            [{"text": "RESELLER 1D", "callback_data": "/SHOPADD_PM 6", "style": "success"}],
-            [{"text": "1D Price", "callback_data": "/SHOPADD_PM 1", "style": "success"}, {"text": "Add 1D Key", "callback_data": "/SHOPADDKEY 1", "style": "success"}],
-            [{"text": "RESELLER 3D", "callback_data": "/SHOPADD_PM 7", "style": "success"}],
-            [{"text": "3D Price", "callback_data": "/SHOPADD_PM 2", "style": "success"}, {"text": "Add 3D Key", "callback_data": "/SHOPADDKEY 2", "style": "success"}],
-            [{"text": "RESELLER 7D", "callback_data": "/SHOPADD_PM 8", "style": "success"}],
-            [{"text": "7D Price", "callback_data": "/SHOPADD_PM 3", "style": "success"}, {"text": "Add 7D Key", "callback_data": "/SHOPADDKEY 3", "style": "success"}],
-            [{"text": "RESELLER 15D", "callback_data": "/SHOPADD_PM 9", "style": "success"}],
-            [{"text": "15D Price", "callback_data": "/SHOPADD_PM 4", "style": "success"}, {"text": "Add 15D Key", "callback_data": "/SHOPADDKEY 4", "style": "success"}],
-            [{"text": "RESELLER 30D", "callback_data": "/SHOPADD_PM 10", "style": "success"}],
-            [{"text": "30D Price", "callback_data": "/SHOPADD_PM 5", "style": "success"}, {"text": "Add 30D Key", "callback_data": "/SHOPADDKEY 5", "style": "success"}],
-            [{"text": "Back", "callback_data": "/setshop_psue", "style": "danger"}]
-        ]
-    }
-    try:
-        edit_message(user_id, msg_id, txt, "HTML", markup)
-    except:
-        send_message(user_id, txt, "HTML", markup)
-    return True
-
-@command("/SHOPADMIN_P2")
-def cmd_shopadmin_p2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        return True
-    def get_old(day):
-        price = bot_data.get_data(f"HG_{day}d_price") or 0
-        reseller = bot_data.get_data(f"HG_{day}d_reseller_price") or 0
-        stock = bot_data.get_data(f"HG_{day}d_keys") or []
-        if not stock:
-            st = "Out of Stock"
-        elif len(stock) <= 2:
-            st = f"Only {len(stock)} left!"
-        else:
-            st = "In Stock"
-        return price, reseller, st
-    p1, r1, s1 = get_old(1)
-    p3, r3, s3 = get_old(3)
-    p7, r7, s7 = get_old(7)
-    p14, r14, s14 = get_old(14)
-    p21, r21, s21 = get_old(21)
-    txt = (
-        "PRIME MOD\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"1D Reseller: ₹{r1}\n1D Price: ₹{p1}\n{s1}\n\n"
-        f"3D Reseller: ₹{r3}\n3D Price: ₹{p3}\n{s3}\n\n"
-        f"7D Reseller: ₹{r7}\n7D Price: ₹{p7}\n{s7}\n\n"
-        f"14D Reseller: ₹{r14}\n14D Price: ₹{p14}\n{s14}\n\n"
-        f"21D Reseller: ₹{r21}\n21D Price: ₹{p21}\n{s21}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\nSelect duration below:"
-    )
-    markup = {
-        "inline_keyboard": [
-            [{"text": "RESELLER 1D", "callback_data": "/SHOPADD_PM 316", "style": "success"}],
-            [{"text": "1D Price", "callback_data": "/SHOPADD_PM 311", "style": "success"}, {"text": "Add 1D Key", "callback_data": "/SHOPADDKEY 306", "style": "success"}],
-            [{"text": "RESELLER 3D", "callback_data": "/SHOPADD_PM 317", "style": "success"}],
-            [{"text": "3D Price", "callback_data": "/SHOPADD_PM 312", "style": "success"}, {"text": "Add 3D Key", "callback_data": "/SHOPADDKEY 307", "style": "success"}],
-            [{"text": "RESELLER 7D", "callback_data": "/SHOPADD_PM 318", "style": "success"}],
-            [{"text": "7D Price", "callback_data": "/SHOPADD_PM 313", "style": "success"}, {"text": "Add 7D Key", "callback_data": "/SHOPADDKEY 308", "style": "success"}],
-            [{"text": "RESELLER 14D", "callback_data": "/SHOPADD_PM 319", "style": "success"}],
-            [{"text": "14D Price", "callback_data": "/SHOPADD_PM 314", "style": "success"}, {"text": "Add 14D Key", "callback_data": "/SHOPADDKEY 309", "style": "success"}],
-            [{"text": "RESELLER 21D", "callback_data": "/SHOPADD_PM 320", "style": "success"}],
-            [{"text": "21D Price", "callback_data": "/SHOPADD_PM 315", "style": "success"}, {"text": "Add 21D Key", "callback_data": "/SHOPADDKEY 310", "style": "success"}],
-            [{"text": "Back", "callback_data": "/setshop_psue", "style": "danger"}]
-        ]
-    }
-    try:
-        edit_message(user_id, msg_id, txt, "HTML", markup)
-    except:
-        send_message(user_id, txt, "HTML", markup)
-    return True
-
-@command("/SHOPADMIN_P3")
-def cmd_shopadmin_p3(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        return True
-    def get_old(day):
-        price = bot_data.get_data(f"SILENT_{day}d_price") or 0
-        reseller = bot_data.get_data(f"SILENT_{day}d_reseller_price") or 0
-        stock = bot_data.get_data(f"SILENT_{day}d_keys") or []
-        if not stock:
-            st = "Out of Stock"
-        elif len(stock) <= 2:
-            st = f"Only {len(stock)} left!"
-        else:
-            st = "In Stock"
-        return price, reseller, st
-    p1, r1, s1 = get_old(1)
-    p3, r3, s3 = get_old(3)
-    p7, r7, s7 = get_old(7)
-    p14, r14, s14 = get_old(14)
-    p28, r28, s28 = get_old(28)
-    txt = (
-        "SILENT CHEATS ANDROID\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"1D Reseller: ₹{r1}\n1D Price: ₹{p1}\n{s1}\n\n"
-        f"3D Reseller: ₹{r3}\n3D Price: ₹{p3}\n{s3}\n\n"
-        f"7D Reseller: ₹{r7}\n7D Price: ₹{p7}\n{s7}\n\n"
-        f"14D Reseller: ₹{r14}\n14D Price: ₹{p14}\n{s14}\n\n"
-        f"28D Reseller: ₹{r28}\n28D Price: ₹{p28}\n{s28}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\nSelect duration below:"
-    )
-    markup = {
-        "inline_keyboard": [
-            [{"text": "RESELLER 1D", "callback_data": "/SHOPADD_PM 221", "style": "success"}],
-            [{"text": "1D Price", "callback_data": "/SHOPADD_PM 191", "style": "success"}, {"text": "Add 1D Key", "callback_data": "/SHOPADDKEY 101", "style": "success"}],
-            [{"text": "RESELLER 3D", "callback_data": "/SHOPADD_PM 22", "style": "success"}],
-            [{"text": "3D Price", "callback_data": "/SHOPADD_PM 19", "style": "success"}, {"text": "Add 3D Key", "callback_data": "/SHOPADDKEY 10", "style": "success"}],
-            [{"text": "RESELLER 7D", "callback_data": "/SHOPADD_PM 23", "style": "success"}],
-            [{"text": "7D Price", "callback_data": "/SHOPADD_PM 20", "style": "success"}, {"text": "Add 7D Key", "callback_data": "/SHOPADDKEY 11", "style": "success"}],
-            [{"text": "RESELLER 14D", "callback_data": "/SHOPADD_PM 24", "style": "success"}],
-            [{"text": "14D Price", "callback_data": "/SHOPADD_PM 21", "style": "success"}, {"text": "Add 14D Key", "callback_data": "/SHOPADDKEY 12", "style": "success"}],
-            [{"text": "RESELLER 28D", "callback_data": "/SHOPADD_PM 225", "style": "success"}],
-            [{"text": "28D Price", "callback_data": "/SHOPADD_PM 226", "style": "success"}, {"text": "Add 28D Key", "callback_data": "/SHOPADDKEY 13", "style": "success"}],
-            [{"text": "Back", "callback_data": "/setshop_psue", "style": "danger"}]
-        ]
-    }
-    try:
-        edit_message(user_id, msg_id, txt, "HTML", markup)
-    except:
-        send_message(user_id, txt, "HTML", markup)
-    return True
-
-@command("/SHOPADDKEY")
-def cmd_shopaddkey(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    if not params:
-        send_message(user_id, "Usage:\n/SHOPADDKEY 1 -> Drip 1d\n/SHOPADDKEY 2 -> Stricks 10d")
-        return True
-    key_map = {
-        "1": ("drip_1d_keys", "DRIP CLIENT APK MOD\n1d Key"),
-        "2": ("drip_3d_keys", "DRIP CLIENT APK MOD\n3d Key"),
-        "3": ("drip_7d_keys", "DRIP CLIENT APK MOD\n7d Key"),
-        "4": ("drip_15d_keys", "DRIP CLIENT APK MOD\n15d Key"),
-        "5": ("drip_30d_keys", "DRIP CLIENT APK MOD\n30d Key"),
-        "6": ("HG_1d_keys", "PRIME-HOOK-MOD\n1d Key"),
-        "7": ("HG_7d_keys", "HG-CHEATS ANDROID\n7d Key"),
-        "8": ("HG_10d_keys", "HG-CHEATS ANDROID\n10d Key"),
-        "9": ("HG_30d_keys", "HG-CHEATS ANDROID\n30d Key"),
-        "10": ("SILENT_3d_keys", "SILENT CHEATS ANDROID\n3d Key"),
-        "11": ("SILENT_7d_keys", "SILENT CHEATS ANDROID\n7d Key"),
-        "12": ("SILENT_14d_keys", "SILENT CHEATS ANDROID\n14d Key"),
-        "13": ("SILENT_28d_keys", "SILENT CHEATS ANDROID\n28d Key"),
-        "14": ("PRIME_5d_keys", "PRIME-HOOK-MOD APK\n5d Key"),
-        "15": ("PRIME_10d_keys", "PRIME-HOOK-MOD APK\n10d Key"),
-        "16": ("ROOT_10d_keys", "BR MOD ROOT\n10d Key"),
-        "17": ("ROOT_20d_keys", "BR MOD ROOT\n20d Key"),
-        "101": ("SILENT_1d_keys", "SILENT CHEATS ANDROID\n1d Key"),
-        "306": ("HG_1d_keys", "PRIME MOD\n1d Key"),
-        "307": ("HG_3d_keys", "PRIME MOD\n3d Key"),
-        "308": ("HG_7d_keys", "PRIME MOD\n7d Key"),
-        "309": ("HG_14d_keys", "PRIME MOD\n14d Key"),
-        "310": ("HG_21d_keys", "PRIME MOD\n21d Key"),
-    }
-    if params in key_map:
-        key_name, title = key_map[params]
-        send_message(user_id, f"<b>{title}</b>\n\nSend key\n\nType /cancel to stop.", "HTML")
-        pending_commands[user_id] = "/SHOPADDKEY1"
-        pending_commands_store.set(user_id, "/SHOPADDKEY1")
-        User.save_data(user_id, "shopaddkey_options", {"key": key_name, "title": title})
-    else:
-        send_message(user_id, "Invalid option.")
-    return True
-
-@command("/SHOPADDKEY1")
-def cmd_shopaddkey1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    if text == "/cancel":
-        send_message(user_id, "Cancelled", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    opts = User.get_data(user_id, "shopaddkey_options")
-    if not opts:
-        send_message(user_id, "System Error: Key type missing.")
-        return True
-    key_name = opts.get("key")
-    title = opts.get("title", "Product")
-    if len(text) < 3:
-        send_message(user_id, "Invalid Key. Send again or /cancel", "HTML")
-        return True
-    existing = bot_data.get_data(key_name) or []
-    if isinstance(existing, str):
-        existing = [existing]
-    existing.append(text)
-    bot_data.save_data(key_name, existing)
-    send_message(
-        user_id,
-        f"Key Added Successfully\n\n{title}\nKey: <code>{text}</code>\nTotal Stock: {len(existing)}",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/SHOPADD_PM")
-def cmd_shopadd_pm(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if not params:
-        send_message(user_id, "Usage:\n/SHOPADD_PM <number>")
-        return True
-    products = {
-        "1": ("drip_1d_price", "DRIP CLIENT APK MOD\n1 Days"),
-        "2": ("drip_3d_price", "DRIP CLIENT APK MOD\n3 Days"),
-        "3": ("drip_7d_price", "DRIP CLIENT APK MOD\n7 Days"),
-        "4": ("drip_15d_price", "DRIP CLIENT APK MOD\n15 Days"),
-        "5": ("drip_30d_price", "DRIP CLIENT APK MOD\n30 Days"),
-        "6": ("drip_1d_reseller_price", "RESELLER PANEL\nDRIP CLIENT APK MOD\n1 Days"),
-        "7": ("drip_3d_reseller_price", "RESELLER PANEL\nDRIP CLIENT APK MOD\n3 Days"),
-        "8": ("drip_7d_reseller_price", "RESELLER PANEL\nDRIP CLIENT APK MOD\n7 Days"),
-        "9": ("drip_15d_reseller_price", "RESELLER PANEL\nDRIP CLIENT APK MOD\n15 Days"),
-        "10": ("drip_30d_reseller_price", "RESELLER PANEL\nDRIP CLIENT APK MOD\n30 Days"),
-        "11": ("HG_1d_price", "HG-CHEATS ANDROID\n1 Days"),
-        "12": ("HG_7d_price", "HG-CHEATS ANDROID\n7 Days"),
-        "13": ("HG_10d_price", "HG-CHEATS ANDROID\n10 Days"),
-        "14": ("HG_30d_price", "HG-CHEATS ANDROID\n30 Days"),
-        "15": ("HG_1d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n1 Days"),
-        "16": ("HG_7d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n7 Days"),
-        "17": ("HG_10d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n10 Days"),
-        "18": ("HG_30d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n30 Days"),
-        "19": ("SILENT_3d_price", "SILENT CHEATS ANDROID\n3 Days"),
-        "20": ("SILENT_7d_price", "SILENT CHEATS ANDROID\n7 Days"),
-        "21": ("SILENT_14d_price", "SILENT CHEATS ANDROID\n14 Days"),
-        "22": ("SILENT_3d_reseller_price", "RESELLER PANEL\nSILENT CHEATS ANDROID\n3 Days"),
-        "23": ("SILENT_7d_reseller_price", "RESELLER PANEL\nSILENT CHEATS ANDROID\n7 Days"),
-        "24": ("SILENT_14d_reseller_price", "RESELLER PANEL\nSILENT CHEATS ANDROID\n14 Days"),
-        "25": ("SILENT_28d_price", "SILENT CHEATS ANDROID\n28 Days"),
-        "26": ("SILENT_28d_reseller_price", "RESELLER PANEL\nSILENT CHEATS ANDROID\n28 Days"),
-        "27": ("PRIME_5d_price", "PRIME-HOOK-MOD APK\n5 Days"),
-        "28": ("PRIME_10d_price", "PRIME-HOOK-MOD APK\n10 Days"),
-        "29": ("PRIME_5d_reseller_price", "RESELLER PANEL\nPRIME-HOOK-MOD APK\n5 Days"),
-        "30": ("PRIME_10d_reseller_price", "RESELLER PANEL\nPRIME-HOOK-MOD APK\n10 Days"),
-        "31": ("ROOT_10d_price", "BR MOD ROOT\n10 Days"),
-        "32": ("ROOT_20d_price", "BR MOD ROOT\n20 Days"),
-        "33": ("ROOT_10d_reseller_price", "RESELLER PANEL\nBR MOD ROOT\n10 Days"),
-        "34": ("ROOT_20d_reseller_price", "RESELLER PANEL\nBR MOD ROOT\n20 Days"),
-        "191": ("SILENT_1d_price", "SILENT CHEATS ANDROID\n1 Days"),
-        "221": ("SILENT_1d_reseller_price", "RESELLER PANEL\nSILENT CHEATS ANDROID\n1 Days"),
-        "311": ("HG_1d_price", "HG-CHEATS ANDROID\n1 Days"),
-        "312": ("HG_3d_price", "HG-CHEATS ANDROID\n3 Days"),
-        "313": ("HG_7d_price", "HG-CHEATS ANDROID\n7 Days"),
-        "314": ("HG_14d_price", "HG-CHEATS ANDROID\n14 Days"),
-        "315": ("HG_21d_price", "HG-CHEATS ANDROID\n21 Days"),
-        "316": ("HG_1d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n1 Days"),
-        "317": ("HG_3d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n3 Days"),
-        "318": ("HG_7d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n7 Days"),
-        "319": ("HG_14d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n14 Days"),
-        "320": ("HG_21d_reseller_price", "RESELLER PANEL\nHG-CHEATS ANDROID\n21 Days"),
-        "225": ("SILENT_28d_reseller_price", "RESELLER PANEL\nSILENT CHEATS ANDROID\n28 Days"),
-        "226": ("SILENT_28d_price", "SILENT CHEATS ANDROID\n28 Days"),
-    }
-    if params in products:
-        data_name, title = products[params]
-        User.save_data(user_id, "shopaddpm_options", {"key": data_name, "title": title})
-        send_message(
-            user_id,
-            f"<b>{title}</b>\n\nSend key price (numbers only).\n\nType /cancel to stop.",
-            "HTML"
-        )
-        pending_commands[user_id] = "/SHOPADD_PM2"
-        pending_commands_store.set(user_id, "/SHOPADD_PM2")
-    else:
-        send_message(user_id, "Invalid option number.")
-    return True
-
-@command("/SHOPADD_PM2")
-def cmd_shopadd_pm2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    if text == "/cancel":
-        send_message(user_id, "Cancelled", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    opts = User.get_data(user_id, "shopaddpm_options")
-    if not opts:
-        send_message(user_id, "System Error")
-        return True
-    try:
-        rate = float(text)
-        price_key = opts.get("key")
-        title = opts.get("title")
-        bot_data.save_data(price_key, rate)
-        easy_time = get_easy_time()
-        act = f"{title} Price = ₹{rate}"
-        adm_ac = bot_data.get_data("AdmAC") or []
-        adm_ac.append(
-            f"Time: {easy_time}\n"
-            f"By {message.get('from', {}).get('first_name', 'Admin')} [ID: <code>{user_id}</code>]\n"
-            f"Action: {act}"
-        )
-        bot_data.save_data("AdmAC", adm_ac)
-        send_message(
-            user_id,
-            f"Successfully Set\n\n{title} Price = ₹{rate}",
-            "HTML"
-        )
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-    except:
-        send_message(
-            user_id,
-            "Invalid number.\nSend numeric value like 90\n\nType /cancel to stop.",
-            "HTML"
-        )
-    return True
-
-@command("/broadcast")
-def cmd_broadcast(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in admins:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
-        return True
-    
-    all_users = user_data_store.get_all_users()
-    all_users = list(set(all_users))
-    
-    User.save_data(user_id, "broadcast_users", all_users)
-    
-    send_message(
-        user_id, 
-        f"📢 <b>BROADCAST MODE</b>\n\n"
-        f"👥 Total Users: {len(all_users)}\n\n"
-        f"Send ANY message.\n"
-        f"Type /cancel to cancel.",
-        "HTML"
-    )
-    pending_commands[user_id] = "/broadcast_send_media"
-    pending_commands_store.set(user_id, "/broadcast_send_media")
-    return True
-
-@command("/broadcast_send_media")
-def cmd_broadcast_send_media(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in admins:
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    if message.get("text") and message.get("text", "").strip() == "/cancel":
-        send_message(user_id, "❌ Cancelled", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    users = User.get_data(user_id, "broadcast_users") or []
-    if not users:
-        send_message(user_id, "No users to broadcast to.", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    from_chat_id = message.get("chat", {}).get("id")
-    msg_id_to_forward = message.get("message_id")
-    
-    success = 0
-    failed = 0
-    
-    for target_user in users:
-        try:
-            forward_message(target_user, from_chat_id, msg_id_to_forward)
-            success += 1
-        except:
-            failed += 1
-        time.sleep(0.1)
-    
-    send_message(
-        user_id, 
-        f"✅ <b>Broadcast Complete</b>\n\n"
-        f"📤 Success: {success}\n"
-        f"❌ Failed: {failed}\n"
-        f"👥 Total: {len(users)}",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/setMyCommands")
-def cmd_set_commands(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    commands_list = [{"command": "start", "description": "START TO BUY"}]
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setMyCommands"
-    try:
-        response = requests.post(url, json={"commands": commands_list})
-        send_message(user_id, str(response.json()))
-    except:
-        send_message(user_id, "Error setting commands")
-    return True
-
+# ========== MAIN ==========
 def handle_update(update):
     if "callback_query" in update:
         callback = update["callback_query"]
@@ -2334,9 +1488,11 @@ def handle_update(update):
         user_id = callback.get("from", {}).get("id")
         msg_id = callback.get("message", {}).get("message_id")
         answer_callback(callback.get("id"))
+        
         parts = data.split(" ")
         cmd = parts[0]
         params = " ".join(parts[1:]) if len(parts) > 1 else None
+        
         msg = {
             "message_id": msg_id,
             "from": callback.get("from", {}),
@@ -2345,16 +1501,19 @@ def handle_update(update):
             "text": data,
             "reply_markup": callback.get("message", {}).get("reply_markup")
         }
+        
         if cmd in commands:
             try:
                 commands[cmd](msg, params)
             except Exception as e:
                 print(f"Callback error: {e}")
         return
+    
     if "message" in update:
         msg = update["message"]
         user_id = msg.get("from", {}).get("id")
         text = msg.get("text", "")
+        
         if user_id in pending_commands:
             pending_cmd = pending_commands[user_id]
             if pending_cmd in commands:
@@ -2363,6 +1522,7 @@ def handle_update(update):
                 except Exception as e:
                     print(f"Pending command error: {e}")
                 return
+        
         if text.startswith("/"):
             parts = text.split(" ")
             cmd = parts[0]
@@ -2374,11 +1534,10 @@ def handle_update(update):
                     print(f"Command error: {e}")
 
 def main():
-    print("Bot Started with MongoDB!")
-    print(f"Connected to MongoDB: {DB_NAME}")
-    print(f"Registered commands: {list(commands.keys())}")
+    print("🤖 Bot Started with MongoDB!")
+    print(f"📁 Connected to MongoDB: {DB_NAME}")
+    print(f"📋 Registered commands: {list(commands.keys())}")
     
-    # Cleanup old pending orders
     payment_orders_store.cleanup_old_orders(30)
     
     last_update_id = 0
@@ -2386,17 +1545,17 @@ def main():
         try:
             updates = get_updates(last_update_id + 1)
             if updates:
-                print(f"Received {len(updates)} updates")
+                print(f"📨 Received {len(updates)} updates")
             for update in updates:
                 if "update_id" in update:
                     last_update_id = update["update_id"]
                 handle_update(update)
             time.sleep(0.5)
         except KeyboardInterrupt:
-            print("Bot stopped.")
+            print("🛑 Bot stopped.")
             break
         except Exception as e:
-            print(f"Error in main loop: {e}")
+            print(f"❌ Error in main loop: {e}")
             time.sleep(1)
 
 if __name__ == "__main__":
