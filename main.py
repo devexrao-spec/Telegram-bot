@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE WITH PREMIUM EMOJIS & STYLES
+# tusharbot.py - COMPLETE WITH PREMIUM EMOJIS & USER-SPECIFIC PAYMENT
 import requests
 import json
 import time
@@ -378,10 +378,20 @@ def command(name):
     return decorator
 
 PLAN_NAMES = {
+    "1": "1 Day",
+    "2": "3 Days", 
+    "3": "7 Days",
+    "4": "15 Days",
+    "5": "30 Days",
     "6": "1 Day",
     "7": "3 Days",
     "8": "7 Days",
     "9": "14 Days",
+    "10": "1 Day",
+    "11": "3 Days",
+    "12": "7 Days",
+    "13": "14 Days",
+    "14": "21 Days",
     "15": "28 Days",
 }
 
@@ -596,7 +606,7 @@ def cmd_backkkk(message, params, options=None):
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# ========== SHOP PRODUCTS WITH EMOJIS ==========
+# ========== SHOP PRODUCTS ==========
 @command("/SHOP_P1")
 def cmd_shop_p1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -870,7 +880,7 @@ def cmd_buybahha(message, params, options):
     User.save_data(user_id, "userhAC", adm_ac)
     return True
 
-# ========== FIXED: AUTOBUY1 ==========
+# ========== FIXED: AUTOBUY1 - USER-SPECIFIC ==========
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
@@ -924,6 +934,7 @@ def cmd_autobuy1(message, params, options=None):
     pending_payments[user_id] = pending_data
     pending_payments_store.set(user_id, pending_data)
     
+    # ========== CLEAN CAPTION WITH ORDER ID ==========
     caption = (
         f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> INSUFFICIENT BALANCE</blockquote>\n\n"
         f"┣ Product: {pt}\n"
@@ -932,18 +943,57 @@ def cmd_autobuy1(message, params, options=None):
         f"┣ Your Balance: ₹{balance}\n"
         f"┗ Need: ₹{need}\n\n"
         f"Scan the QR and complete payment.\n\n"
-        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b> <code>{order_id}</code>\n\n"
-        f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
+        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b>\n"
+        f"<code>{order_id}</code>\n\n"
+        f"<b>📌 IMPORTANT:</b>\n"
+        f"<i>Copy this Order ID and paste in UPI note while paying!</i>\n\n"
+        f"After payment, tap VERIFY PAYMENT button below."
     )
     
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [{"text": "CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
+            [{"text": "📋 COPY ORDER ID", "callback_data": f"/copy_order {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "success"}],
+            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
         ]
     }
     
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
+    return True
+
+# ========== COPY ORDER ID COMMAND ==========
+@command("/copy_order")
+def cmd_copy_order(message, params, options=None):
+    user_id = str(message.get("from", {}).get("id"))
+    msg_id = message.get("message_id")
+    
+    order_id = params
+    
+    if not order_id:
+        send_message(user_id, "No order ID found.")
+        return True
+    
+    # Check if order belongs to this user
+    order_data = payment_orders_store.get_order(order_id)
+    if not order_data:
+        send_message(user_id, "Invalid order ID.")
+        return True
+    
+    order_owner = order_data.get("user_id")
+    if str(order_owner) != str(user_id):
+        send_message(user_id, "❌ This order does not belong to you!")
+        return True
+    
+    # Send order ID in a way that's easy to copy
+    send_message(
+        user_id,
+        f"<b><tg-emoji emoji-id='6278116707751956084'>📋</tg-emoji> Order ID Copied!</b>\n\n"
+        f"<code>{order_id}</code>\n\n"
+        f"<i>Paste this in UPI note while paying.</i>\n\n"
+        f"Then tap <b>VERIFY PAYMENT</b> button.",
+        "HTML"
+    )
+    
     return True
 
 # ========== FIXED: VERIFY PAYMENT ==========
@@ -1051,7 +1101,7 @@ def cmd_cancel(message, params, options=None):
     send_message(user_id, "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Cancelled", "HTML")
     return True
 
-# ========== ADD PAYMENT WITH EMOJIS ==========
+# ========== ADD PAYMENT ==========
 current_amount = {}
 
 @command("/addpayment")
@@ -1276,20 +1326,24 @@ def cmd_addpayment_qr(message):
         f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED</blockquote>\n"
         f"Scan the QR and complete payment.\n\n"
         f"Amount: ₹{amount}\n\n"
-        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b> <code>{order_id}</code>\n\n"
-        f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
+        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b>\n"
+        f"<code>{order_id}</code>\n\n"
+        f"<b>📌 IMPORTANT:</b>\n"
+        f"<i>Copy this Order ID and paste in UPI note while paying!</i>\n\n"
+        f"After payment, tap VERIFY PAYMENT button below."
     )
     
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [{"text": "CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
+            [{"text": "📋 COPY ORDER ID", "callback_data": f"/copy_order {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "success"}],
+            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
         ]
     }
     
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
 
-# ========== OTHER COMMANDS WITH EMOJIS ==========
+# ========== OTHER COMMANDS ==========
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1429,7 +1483,7 @@ when contacting for faster help.</i>
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# ========== ADMIN COMMANDS (BASIC) ==========
+# ========== ADMIN COMMANDS ==========
 @command("/admin")
 def cmd_admin(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1478,6 +1532,228 @@ def cmd_admin(message, params, options=None):
             edit_message(user_id, msg_id, txt, "HTML", markup)
         except:
             send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/TUSHAR_Admins")
+def cmd_tushar_admins(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    if params and params in admins:
+        admins.remove(params)
+        bot_data.save_data("AllBotAdminss", admins)
+    
+    markup = {"inline_keyboard": []}
+    for admin in admins:
+        markup["inline_keyboard"].append([
+            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
+            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
+        ])
+    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
+    
+    text = "<b>Here You Can Manage Your Admins</b>"
+    try:
+        edit_message(user_id, msg_id, text, "HTML", markup)
+    except:
+        send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/TUSHAR_AddAdmin")
+def cmd_tushar_addadmin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
+    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
+    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
+    return True
+
+@command("/TUSHAR_AddAdmin1")
+def cmd_tushar_addadmin1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    new_admin = message.get("text")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    if new_admin in admins:
+        send_message(user_id, "Admin Already Exists")
+    else:
+        admins.append(new_admin)
+        bot_data.save_data("AllBotAdminss", admins)
+        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/ChangeAnyUserBal")
+def cmd_change_balance(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        return True
+    
+    send_message(
+        user_id,
+        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format : <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/ChangeAnyUserBal2"
+    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
+    return True
+
+@command("/ChangeAnyUserBal2")
+def cmd_change_balance2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    parts = text.split(" ")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid format. Use: user_id amount")
+        return True
+    
+    target_user = parts[0]
+    try:
+        amount = float(parts[1])
+    except:
+        send_message(user_id, "Invalid amount")
+        return True
+    
+    bal = Resources.another_res("Balance", user=target_user)
+    bal.add(amount)
+    easy_time = get_easy_time()
+    
+    send_message(
+        user_id,
+        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
+        "HTML"
+    )
+    send_message(
+        target_user,
+        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
+        "HTML"
+    )
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ========== SHOP SETUP (BASIC) ==========
+@command("/setshop_psue")
+def cmd_setshop_psue(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    markup = {
+        "inline_keyboard": [
+            [{"text": "📦 DRIP CLIENT", "callback_data": "/SHOPADMIN_P1", "style": "success"}],
+            [{"text": "📦 SILENT CHEATS", "callback_data": "/SHOPADMIN_P3", "style": "success"}],
+            [{"text": "📦 PRIME MOD", "callback_data": "/SHOPADMIN_P2", "style": "success"}],
+            [{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}]
+        ]
+    }
+    
+    txt = f"<b>Welcome {message.get('from', {}).get('first_name', 'Admin')}\n━━━━━━━━━━━━━━━\nSHOP MOOD\n━━━━━━━━━━━━━━━</b>"
+    
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+# ========== BROADCAST ==========
+@command("/broadcast")
+def cmd_broadcast(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        return True
+    
+    all_users = user_data_store.get_all_users()
+    all_users = list(set(all_users))
+    
+    User.save_data(user_id, "broadcast_users", all_users)
+    
+    send_message(
+        user_id, 
+        f"📢 <b>BROADCAST MODE</b>\n\n"
+        f"👥 Total Users: {len(all_users)}\n\n"
+        f"Send ANY message.\n"
+        f"Type /cancel to cancel.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/broadcast_send_media"
+    pending_commands_store.set(user_id, "/broadcast_send_media")
+    return True
+
+@command("/broadcast_send_media")
+def cmd_broadcast_send_media(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    if message.get("text") and message.get("text", "").strip() == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    users = User.get_data(user_id, "broadcast_users") or []
+    if not users:
+        send_message(user_id, "No users to broadcast to.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    from_chat_id = message.get("chat", {}).get("id")
+    msg_id_to_forward = message.get("message_id")
+    
+    success = 0
+    failed = 0
+    
+    for target_user in users:
+        try:
+            forward_message(target_user, from_chat_id, msg_id_to_forward)
+            success += 1
+        except:
+            failed += 1
+        time.sleep(0.1)
+    
+    send_message(
+        user_id, 
+        f"✅ <b>Broadcast Complete</b>\n\n"
+        f"📤 Success: {success}\n"
+        f"❌ Failed: {failed}\n"
+        f"👥 Total: {len(users)}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
     return True
 
 # ========== MAIN ==========
