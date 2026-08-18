@@ -632,7 +632,6 @@ def cmd_shopnawkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     
-    # Get all active products from config
     products = products_config_store.get_all_products()
     
     text = """
@@ -700,7 +699,6 @@ def cmd_backkkk(message, params, options=None):
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# Dynamic product handlers - they use the products config
 @command("/SHOP_P1")
 @command("/SHOP_P2")
 @command("/SHOP_P3")
@@ -709,13 +707,12 @@ def cmd_shop_product(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     
-    # Determine which product this is
     cmd = message.get("text", "").split(" ")[0]
     product_id = cmd.replace("/SHOP_", "")
     
     product = products_config_store.get_product(product_id)
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found. Please contact admin.")
         return True
     
     resellers = bot_data.get_data("resellers_list") or []
@@ -745,7 +742,6 @@ def cmd_buyjai(message, params, options=None):
         send_message(user_id, "Invalid Product")
         return True
     
-    # Find the product and plan from the plan_id
     plan_id = params
     product = None
     plan_data = None
@@ -760,7 +756,7 @@ def cmd_buyjai(message, params, options=None):
             break
     
     if not product or not plan_data:
-        send_message(user_id, "Invalid Product ID")
+        send_message(user_id, "❌ Invalid Product ID. Please contact admin.")
         return True
     
     title = f"{product.get('name')}\n{plan_data.get('days', 1)} Days"
@@ -795,7 +791,7 @@ def cmd_buyjai_reseller(message, params, options=None):
             break
     
     if not product or not plan_data:
-        send_message(user_id, "Invalid Product ID")
+        send_message(user_id, "❌ Invalid Product ID. Please contact admin.")
         return True
     
     title = f"{product.get('name')}\n{plan_data.get('days', 1)} Days"
@@ -867,7 +863,7 @@ def cmd_buybahha(message, params, options):
     User.save_data(user_id, "userhAC", adm_ac)
     return True
 
-# ========== FIXED: AUTOBUY1 WITH VERIFY BUTTON ==========
+# ========== AUTOBUY1 WITH VERIFY BUTTON ==========
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -936,7 +932,6 @@ def cmd_autobuy1(message, params, options=None):
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
     return True
 
-# ========== FIXED: VERIFY PAYMENT ==========
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
@@ -1702,7 +1697,7 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
-# ========== NEW: PRODUCT MANAGEMENT COMMANDS ==========
+# ========== PRODUCT MANAGEMENT COMMANDS ==========
 
 @command("/manage_products")
 def cmd_manage_products(message, params, options=None):
@@ -1797,12 +1792,10 @@ def cmd_add_product_step2(message, params, options=None):
     emoji = parts[3].strip()
     callback = parts[4].strip()
     
-    # Check if product exists
     if products_config_store.get_product(product_id):
         send_message(user_id, f"❌ Product with ID <code>{product_id}</code> already exists!", "HTML")
         return True
     
-    # Create product with no plans initially
     product_data = {
         "product_id": product_id,
         "name": name,
@@ -1862,20 +1855,12 @@ def cmd_edit_product_select(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
-@command("/edit_product_")
-def cmd_edit_product_specific(message, params, options=None):
-    # This is a dynamic command - will be called as /edit_product_P1 etc.
-    # The actual command is /edit_product_, but we need to handle the product_id from callback data
-    pass
-
-# We'll handle product editing via the callback data
-def handle_edit_product(callback_data, user_id, msg_id):
+def handle_edit_product(product_id, user_id, msg_id):
     """Handle editing a specific product"""
-    product_id = callback_data.replace("/edit_product_", "")
     product = products_config_store.get_product(product_id)
     
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return
     
     text = f"✏️ <b>Editing: {product.get('name')}</b>\n\n"
@@ -1904,16 +1889,7 @@ def handle_edit_product(callback_data, user_id, msg_id):
     except:
         send_message(user_id, text, "HTML", markup)
 
-# Helper to handle field editing
-def handle_edit_field(callback_data, user_id, msg_id):
-    parts = callback_data.split("_")
-    if len(parts) < 4:
-        send_message(user_id, "Invalid request.")
-        return
-    
-    field = parts[2]
-    product_id = parts[3]
-    
+def handle_edit_field(field, product_id, user_id, msg_id):
     User.save_data(user_id, "editing_product_field", {"product_id": product_id, "field": field})
     
     field_names = {
@@ -1954,7 +1930,7 @@ def cmd_edit_field_save(message, params, options=None):
     
     product = products_config_store.get_product(product_id)
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return True
     
     update_data = {field: text}
@@ -1971,10 +1947,24 @@ def cmd_edit_field_save(message, params, options=None):
     User.save_data(user_id, "editing_product_field", None)
     return True
 
-@command("/toggle_product_")
-def cmd_toggle_product(message, params, options=None):
-    # This will be handled via callback
-    pass
+# ========== TOGGLE PRODUCT ==========
+
+def handle_toggle_product(product_id, user_id, msg_id):
+    product = products_config_store.get_product(product_id)
+    
+    if not product:
+        send_message(user_id, "❌ Product not found.")
+        return
+    
+    new_status = not product.get("active", True)
+    products_config_store.update_product(product_id, {"active": new_status})
+    
+    status_text = "activated" if new_status else "deactivated"
+    send_message(
+        user_id,
+        f"✅ Product {product.get('name')} has been {status_text}.",
+        "HTML"
+    )
 
 # ========== DELETE PRODUCT ==========
 
@@ -2008,6 +1998,22 @@ def cmd_delete_product_select(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
+def handle_delete_product_confirm(product_id, user_id, msg_id):
+    product = products_config_store.get_product(product_id)
+    
+    if not product:
+        send_message(user_id, "❌ Product not found.")
+        return
+    
+    products_config_store.delete_product(product_id)
+    
+    send_message(
+        user_id,
+        f"✅ Product {product.get('name')} has been deactivated (soft-deleted).\n"
+        f"It can be reactivated by toggling its status.",
+        "HTML"
+    )
+
 # ========== ADD PLAN ==========
 
 @command("/add_plan_select_product")
@@ -2040,17 +2046,11 @@ def cmd_add_plan_select_product(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
-@command("/add_plan_")
-def cmd_add_plan_specific(message, params, options=None):
-    # Handle via callback
-    pass
-
-def handle_add_plan(callback_data, user_id, msg_id):
-    product_id = callback_data.replace("/add_plan_", "")
+def handle_add_plan(product_id, user_id, msg_id):
     product = products_config_store.get_product(product_id)
     
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return
     
     User.save_data(user_id, "adding_plan_to_product", product_id)
@@ -2107,10 +2107,9 @@ def cmd_add_plan_save(message, params, options=None):
     
     product = products_config_store.get_product(product_id)
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return True
     
-    # Check if plan_id already exists
     for plan in product.get("plans", []):
         if plan.get("plan_id") == plan_id:
             send_message(user_id, f"❌ Plan ID <code>{plan_id}</code> already exists in this product.", "HTML")
@@ -2126,7 +2125,6 @@ def cmd_add_plan_save(message, params, options=None):
     
     products_config_store.add_plan_to_product(product_id, plan_data)
     
-    # Initialize price and key storage
     bot_data.save_data(price_key, 0)
     bot_data.save_data(reseller_price_key, 0)
     bot_data.save_data(key_key, [])
@@ -2139,7 +2137,7 @@ def cmd_add_plan_save(message, params, options=None):
         f"💰 Price Key: {price_key}\n"
         f"💰 Reseller Key: {reseller_price_key}\n"
         f"🔑 Key Key: {key_key}\n\n"
-        f"Now set the price using /SHOPADD_PM with the plan ID.",
+        f"Now set the price using /SHOPADD_PM {plan_id}",
         "HTML"
     )
     
@@ -2180,17 +2178,11 @@ def cmd_edit_plan_select_product(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
-@command("/edit_plan_list_")
-def cmd_edit_plan_list(message, params, options=None):
-    # Handle via callback
-    pass
-
-def handle_edit_plan_list(callback_data, user_id, msg_id):
-    product_id = callback_data.replace("/edit_plan_list_", "")
+def handle_edit_plan_list(product_id, user_id, msg_id):
     product = products_config_store.get_product(product_id)
     
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return
     
     plans = product.get("plans", [])
@@ -2216,23 +2208,10 @@ def handle_edit_plan_list(callback_data, user_id, msg_id):
     except:
         send_message(user_id, text, "HTML", markup)
 
-@command("/edit_plan_")
-def cmd_edit_plan_specific(message, params, options=None):
-    # Handle via callback
-    pass
-
-def handle_edit_plan(callback_data, user_id, msg_id):
-    parts = callback_data.split("_")
-    if len(parts) < 4:
-        send_message(user_id, "Invalid request.")
-        return
-    
-    product_id = parts[2]
-    plan_id = parts[3]
-    
+def handle_edit_plan(product_id, plan_id, user_id, msg_id):
     product = products_config_store.get_product(product_id)
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return
     
     plan = None
@@ -2242,7 +2221,7 @@ def handle_edit_plan(callback_data, user_id, msg_id):
             break
     
     if not plan:
-        send_message(user_id, "Plan not found.")
+        send_message(user_id, "❌ Plan not found.")
         return
     
     User.save_data(user_id, "editing_plan", {"product_id": product_id, "plan_id": plan_id})
@@ -2356,12 +2335,11 @@ def cmd_remove_plan_select_product(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
-def handle_remove_plan_list(callback_data, user_id, msg_id):
-    product_id = callback_data.replace("/remove_plan_list_", "")
+def handle_remove_plan_list(product_id, user_id, msg_id):
     product = products_config_store.get_product(product_id)
     
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return
     
     plans = product.get("plans", [])
@@ -2387,26 +2365,12 @@ def handle_remove_plan_list(callback_data, user_id, msg_id):
     except:
         send_message(user_id, text, "HTML", markup)
 
-@command("/remove_plan_confirm_")
-def cmd_remove_plan_confirm(message, params, options=None):
-    # Handle via callback
-    pass
-
-def handle_remove_plan_confirm(callback_data, user_id, msg_id):
-    parts = callback_data.replace("/remove_plan_confirm_", "").split("_")
-    if len(parts) < 2:
-        send_message(user_id, "Invalid request.")
-        return
-    
-    product_id = parts[0]
-    plan_id = parts[1]
-    
+def handle_remove_plan_confirm(product_id, plan_id, user_id, msg_id):
     product = products_config_store.get_product(product_id)
     if not product:
-        send_message(user_id, "Product not found.")
+        send_message(user_id, "❌ Product not found.")
         return
     
-    # Check if plan exists
     plan_exists = False
     for plan in product.get("plans", []):
         if plan.get("plan_id") == plan_id:
@@ -2414,7 +2378,7 @@ def handle_remove_plan_confirm(callback_data, user_id, msg_id):
             break
     
     if not plan_exists:
-        send_message(user_id, "Plan not found.")
+        send_message(user_id, "❌ Plan not found.")
         return
     
     products_config_store.remove_plan_from_product(product_id, plan_id)
@@ -2424,50 +2388,6 @@ def handle_remove_plan_confirm(callback_data, user_id, msg_id):
         f"✅ Plan <code>{plan_id}</code> removed from {product.get('name')}",
         "HTML"
     )
-
-# ========== Toggle Product Status ==========
-
-def handle_toggle_product(callback_data, user_id, msg_id):
-    product_id = callback_data.replace("/toggle_product_", "")
-    product = products_config_store.get_product(product_id)
-    
-    if not product:
-        send_message(user_id, "Product not found.")
-        return
-    
-    new_status = not product.get("active", True)
-    products_config_store.update_product(product_id, {"active": new_status})
-    
-    status_text = "activated" if new_status else "deactivated"
-    send_message(
-        user_id,
-        f"✅ Product {product.get('name')} has been {status_text}.",
-        "HTML"
-    )
-
-# ========== Handle Delete Product ==========
-
-def handle_delete_product_confirm(callback_data, user_id, msg_id):
-    product_id = callback_data.replace("/delete_confirm_", "")
-    product = products_config_store.get_product(product_id)
-    
-    if not product:
-        send_message(user_id, "Product not found.")
-        return
-    
-    products_config_store.delete_product(product_id)
-    
-    send_message(
-        user_id,
-        f"✅ Product {product.get('name')} has been deactivated (soft-deleted).\n"
-        f"It can be reactivated by toggling its status.",
-        "HTML"
-    )
-
-# ========== END PRODUCT MANAGEMENT ==========
-
-# Rest of the admin commands remain the same...
-# [All your existing admin commands go here - /TUSHAR_Admins, /broadcast, /ChangeAnyUserBal, etc.]
 
 # ========== CONTINUE EXISTING ADMIN COMMANDS ==========
 
@@ -2910,7 +2830,6 @@ def cmd_shopaddkey(message, params, options=None):
         send_message(user_id, "Usage:\n/SHOPADDKEY <plan_id>")
         return True
     
-    # Get all products and find the key
     products = products_config_store.get_all_products_including_inactive()
     found_key = None
     found_title = None
@@ -2925,7 +2844,7 @@ def cmd_shopaddkey(message, params, options=None):
             break
     
     if not found_key:
-        send_message(user_id, f"Invalid plan ID: {params}")
+        send_message(user_id, f"❌ Invalid plan ID: {params}")
         return True
     
     send_message(user_id, f"<b>{found_title}</b>\n\nSend key\n\nType /cancel to stop.", "HTML")
@@ -2973,7 +2892,6 @@ def cmd_shopadd_pm(message, params, options=None):
         send_message(user_id, "Usage:\n/SHOPADD_PM <plan_id>")
         return True
     
-    # Get all products and find the plan
     products = products_config_store.get_all_products_including_inactive()
     found_price_key = None
     found_title = None
@@ -2988,7 +2906,7 @@ def cmd_shopadd_pm(message, params, options=None):
             break
     
     if not found_price_key:
-        send_message(user_id, f"Invalid plan ID: {params}")
+        send_message(user_id, f"❌ Invalid plan ID: {params}")
         return True
     
     User.save_data(user_id, "shopaddpm_options", {"key": found_price_key, "title": found_title})
@@ -3174,31 +3092,52 @@ def handle_update(update):
         
         # Handle dynamic product management callbacks
         if cmd.startswith("/edit_product_"):
-            handle_edit_product(cmd, user_id, msg_id)
+            product_id = cmd.replace("/edit_product_", "")
+            handle_edit_product(product_id, user_id, msg_id)
             return
         elif cmd.startswith("/edit_field_"):
-            handle_edit_field(cmd, user_id, msg_id)
+            # Format: /edit_field_name_P1
+            parts2 = cmd.split("_")
+            if len(parts2) >= 4:
+                field = parts2[2]
+                product_id = parts2[3]
+                handle_edit_field(field, product_id, user_id, msg_id)
             return
         elif cmd.startswith("/toggle_product_"):
-            handle_toggle_product(cmd, user_id, msg_id)
+            product_id = cmd.replace("/toggle_product_", "")
+            handle_toggle_product(product_id, user_id, msg_id)
             return
         elif cmd.startswith("/delete_confirm_"):
-            handle_delete_product_confirm(cmd, user_id, msg_id)
+            product_id = cmd.replace("/delete_confirm_", "")
+            handle_delete_product_confirm(product_id, user_id, msg_id)
             return
         elif cmd.startswith("/add_plan_"):
-            handle_add_plan(cmd, user_id, msg_id)
+            product_id = cmd.replace("/add_plan_", "")
+            handle_add_plan(product_id, user_id, msg_id)
             return
         elif cmd.startswith("/edit_plan_list_"):
-            handle_edit_plan_list(cmd, user_id, msg_id)
+            product_id = cmd.replace("/edit_plan_list_", "")
+            handle_edit_plan_list(product_id, user_id, msg_id)
             return
         elif cmd.startswith("/edit_plan_"):
-            handle_edit_plan(cmd, user_id, msg_id)
+            # Format: /edit_plan_P1_1
+            parts2 = cmd.split("_")
+            if len(parts2) >= 4:
+                product_id = parts2[2]
+                plan_id = parts2[3]
+                handle_edit_plan(product_id, plan_id, user_id, msg_id)
             return
         elif cmd.startswith("/remove_plan_list_"):
-            handle_remove_plan_list(cmd, user_id, msg_id)
+            product_id = cmd.replace("/remove_plan_list_", "")
+            handle_remove_plan_list(product_id, user_id, msg_id)
             return
         elif cmd.startswith("/remove_plan_confirm_"):
-            handle_remove_plan_confirm(cmd, user_id, msg_id)
+            # Format: /remove_plan_confirm_P1_1
+            parts2 = cmd.replace("/remove_plan_confirm_", "").split("_")
+            if len(parts2) >= 2:
+                product_id = parts2[0]
+                plan_id = parts2[1]
+                handle_remove_plan_confirm(product_id, plan_id, user_id, msg_id)
             return
         
         if cmd in commands:
