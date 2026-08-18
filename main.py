@@ -373,10 +373,20 @@ def command(name):
     return decorator
 
 PLAN_NAMES = {
+    "1": "1 Day",
+    "2": "3 Days",
+    "3": "7 Days",
+    "4": "15 Days",
+    "5": "30 Days",
     "6": "1 Day",
     "7": "3 Days",
     "8": "7 Days",
     "9": "14 Days",
+    "10": "1 Day",
+    "11": "3 Days",
+    "12": "7 Days",
+    "13": "14 Days",
+    "14": "21 Days",
     "15": "28 Days",
 }
 
@@ -755,7 +765,7 @@ def cmd_buybahha(message, params, options):
     return True
 
 # ============================================================
-# ========== PART 2 - PAYMENT COMMANDS ==========
+# ========== PAYMENT COMMANDS ==========
 # ============================================================
 
 @command("/autobuy1")
@@ -1241,7 +1251,7 @@ def cmd_verify_addpay(message, params, options=None):
     return True
 
 # ============================================================
-# ========== PART 3 - OTHER USER COMMANDS ==========
+# ========== OTHER USER COMMANDS ==========
 # ============================================================
 
 @command("/orderksk")
@@ -1377,8 +1387,9 @@ when contacting for faster help.</i>
     except:
         send_message(user_id, text, "HTML", reply_markup)
     return True
-    # ============================================================
-# ========== PART 4 - ADMIN COMMANDS ==========
+
+# ============================================================
+# ========== ADMIN COMMANDS ==========
 # ============================================================
 
 @command("/admin")
@@ -1391,29 +1402,30 @@ def cmd_admin(message, params, options=None):
         bot_data.save_data("AllBotAdminss", admins)
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     bot_mode = bot_data.get_data("BotMode") or "ON"
-    bot_sta = "🟢 On"
+    bot_sta = "🟢 Oɴ"
     bot_change = "BotMode OFF"
     if bot_mode == "OFF":
-        bot_sta = "🔴 Off"
+        bot_sta = "🔴 Oғғ"
         bot_change = "BotMode ON"
     markup = {
         "inline_keyboard": [
-            [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
-            [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bot: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
-            [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Recent Admin Actions", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
-            [{"text": "📊 Shop setup", "callback_data": "/setshop_psue", "style": "success"}],
-            [{"text": "💰 Add Reseller", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Remove Reseller", "callback_data": "/removereseller", "style": "danger"}],
-            [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
+            [{"text": "👑 Aᴅᴍɪɴs", "callback_data": "/TUSHAR_Admins", "style": "success"}],
+            [{"text": "📣 Bʀᴏᴀᴅᴄᴀsᴛ", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bᴏᴛ: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
+            [{"text": "💰 Aᴅᴅ Bᴀʟᴀɴᴄᴇ", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Rᴇᴄᴇɴᴛ Aᴄᴛɪᴏɴs", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
+            [{"text": "📊 Sʜᴏᴘ Sᴇᴛᴜᴘ", "callback_data": "/setshop_psue", "style": "success"}],
+            [{"text": "📦 Eᴅɪᴛ Pʀᴏᴅᴜᴄᴛs", "callback_data": "/edit_products", "style": "success"}],
+            [{"text": "💰 Aᴅᴅ Rᴇsᴇʟʟᴇʀ", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Rᴇᴍᴏᴠᴇ Rᴇsᴇʟʟᴇʀ", "callback_data": "/removereseller", "style": "danger"}],
+            [{"text": "📝 Rᴇsᴇʟʟᴇʀ Lɪsᴛ", "callback_data": "/resellerlist", "style": "success"}]
         ]
     }
     txt = f"""<b>
-👋 Welcome {message.get('from', {}).get('first_name', 'Admin')} 🎉
+👋 Wᴇʟᴄᴏᴍᴇ {message.get('from', {}).get('first_name', 'Admin')} 🎉
 
 ━━━━━━━━━━━━━━━
-🤖 Bot Status : {bot_sta}
+🤖 Bᴏᴛ Sᴛᴀᴛᴜs : {bot_sta}
 ━━━━━━━━━━━━━━━
 </b>"""
     if str(message.get("text")) == "/admin":
@@ -1432,7 +1444,7 @@ def cmd_tushar_admins(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     if params and params in admins:
         admins.remove(params)
@@ -1443,9 +1455,9 @@ def cmd_tushar_admins(message, params, options=None):
             {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
             {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
         ])
-    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
-    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
-    text = "<b>Here You Can Manage Your Admins</b>"
+    markup["inline_keyboard"].append([{"text": "➕ Aᴅᴅ Aᴅᴍɪɴ", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/admin", "style": "danger"}])
+    text = "<b>Hᴇʀᴇ Yᴏᴜ Cᴀɴ Mᴀɴᴀɢᴇ Yᴏᴜʀ Aᴅᴍɪɴs</b>"
     if options:
         text = options
     try:
@@ -1460,9 +1472,9 @@ def cmd_tushar_addadmin(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
-    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
+    send_message(user_id, "<b>Sᴇɴᴅ UꜱᴇʀID ᴏꜰ Aᴅᴍɪɴ Yᴏᴜ Wᴀɴᴛ Tᴏ Aᴅᴅ</b>", "HTML")
     pending_commands[user_id] = "/TUSHAR_AddAdmin1"
     pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
     return True
@@ -1474,14 +1486,14 @@ def cmd_tushar_addadmin1(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     if new_admin in admins:
-        send_message(user_id, "Admin Already Exists")
+        send_message(user_id, "Aᴅᴍɪɴ Aʟʀᴇᴀᴅʏ Exɪsᴛs")
     else:
         admins.append(new_admin)
         bot_data.save_data("AllBotAdminss", admins)
-        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
+        send_message(user_id, f"✅ Aᴅᴍɪɴ <code>{new_admin}</code> Aᴅᴅᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ", "HTML")
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
     return True
@@ -1492,14 +1504,14 @@ def cmd_tushar_adminaction(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     adm_ac = bot_data.get_data("AdmAC") or []
     latest_10 = adm_ac[-10:][::-1]
     if latest_10:
         send_message(user_id, "\n\n".join(latest_10), "HTML")
     else:
-        send_message(user_id, "No admin actions recorded yet.")
+        send_message(user_id, "Nᴏ ᴀᴅᴍɪɴ ᴀᴄᴛɪᴏɴs ʀᴇᴄᴏʀᴅᴇᴅ ʏᴇᴛ.")
     return True
 
 @command("/ChangeAnyUserBal")
@@ -1508,11 +1520,11 @@ def cmd_change_balance(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     send_message(
         user_id,
-        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format : <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        f"<b>💡 Sᴇɴᴅ Uꜱᴇʀ Tᴇʟᴇɢʀᴀᴍ Id & Aᴍᴏᴜɴᴛ\n\n⚠️ Usᴇ Fᴏʀᴍᴀᴛ : <code>{user_id} 10</code>\n\nAᴅᴅ - Bᴇꜰᴏʀᴇ Aᴍᴏᴜɴᴛ Tᴏ Dᴇᴅᴜᴄᴛ Bᴀʟᴀɴᴄᴇ Lɪᴋᴇ -10</b>",
         "HTML"
     )
     pending_commands[user_id] = "/ChangeAnyUserBal2"
@@ -1526,7 +1538,7 @@ def cmd_change_balance2(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     parts = text.split(" ")
     if len(parts) < 2:
@@ -1544,23 +1556,475 @@ def cmd_change_balance2(message, params, options=None):
     act = f"Added {amount} Rs To {target_user} Account"
     adm_ac = bot_data.get_data("AdmAC") or []
     adm_ac.append(
-        f"<b>📆 Time:</b> {easy_time}\n"
-        f"👥 <b>By {message.get('from', {}).get('first_name', 'Admin')}</b> [ID: <code>{user_id}</code>]\n"
-        f"🔍<b> Action: </b> {act}"
+        f"<b>📆 Tɪᴍᴇ:</b> {easy_time}\n"
+        f"👥 <b>Bʏ {message.get('from', {}).get('first_name', 'Admin')}</b> [ID: <code>{user_id}</code>]\n"
+        f"🔍<b> Aᴄᴛɪᴏɴ: </b> {act}"
     )
     bot_data.save_data("AdmAC", adm_ac)
     send_message(
         user_id,
-        f"<b>💴 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\n💰 Final Balance = {bal.value()}</b>",
+        f"<b>💴 Aᴄᴄᴏᴜɴᴛ Oꜰ <a href='tg://user?id={target_user}'>{target_user}</a> Wᴀs Iɴᴄʀᴇᴀsᴇᴅ Bʏ {amount}\n\n💰 Fɪɴᴀʟ Bᴀʟᴀɴᴄᴇ = {bal.value()}</b>",
         "HTML"
     )
     send_message(
         target_user,
-        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
+        f"<b>💰 Aᴅᴍɪɴ Gᴀᴠᴇ Yᴏᴜ A Iɴᴄʀᴇᴀsᴇ Iɴ Bᴀʟᴀɴᴄᴇ Bʏ {amount}</b>",
         "HTML"
     )
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
+    return True
+
+@command("/edit_products")
+def cmd_edit_products(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    markup = {
+        "inline_keyboard": [
+            [{"text": "📦 Dʀɪᴘ Cʟɪᴇɴᴛ", "callback_data": "/edit_drip", "style": "success"}],
+            [{"text": "📦 Sɪʟᴇɴᴛ Cʜᴇᴀᴛs", "callback_data": "/edit_silent", "style": "success"}],
+            [{"text": "📦 Pʀɪᴍᴇ Hᴏᴏᴋ", "callback_data": "/edit_prime", "style": "success"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/admin", "style": "danger"}]
+        ]
+    }
+    txt = "<b>📦 Sᴇʟᴇᴄᴛ Pʀᴏᴅᴜᴄᴛ Tᴏ Eᴅɪᴛ</b>"
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/edit_drip")
+def cmd_edit_drip(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    p1 = bot_data.get_data("drip_1d_price") or 108
+    p3 = bot_data.get_data("drip_3d_price") or 260
+    p7 = bot_data.get_data("drip_7d_price") or 360
+    p15 = bot_data.get_data("drip_15d_price") or 560
+    p30 = bot_data.get_data("drip_30d_price") or 810
+    
+    r1 = bot_data.get_data("drip_1d_reseller_price") or 95
+    r3 = bot_data.get_data("drip_3d_reseller_price") or 220
+    r7 = bot_data.get_data("drip_7d_reseller_price") or 320
+    r15 = bot_data.get_data("drip_15d_reseller_price") or 480
+    r30 = bot_data.get_data("drip_30d_reseller_price") or 750
+    
+    stock1 = len(bot_data.get_data("drip_1d_keys") or [])
+    stock3 = len(bot_data.get_data("drip_3d_keys") or [])
+    stock7 = len(bot_data.get_data("drip_7d_keys") or [])
+    stock15 = len(bot_data.get_data("drip_15d_keys") or [])
+    stock30 = len(bot_data.get_data("drip_30d_keys") or [])
+    
+    txt = f"""
+<b>📦 Dʀɪᴘ Cʟɪᴇɴᴛ Mᴏᴅ</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+<u>1 Dᴀʏ</u>
+├ Pʀɪᴄᴇ: ₹{p1}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r1}
+└ Sᴛᴏᴄᴋ: {stock1}
+
+<u>3 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p3}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r3}
+└ Sᴛᴏᴄᴋ: {stock3}
+
+<u>7 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p7}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r7}
+└ Sᴛᴏᴄᴋ: {stock7}
+
+<u>15 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p15}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r15}
+└ Sᴛᴏᴄᴋ: {stock15}
+
+<u>30 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p30}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r30}
+└ Sᴛᴏᴄᴋ: {stock30}
+
+━━━━━━━━━━━━━━━━━━━━━━
+<b>Sᴇʟᴇᴄᴛ ᴏᴘᴛɪᴏɴ ʙᴇʟᴏᴡ:</b>
+"""
+    markup = {
+        "inline_keyboard": [
+            [{"text": "1D Pʀɪᴄᴇ", "callback_data": "/set_price drip_1d_price"}, {"text": "1D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price drip_1d_reseller_price"}],
+            [{"text": "3D Pʀɪᴄᴇ", "callback_data": "/set_price drip_3d_price"}, {"text": "3D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price drip_3d_reseller_price"}],
+            [{"text": "7D Pʀɪᴄᴇ", "callback_data": "/set_price drip_7d_price"}, {"text": "7D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price drip_7d_reseller_price"}],
+            [{"text": "15D Pʀɪᴄᴇ", "callback_data": "/set_price drip_15d_price"}, {"text": "15D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price drip_15d_reseller_price"}],
+            [{"text": "30D Pʀɪᴄᴇ", "callback_data": "/set_price drip_30d_price"}, {"text": "30D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price drip_30d_reseller_price"}],
+            [{"text": "➕ Aᴅᴅ Kᴇʏs", "callback_data": "/add_keys drip"}, {"text": "🔙 Bᴀᴄᴋ", "callback_data": "/edit_products", "style": "danger"}]
+        ]
+    }
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/edit_silent")
+def cmd_edit_silent(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    p1 = bot_data.get_data("SILENT_1d_price") or 108
+    p3 = bot_data.get_data("SILENT_3d_price") or 260
+    p7 = bot_data.get_data("SILENT_7d_price") or 360
+    p14 = bot_data.get_data("SILENT_14d_price") or 560
+    p28 = bot_data.get_data("SILENT_28d_price") or 810
+    
+    r1 = bot_data.get_data("SILENT_1d_reseller_price") or 95
+    r3 = bot_data.get_data("SILENT_3d_reseller_price") or 220
+    r7 = bot_data.get_data("SILENT_7d_reseller_price") or 320
+    r14 = bot_data.get_data("SILENT_14d_reseller_price") or 480
+    r28 = bot_data.get_data("SILENT_28d_reseller_price") or 750
+    
+    stock1 = len(bot_data.get_data("SILENT_1d_keys") or [])
+    stock3 = len(bot_data.get_data("SILENT_3d_keys") or [])
+    stock7 = len(bot_data.get_data("SILENT_7d_keys") or [])
+    stock14 = len(bot_data.get_data("SILENT_14d_keys") or [])
+    stock28 = len(bot_data.get_data("SILENT_28d_keys") or [])
+    
+    txt = f"""
+<b>📦 Sɪʟᴇɴᴛ Cʜᴇᴀᴛs Aɴᴅʀᴏɪᴅ</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+<u>1 Dᴀʏ</u>
+├ Pʀɪᴄᴇ: ₹{p1}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r1}
+└ Sᴛᴏᴄᴋ: {stock1}
+
+<u>3 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p3}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r3}
+└ Sᴛᴏᴄᴋ: {stock3}
+
+<u>7 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p7}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r7}
+└ Sᴛᴏᴄᴋ: {stock7}
+
+<u>14 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p14}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r14}
+└ Sᴛᴏᴄᴋ: {stock14}
+
+<u>28 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p28}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r28}
+└ Sᴛᴏᴄᴋ: {stock28}
+
+━━━━━━━━━━━━━━━━━━━━━━
+<b>Sᴇʟᴇᴄᴛ ᴏᴘᴛɪᴏɴ ʙᴇʟᴏᴡ:</b>
+"""
+    markup = {
+        "inline_keyboard": [
+            [{"text": "1D Pʀɪᴄᴇ", "callback_data": "/set_price SILENT_1d_price"}, {"text": "1D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price SILENT_1d_reseller_price"}],
+            [{"text": "3D Pʀɪᴄᴇ", "callback_data": "/set_price SILENT_3d_price"}, {"text": "3D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price SILENT_3d_reseller_price"}],
+            [{"text": "7D Pʀɪᴄᴇ", "callback_data": "/set_price SILENT_7d_price"}, {"text": "7D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price SILENT_7d_reseller_price"}],
+            [{"text": "14D Pʀɪᴄᴇ", "callback_data": "/set_price SILENT_14d_price"}, {"text": "14D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price SILENT_14d_reseller_price"}],
+            [{"text": "28D Pʀɪᴄᴇ", "callback_data": "/set_price SILENT_28d_price"}, {"text": "28D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price SILENT_28d_reseller_price"}],
+            [{"text": "➕ Aᴅᴅ Kᴇʏs", "callback_data": "/add_keys silent"}, {"text": "🔙 Bᴀᴄᴋ", "callback_data": "/edit_products", "style": "danger"}]
+        ]
+    }
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/edit_prime")
+def cmd_edit_prime(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    p1 = bot_data.get_data("HG_1d_price") or 108
+    p3 = bot_data.get_data("HG_3d_price") or 200
+    p7 = bot_data.get_data("HG_7d_price") or 360
+    p14 = bot_data.get_data("HG_14d_price") or 600
+    p21 = bot_data.get_data("HG_21d_price") or 700
+    
+    r1 = bot_data.get_data("HG_1d_reseller_price") or 95
+    r3 = bot_data.get_data("HG_3d_reseller_price") or 180
+    r7 = bot_data.get_data("HG_7d_reseller_price") or 320
+    r14 = bot_data.get_data("HG_14d_reseller_price") or 550
+    r21 = bot_data.get_data("HG_21d_reseller_price") or 650
+    
+    stock1 = len(bot_data.get_data("HG_1d_keys") or [])
+    stock3 = len(bot_data.get_data("HG_3d_keys") or [])
+    stock7 = len(bot_data.get_data("HG_7d_keys") or [])
+    stock14 = len(bot_data.get_data("HG_14d_keys") or [])
+    stock21 = len(bot_data.get_data("HG_21d_keys") or [])
+    
+    txt = f"""
+<b>📦 Pʀɪᴍᴇ Hᴏᴏᴋ</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+<u>1 Dᴀʏ</u>
+├ Pʀɪᴄᴇ: ₹{p1}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r1}
+└ Sᴛᴏᴄᴋ: {stock1}
+
+<u>3 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p3}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r3}
+└ Sᴛᴏᴄᴋ: {stock3}
+
+<u>7 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p7}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r7}
+└ Sᴛᴏᴄᴋ: {stock7}
+
+<u>14 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p14}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r14}
+└ Sᴛᴏᴄᴋ: {stock14}
+
+<u>21 Dᴀʏs</u>
+├ Pʀɪᴄᴇ: ₹{p21}
+├ Rᴇsᴇʟʟᴇʀ: ₹{r21}
+└ Sᴛᴏᴄᴋ: {stock21}
+
+━━━━━━━━━━━━━━━━━━━━━━
+<b>Sᴇʟᴇᴄᴛ ᴏᴘᴛɪᴏɴ ʙᴇʟᴏᴡ:</b>
+"""
+    markup = {
+        "inline_keyboard": [
+            [{"text": "1D Pʀɪᴄᴇ", "callback_data": "/set_price HG_1d_price"}, {"text": "1D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price HG_1d_reseller_price"}],
+            [{"text": "3D Pʀɪᴄᴇ", "callback_data": "/set_price HG_3d_price"}, {"text": "3D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price HG_3d_reseller_price"}],
+            [{"text": "7D Pʀɪᴄᴇ", "callback_data": "/set_price HG_7d_price"}, {"text": "7D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price HG_7d_reseller_price"}],
+            [{"text": "14D Pʀɪᴄᴇ", "callback_data": "/set_price HG_14d_price"}, {"text": "14D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price HG_14d_reseller_price"}],
+            [{"text": "21D Pʀɪᴄᴇ", "callback_data": "/set_price HG_21d_price"}, {"text": "21D Rᴇsᴇʟʟᴇʀ", "callback_data": "/set_price HG_21d_reseller_price"}],
+            [{"text": "➕ Aᴅᴅ Kᴇʏs", "callback_data": "/add_keys prime"}, {"text": "🔙 Bᴀᴄᴋ", "callback_data": "/edit_products", "style": "danger"}]
+        ]
+    }
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/set_price")
+def cmd_set_price(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
+        return True
+    
+    if not params:
+        send_message(user_id, "<b>❌ Iɴᴠᴀʟɪᴅ Kᴇʏ</b>", "HTML")
+        return True
+    
+    key = params
+    User.save_data(user_id, "set_price_key", key)
+    
+    send_message(
+        user_id,
+        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Pʀɪᴄᴇ Fᴏʀ:</b>\n\n<code>{key}</code>\n\nTʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/set_price_process"
+    pending_commands_store.set(user_id, "/set_price_process")
+    return True
+
+@command("/set_price_process")
+def cmd_set_price_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    key = User.get_data(user_id, "set_price_key")
+    if not key:
+        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        return True
+    
+    try:
+        price = float(text)
+        bot_data.save_data(key, price)
+        
+        easy_time = get_easy_time()
+        adm_ac = bot_data.get_data("AdmAC") or []
+        adm_ac.append(
+            f"📆 Tɪᴍᴇ: {easy_time}\n"
+            f"👤 Bʏ: {message.get('from', {}).get('first_name', 'Admin')} [ID: {user_id}]\n"
+            f"🔍 Aᴄᴛɪᴏɴ: Sᴇᴛ {key} = ₹{price}"
+        )
+        bot_data.save_data("AdmAC", adm_ac)
+        
+        send_message(
+            user_id,
+            f"✅ <b>Sᴜᴄᴄᴇssғᴜʟʟʏ Sᴇᴛ!</b>\n\n<code>{key}</code> = ₹{price}",
+            "HTML"
+        )
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        User.save_data(user_id, "set_price_key", None)
+    except:
+        send_message(
+            user_id,
+            "❌ Iɴᴠᴀʟɪᴅ ᴀᴍᴏᴜɴᴛ.\n\nSᴇɴᴅ ɴᴜᴍᴇʀɪᴄ ᴠᴀʟᴜᴇ ʟɪᴋᴇ 90\n\nTʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+            "HTML"
+        )
+    return True
+
+@command("/add_keys")
+def cmd_add_keys(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
+        return True
+    
+    if not params:
+        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ᴘʀᴏᴅᴜᴄᴛ\n\nUᴜsᴀɢᴇ: /add_keys drip / add_keys silent / add_keys prime", "HTML")
+        return True
+    
+    product = params.lower()
+    key_map = {
+        "drip": ["drip_1d_keys", "drip_3d_keys", "drip_7d_keys", "drip_15d_keys", "drip_30d_keys"],
+        "silent": ["SILENT_1d_keys", "SILENT_3d_keys", "SILENT_7d_keys", "SILENT_14d_keys", "SILENT_28d_keys"],
+        "prime": ["HG_1d_keys", "HG_3d_keys", "HG_7d_keys", "HG_14d_keys", "HG_21d_keys"]
+    }
+    
+    if product not in key_map:
+        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ᴘʀᴏᴅᴜᴄᴛ\n\nUᴜsᴀɢᴇ: /add_keys drip / add_keys silent / add_keys prime", "HTML")
+        return True
+    
+    User.save_data(user_id, "add_keys_product", product)
+    
+    markup = {
+        "inline_keyboard": []
+    }
+    
+    if product == "drip":
+        markup["inline_keyboard"] = [
+            [{"text": "1D Kᴇʏs", "callback_data": "/add_keys_process drip_1d_keys"}, {"text": "3D Kᴇʏs", "callback_data": "/add_keys_process drip_3d_keys"}],
+            [{"text": "7D Kᴇʏs", "callback_data": "/add_keys_process drip_7d_keys"}, {"text": "15D Kᴇʏs", "callback_data": "/add_keys_process drip_15d_keys"}],
+            [{"text": "30D Kᴇʏs", "callback_data": "/add_keys_process drip_30d_keys"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/edit_drip", "style": "danger"}]
+        ]
+    elif product == "silent":
+        markup["inline_keyboard"] = [
+            [{"text": "1D Kᴇʏs", "callback_data": "/add_keys_process SILENT_1d_keys"}, {"text": "3D Kᴇʏs", "callback_data": "/add_keys_process SILENT_3d_keys"}],
+            [{"text": "7D Kᴇʏs", "callback_data": "/add_keys_process SILENT_7d_keys"}, {"text": "14D Kᴇʏs", "callback_data": "/add_keys_process SILENT_14d_keys"}],
+            [{"text": "28D Kᴇʏs", "callback_data": "/add_keys_process SILENT_28d_keys"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/edit_silent", "style": "danger"}]
+        ]
+    elif product == "prime":
+        markup["inline_keyboard"] = [
+            [{"text": "1D Kᴇʏs", "callback_data": "/add_keys_process HG_1d_keys"}, {"text": "3D Kᴇʏs", "callback_data": "/add_keys_process HG_3d_keys"}],
+            [{"text": "7D Kᴇʏs", "callback_data": "/add_keys_process HG_7d_keys"}, {"text": "14D Kᴇʏs", "callback_data": "/add_keys_process HG_14d_keys"}],
+            [{"text": "21D Kᴇʏs", "callback_data": "/add_keys_process HG_21d_keys"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/edit_prime", "style": "danger"}]
+        ]
+    
+    txt = f"<b>➕ Sᴇʟᴇᴄᴛ Kᴇʏ Tʏᴘᴇ Tᴏ Aᴅᴅ Fᴏʀ {product.upper()}</b>"
+    
+    try:
+        edit_message(user_id, message.get("message_id"), txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/add_keys_process")
+def cmd_add_keys_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    if not params:
+        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Kᴇʏ", "HTML")
+        return True
+    
+    key_name = params
+    User.save_data(user_id, "add_keys_key_name", key_name)
+    
+    send_message(
+        user_id,
+        f"<b>🔑 Eɴᴛᴇʀ Kᴇʏ(s) Fᴏʀ:</b>\n\n<code>{key_name}</code>\n\n"
+        f"Sᴇɴᴅ ᴏɴᴇ ᴋᴇʏ ᴘᴇʀ ʟɪɴᴇ.\n"
+        f"Tʏᴘᴇ <b>DONE</b> ᴛᴏ ғɪɴɪsʜ.\n"
+        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/add_keys_process_2"
+    pending_commands_store.set(user_id, "/add_keys_process_2")
+    return True
+
+@command("/add_keys_process_2")
+def cmd_add_keys_process_2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    key_name = User.get_data(user_id, "add_keys_key_name")
+    if not key_name:
+        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        return True
+    
+    if text.upper() == "DONE":
+        send_message(user_id, f"✅ <b>Aʟʟ Kᴇʏs Aᴅᴅᴇᴅ Tᴏ</b>\n\n<code>{key_name}</code>", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        User.save_data(user_id, "add_keys_key_name", None)
+        return True
+    
+    existing = bot_data.get_data(key_name) or []
+    if isinstance(existing, str):
+        existing = [existing]
+    
+    keys = text.strip().split('\n')
+    added = 0
+    for k in keys:
+        k = k.strip()
+        if k:
+            existing.append(k)
+            added += 1
+    
+    bot_data.save_data(key_name, existing)
+    
+    send_message(
+        user_id,
+        f"✅ <b>Aᴅᴅᴇᴅ {added} Kᴇʏ(s)</b>\n\n"
+        f"Tᴏᴛᴀʟ Sᴛᴏᴄᴋ: {len(existing)}\n\n"
+        f"Sᴇɴᴅ ᴍᴏʀᴇ ᴋᴇʏs ᴏʀ ᴛʏᴘᴇ <b>DONE</b> ᴛᴏ ғɪɴɪsʜ.",
+        "HTML"
+    )
     return True
 
 @command("/addreseller")
@@ -1569,9 +2033,9 @@ def cmd_addreseller(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
-    send_message(user_id, "📩 Send me id reseller", "HTML")
+    send_message(user_id, "📩 Sᴇɴᴅ ᴍᴇ ɪᴅ ʀᴇsᴇʟʟᴇʀ", "HTML")
     pending_commands[user_id] = "/add_reseller_process"
     pending_commands_store.set(user_id, "/add_reseller_process")
     return True
@@ -1607,7 +2071,7 @@ def cmd_add_reseller_process(message, params, options=None):
 @command("/removereseller")
 def cmd_removereseller(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    send_message(user_id, "Send me reseller id to remove", "HTML")
+    send_message(user_id, "Sᴇɴᴅ ᴍᴇ ʀᴇsᴇʟʟᴇʀ ɪᴅ ᴛᴏ ʀᴇᴍᴏᴠᴇ", "HTML")
     pending_commands[user_id] = "/remove_reseller_process"
     pending_commands_store.set(user_id, "/remove_reseller_process")
     return True
@@ -1656,10 +2120,6 @@ def cmd_resellerlist(message, params, options=None):
     send_message(user_id, text, "HTML")
     return True
 
-# ============================================================
-# ========== PART 5 - SHOP ADMIN & BROADCAST ==========
-# ============================================================
-
 @command("/setshop_psue")
 def cmd_setshop_psue(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1667,21 +2127,21 @@ def cmd_setshop_psue(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     markup = {
         "inline_keyboard": [
-            [{"text": "DRIP CLIENT MOD", "callback_data": "/SHOPADMIN_P1", "style": "success"}],
-            [{"text": "SILENT CHEATS ANDROID", "callback_data": "/SHOPADMIN_P3", "style": "success"}],
-            [{"text": "PRIME MOD", "callback_data": "/SHOPADMIN_P2", "style": "success"}],
-            [{"text": "Back", "callback_data": "/admin", "style": "danger"}]
+            [{"text": "📦 Dʀɪᴘ Cʟɪᴇɴᴛ", "callback_data": "/SHOPADMIN_P1", "style": "success"}],
+            [{"text": "📦 Sɪʟᴇɴᴛ Cʜᴇᴀᴛs", "callback_data": "/SHOPADMIN_P3", "style": "success"}],
+            [{"text": "📦 Pʀɪᴍᴇ Mᴏᴅ", "callback_data": "/SHOPADMIN_P2", "style": "success"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/admin", "style": "danger"}]
         ]
     }
     txt = f"""<b>
-Welcome {message.get('from', {}).get('first_name', 'Admin')}
+Wᴇʟᴄᴏᴍᴇ {message.get('from', {}).get('first_name', 'Admin')}
 
 ━━━━━━━━━━━━━━━
-SHOP MOOD
+Sʜᴏᴘ Sᴇᴛᴜᴘ
 ━━━━━━━━━━━━━━━
 </b>"""
     try:
@@ -1715,28 +2175,28 @@ def cmd_shopadmin_p1(message, params, options=None):
     p15, r15, s15 = get_old(15)
     p30, r30, s30 = get_old(30)
     txt = (
-        "DRIP CLIENT MOD\n"
+        "📦 Dʀɪᴘ Cʟɪᴇɴᴛ Mᴏᴅ\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"1D Reseller: ₹{r1}\n1D Price: ₹{p1}\n{s1}\n\n"
-        f"3D Reseller: ₹{r3}\n3D Price: ₹{p3}\n{s3}\n\n"
-        f"7D Reseller: ₹{r7}\n7D Price: ₹{p7}\n{s7}\n\n"
-        f"15D Reseller: ₹{r15}\n15D Price: ₹{p15}\n{s15}\n\n"
-        f"30D Reseller: ₹{r30}\n30D Price: ₹{p30}\n{s30}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\nSelect duration below:"
+        f"1D Rᴇsᴇʟʟᴇʀ: ₹{r1}\n1D Pʀɪᴄᴇ: ₹{p1}\n{s1}\n\n"
+        f"3D Rᴇsᴇʟʟᴇʀ: ₹{r3}\n3D Pʀɪᴄᴇ: ₹{p3}\n{s3}\n\n"
+        f"7D Rᴇsᴇʟʟᴇʀ: ₹{r7}\n7D Pʀɪᴄᴇ: ₹{p7}\n{s7}\n\n"
+        f"15D Rᴇsᴇʟʟᴇʀ: ₹{r15}\n15D Pʀɪᴄᴇ: ₹{p15}\n{s15}\n\n"
+        f"30D Rᴇsᴇʟʟᴇʀ: ₹{r30}\n30D Pʀɪᴄᴇ: ₹{p30}\n{s30}\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\nSᴇʟᴇᴄᴛ ᴅᴜʀᴀᴛɪᴏɴ ʙᴇʟᴏᴡ:"
     )
     markup = {
         "inline_keyboard": [
-            [{"text": "RESELLER 1D", "callback_data": "/SHOPADD_PM 6", "style": "success"}],
-            [{"text": "1D Price", "callback_data": "/SHOPADD_PM 1", "style": "success"}, {"text": "Add 1D Key", "callback_data": "/SHOPADDKEY 1", "style": "success"}],
-            [{"text": "RESELLER 3D", "callback_data": "/SHOPADD_PM 7", "style": "success"}],
-            [{"text": "3D Price", "callback_data": "/SHOPADD_PM 2", "style": "success"}, {"text": "Add 3D Key", "callback_data": "/SHOPADDKEY 2", "style": "success"}],
-            [{"text": "RESELLER 7D", "callback_data": "/SHOPADD_PM 8", "style": "success"}],
-            [{"text": "7D Price", "callback_data": "/SHOPADD_PM 3", "style": "success"}, {"text": "Add 7D Key", "callback_data": "/SHOPADDKEY 3", "style": "success"}],
-            [{"text": "RESELLER 15D", "callback_data": "/SHOPADD_PM 9", "style": "success"}],
-            [{"text": "15D Price", "callback_data": "/SHOPADD_PM 4", "style": "success"}, {"text": "Add 15D Key", "callback_data": "/SHOPADDKEY 4", "style": "success"}],
-            [{"text": "RESELLER 30D", "callback_data": "/SHOPADD_PM 10", "style": "success"}],
-            [{"text": "30D Price", "callback_data": "/SHOPADD_PM 5", "style": "success"}, {"text": "Add 30D Key", "callback_data": "/SHOPADDKEY 5", "style": "success"}],
-            [{"text": "Back", "callback_data": "/setshop_psue", "style": "danger"}]
+            [{"text": "Rᴇsᴇʟʟᴇʀ 1D", "callback_data": "/SHOPADD_PM 6", "style": "success"}],
+            [{"text": "1D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 1", "style": "success"}, {"text": "Aᴅᴅ 1D Kᴇʏ", "callback_data": "/SHOPADDKEY 1", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 3D", "callback_data": "/SHOPADD_PM 7", "style": "success"}],
+            [{"text": "3D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 2", "style": "success"}, {"text": "Aᴅᴅ 3D Kᴇʏ", "callback_data": "/SHOPADDKEY 2", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 7D", "callback_data": "/SHOPADD_PM 8", "style": "success"}],
+            [{"text": "7D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 3", "style": "success"}, {"text": "Aᴅᴅ 7D Kᴇʏ", "callback_data": "/SHOPADDKEY 3", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 15D", "callback_data": "/SHOPADD_PM 9", "style": "success"}],
+            [{"text": "15D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 4", "style": "success"}, {"text": "Aᴅᴅ 15D Kᴇʏ", "callback_data": "/SHOPADDKEY 4", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 30D", "callback_data": "/SHOPADD_PM 10", "style": "success"}],
+            [{"text": "30D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 5", "style": "success"}, {"text": "Aᴅᴅ 30D Kᴇʏ", "callback_data": "/SHOPADDKEY 5", "style": "success"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/setshop_psue", "style": "danger"}]
         ]
     }
     try:
@@ -1770,28 +2230,28 @@ def cmd_shopadmin_p2(message, params, options=None):
     p14, r14, s14 = get_old(14)
     p21, r21, s21 = get_old(21)
     txt = (
-        "PRIME MOD\n"
+        "📦 Pʀɪᴍᴇ Mᴏᴅ\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"1D Reseller: ₹{r1}\n1D Price: ₹{p1}\n{s1}\n\n"
-        f"3D Reseller: ₹{r3}\n3D Price: ₹{p3}\n{s3}\n\n"
-        f"7D Reseller: ₹{r7}\n7D Price: ₹{p7}\n{s7}\n\n"
-        f"14D Reseller: ₹{r14}\n14D Price: ₹{p14}\n{s14}\n\n"
-        f"21D Reseller: ₹{r21}\n21D Price: ₹{p21}\n{s21}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\nSelect duration below:"
+        f"1D Rᴇsᴇʟʟᴇʀ: ₹{r1}\n1D Pʀɪᴄᴇ: ₹{p1}\n{s1}\n\n"
+        f"3D Rᴇsᴇʟʟᴇʀ: ₹{r3}\n3D Pʀɪᴄᴇ: ₹{p3}\n{s3}\n\n"
+        f"7D Rᴇsᴇʟʟᴇʀ: ₹{r7}\n7D Pʀɪᴄᴇ: ₹{p7}\n{s7}\n\n"
+        f"14D Rᴇsᴇʟʟᴇʀ: ₹{r14}\n14D Pʀɪᴄᴇ: ₹{p14}\n{s14}\n\n"
+        f"21D Rᴇsᴇʟʟᴇʀ: ₹{r21}\n21D Pʀɪᴄᴇ: ₹{p21}\n{s21}\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\nSᴇʟᴇᴄᴛ ᴅᴜʀᴀᴛɪᴏɴ ʙᴇʟᴏᴡ:"
     )
     markup = {
         "inline_keyboard": [
-            [{"text": "RESELLER 1D", "callback_data": "/SHOPADD_PM 316", "style": "success"}],
-            [{"text": "1D Price", "callback_data": "/SHOPADD_PM 311", "style": "success"}, {"text": "Add 1D Key", "callback_data": "/SHOPADDKEY 306", "style": "success"}],
-            [{"text": "RESELLER 3D", "callback_data": "/SHOPADD_PM 317", "style": "success"}],
-            [{"text": "3D Price", "callback_data": "/SHOPADD_PM 312", "style": "success"}, {"text": "Add 3D Key", "callback_data": "/SHOPADDKEY 307", "style": "success"}],
-            [{"text": "RESELLER 7D", "callback_data": "/SHOPADD_PM 318", "style": "success"}],
-            [{"text": "7D Price", "callback_data": "/SHOPADD_PM 313", "style": "success"}, {"text": "Add 7D Key", "callback_data": "/SHOPADDKEY 308", "style": "success"}],
-            [{"text": "RESELLER 14D", "callback_data": "/SHOPADD_PM 319", "style": "success"}],
-            [{"text": "14D Price", "callback_data": "/SHOPADD_PM 314", "style": "success"}, {"text": "Add 14D Key", "callback_data": "/SHOPADDKEY 309", "style": "success"}],
-            [{"text": "RESELLER 21D", "callback_data": "/SHOPADD_PM 320", "style": "success"}],
-            [{"text": "21D Price", "callback_data": "/SHOPADD_PM 315", "style": "success"}, {"text": "Add 21D Key", "callback_data": "/SHOPADDKEY 310", "style": "success"}],
-            [{"text": "Back", "callback_data": "/setshop_psue", "style": "danger"}]
+            [{"text": "Rᴇsᴇʟʟᴇʀ 1D", "callback_data": "/SHOPADD_PM 316", "style": "success"}],
+            [{"text": "1D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 311", "style": "success"}, {"text": "Aᴅᴅ 1D Kᴇʏ", "callback_data": "/SHOPADDKEY 306", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 3D", "callback_data": "/SHOPADD_PM 317", "style": "success"}],
+            [{"text": "3D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 312", "style": "success"}, {"text": "Aᴅᴅ 3D Kᴇʏ", "callback_data": "/SHOPADDKEY 307", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 7D", "callback_data": "/SHOPADD_PM 318", "style": "success"}],
+            [{"text": "7D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 313", "style": "success"}, {"text": "Aᴅᴅ 7D Kᴇʏ", "callback_data": "/SHOPADDKEY 308", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 14D", "callback_data": "/SHOPADD_PM 319", "style": "success"}],
+            [{"text": "14D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 314", "style": "success"}, {"text": "Aᴅᴅ 14D Kᴇʏ", "callback_data": "/SHOPADDKEY 309", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 21D", "callback_data": "/SHOPADD_PM 320", "style": "success"}],
+            [{"text": "21D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 315", "style": "success"}, {"text": "Aᴅᴅ 21D Kᴇʏ", "callback_data": "/SHOPADDKEY 310", "style": "success"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/setshop_psue", "style": "danger"}]
         ]
     }
     try:
@@ -1825,28 +2285,28 @@ def cmd_shopadmin_p3(message, params, options=None):
     p14, r14, s14 = get_old(14)
     p28, r28, s28 = get_old(28)
     txt = (
-        "SILENT CHEATS ANDROID\n"
+        "📦 Sɪʟᴇɴᴛ Cʜᴇᴀᴛs Aɴᴅʀᴏɪᴅ\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"1D Reseller: ₹{r1}\n1D Price: ₹{p1}\n{s1}\n\n"
-        f"3D Reseller: ₹{r3}\n3D Price: ₹{p3}\n{s3}\n\n"
-        f"7D Reseller: ₹{r7}\n7D Price: ₹{p7}\n{s7}\n\n"
-        f"14D Reseller: ₹{r14}\n14D Price: ₹{p14}\n{s14}\n\n"
-        f"28D Reseller: ₹{r28}\n28D Price: ₹{p28}\n{s28}\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\nSelect duration below:"
+        f"1D Rᴇsᴇʟʟᴇʀ: ₹{r1}\n1D Pʀɪᴄᴇ: ₹{p1}\n{s1}\n\n"
+        f"3D Rᴇsᴇʟʟᴇʀ: ₹{r3}\n3D Pʀɪᴄᴇ: ₹{p3}\n{s3}\n\n"
+        f"7D Rᴇsᴇʟʟᴇʀ: ₹{r7}\n7D Pʀɪᴄᴇ: ₹{p7}\n{s7}\n\n"
+        f"14D Rᴇsᴇʟʟᴇʀ: ₹{r14}\n14D Pʀɪᴄᴇ: ₹{p14}\n{s14}\n\n"
+        f"28D Rᴇsᴇʟʟᴇʀ: ₹{r28}\n28D Pʀɪᴄᴇ: ₹{p28}\n{s28}\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\nSᴇʟᴇᴄᴛ ᴅᴜʀᴀᴛɪᴏɴ ʙᴇʟᴏᴡ:"
     )
     markup = {
         "inline_keyboard": [
-            [{"text": "RESELLER 1D", "callback_data": "/SHOPADD_PM 221", "style": "success"}],
-            [{"text": "1D Price", "callback_data": "/SHOPADD_PM 191", "style": "success"}, {"text": "Add 1D Key", "callback_data": "/SHOPADDKEY 101", "style": "success"}],
-            [{"text": "RESELLER 3D", "callback_data": "/SHOPADD_PM 22", "style": "success"}],
-            [{"text": "3D Price", "callback_data": "/SHOPADD_PM 19", "style": "success"}, {"text": "Add 3D Key", "callback_data": "/SHOPADDKEY 10", "style": "success"}],
-            [{"text": "RESELLER 7D", "callback_data": "/SHOPADD_PM 23", "style": "success"}],
-            [{"text": "7D Price", "callback_data": "/SHOPADD_PM 20", "style": "success"}, {"text": "Add 7D Key", "callback_data": "/SHOPADDKEY 11", "style": "success"}],
-            [{"text": "RESELLER 14D", "callback_data": "/SHOPADD_PM 24", "style": "success"}],
-            [{"text": "14D Price", "callback_data": "/SHOPADD_PM 21", "style": "success"}, {"text": "Add 14D Key", "callback_data": "/SHOPADDKEY 12", "style": "success"}],
-            [{"text": "RESELLER 28D", "callback_data": "/SHOPADD_PM 225", "style": "success"}],
-            [{"text": "28D Price", "callback_data": "/SHOPADD_PM 226", "style": "success"}, {"text": "Add 28D Key", "callback_data": "/SHOPADDKEY 13", "style": "success"}],
-            [{"text": "Back", "callback_data": "/setshop_psue", "style": "danger"}]
+            [{"text": "Rᴇsᴇʟʟᴇʀ 1D", "callback_data": "/SHOPADD_PM 221", "style": "success"}],
+            [{"text": "1D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 191", "style": "success"}, {"text": "Aᴅᴅ 1D Kᴇʏ", "callback_data": "/SHOPADDKEY 101", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 3D", "callback_data": "/SHOPADD_PM 22", "style": "success"}],
+            [{"text": "3D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 19", "style": "success"}, {"text": "Aᴅᴅ 3D Kᴇʏ", "callback_data": "/SHOPADDKEY 10", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 7D", "callback_data": "/SHOPADD_PM 23", "style": "success"}],
+            [{"text": "7D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 20", "style": "success"}, {"text": "Aᴅᴅ 7D Kᴇʏ", "callback_data": "/SHOPADDKEY 11", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 14D", "callback_data": "/SHOPADD_PM 24", "style": "success"}],
+            [{"text": "14D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 21", "style": "success"}, {"text": "Aᴅᴅ 14D Kᴇʏ", "callback_data": "/SHOPADDKEY 12", "style": "success"}],
+            [{"text": "Rᴇsᴇʟʟᴇʀ 28D", "callback_data": "/SHOPADD_PM 225", "style": "success"}],
+            [{"text": "28D Pʀɪᴄᴇ", "callback_data": "/SHOPADD_PM 226", "style": "success"}, {"text": "Aᴅᴅ 28D Kᴇʏ", "callback_data": "/SHOPADDKEY 13", "style": "success"}],
+            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/setshop_psue", "style": "danger"}]
         ]
     }
     try:
@@ -1861,7 +2321,7 @@ def cmd_shopaddkey(message, params, options=None):
     admins = bot_data.get_data("AllBotAdminss") or []
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     if not params:
         send_message(user_id, "Usage:\n/SHOPADDKEY 1 -> Drip 1d\n/SHOPADDKEY 2 -> Stricks 10d")
@@ -2046,7 +2506,7 @@ def cmd_shopadd_pm2(message, params, options=None):
     return True
 
 # ============================================================
-# ========== PART 6 - BROADCAST & MAIN ==========
+# ========== BROADCAST & MAIN ==========
 # ============================================================
 
 @command("/broadcast")
@@ -2054,7 +2514,7 @@ def cmd_broadcast(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     admins = bot_data.get_data("AllBotAdminss") or []
     if str(user_id) not in admins:
-        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
         return True
     
     all_users = user_data_store.get_all_users()
@@ -2075,10 +2535,10 @@ def cmd_broadcast(message, params, options=None):
     send_message(
         user_id, 
         f"📢 <b>BROADCAST MODE</b>\n\n"
-        f"👥 Total Users: {len(all_users)}\n\n"
-        f"Send ANY message (text, photo, video, document).\n"
-        f"<b>Your message will be FORWARDED to all users.</b>\n\n"
-        f"Type /cancel to cancel.",
+        f"👥 Tᴏᴛᴀʟ Usᴇʀs: {len(all_users)}\n\n"
+        f"Sᴇɴᴅ ANY ᴍᴇssᴀɢᴇ (ᴛᴇxᴛ, ᴘʜᴏᴛᴏ, ᴠɪᴅᴇᴏ, ᴅᴏᴄᴜᴍᴇɴᴛ).\n"
+        f"<b>Yᴏᴜʀ ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ FORWARDED ᴛᴏ ᴀʟʟ ᴜsᴇʀs.</b>\n\n"
+        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ ᴄᴀɴᴄᴇʟ.",
         "HTML"
     )
     pending_commands[user_id] = "/broadcast_send_media"
@@ -2095,7 +2555,7 @@ def cmd_broadcast_send_media(message, params, options=None):
         return True
     
     if message.get("text") and message.get("text", "").strip() == "/cancel":
-        send_message(user_id, "❌ Cancelled", "HTML")
+        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         User.save_data(user_id, "broadcast_users", None)
@@ -2103,7 +2563,7 @@ def cmd_broadcast_send_media(message, params, options=None):
     
     users = User.get_data(user_id, "broadcast_users") or []
     if not users:
-        send_message(user_id, "No users to broadcast to. Please use /broadcast again.", "HTML")
+        send_message(user_id, "Nᴏ ᴜsᴇʀs ᴛᴏ ʙʀᴏᴀᴅᴄᴀsᴛ ᴛᴏ. Pʟᴇᴀsᴇ ᴜsᴇ /ʙʀᴏᴀᴅᴄᴀsᴛ ᴀɢᴀɪɴ.", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
@@ -2136,10 +2596,10 @@ def cmd_broadcast_send_media(message, params, options=None):
     
     send_message(
         user_id, 
-        f"✅ <b>Broadcast Complete</b>\n\n"
-        f"📤 Forwarded to: {success}\n"
-        f"❌ Failed: {failed}\n"
-        f"👥 Total: {len(users)}",
+        f"✅ <b>Bʀᴏᴀᴅᴄᴀsᴛ Cᴏᴍᴘʟᴇᴛᴇ</b>\n\n"
+        f"📤 Fᴏʀᴡᴀʀᴅᴇᴅ ᴛᴏ: {success}\n"
+        f"❌ Fᴀɪʟᴇᴅ: {failed}\n"
+        f"👥 Tᴏᴛᴀʟ: {len(users)}",
         "HTML"
     )
     pending_commands.pop(user_id, None)
