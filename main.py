@@ -379,25 +379,20 @@ def cmd_start(message, params, options=None):
         User.save_data(user_id, "joined_date", message.get("date"))
     balance = Resources.another_res("Balance", user=user_id).value()
     text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
-        "</blockquote>\n\n"
         "<b>"
-        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n\n"
+        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n"
         "<b>"
-        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n\n"
+        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n"
         "<b>"
-        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n\n"
+        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n"
         "<b>"
-        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n\n"
+        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n"
         "<b>"
-        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n\n"
+        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n"
         "<b>"
-        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n\n"
+        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n"
         "<b>"
-        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n\n"
+        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n"
         "<blockquote>"
         "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
         "</blockquote>"
@@ -464,7 +459,7 @@ def cmd_shopnawkk(message, params, options=None):
         
         if has_plan:
             markup["inline_keyboard"].append([
-                {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji, "style": "success"}
+                {"text": f"{display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji, "style": "success"}
             ])
     
     if not markup["inline_keyboard"]:
@@ -1129,25 +1124,20 @@ def cmd_backkkk(message, params, options=None):
     msg_id = message.get("message_id")
     balance = Resources.another_res("Balance", user=user_id).value()
     text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
-        "</blockquote>\n\n"
         "<b>"
-        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n\n"
+        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n"
         "<b>"
-        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n\n"
+        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n"
         "<b>"
-        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n\n"
+        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n"
         "<b>"
-        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n\n"
+        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n"
         "<b>"
-        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n\n"
+        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n"
         "<b>"
-        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n\n"
+        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n"
         "<b>"
-        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n\n"
+        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n"
         "<blockquote>"
         "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
         "</blockquote>"
