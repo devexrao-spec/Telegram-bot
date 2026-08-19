@@ -366,6 +366,27 @@ PLAN_NAMES = {
     "15": "28 Days",
 }
 
+# ========== CHECK MAINTENANCE MODE ==========
+def check_maintenance(user_id, message):
+    maintenance_mode = bot_data.get_data("maintenance_mode") or False
+    if maintenance_mode:
+        admins = bot_data.get_data("AllBotAdminss") or []
+        is_admin = str(user_id) in [str(a) for a in admins]
+        if not is_admin:
+            text = (
+                "<blockquote>"
+                "<tg-emoji emoji-id='5447644880824181073'>🔧</tg-emoji> "
+                "MAINTENANCE MODE ACTIVE "
+                "<tg-emoji emoji-id='5444856076954520455'>🔴</tg-emoji>"
+                "</blockquote>\n\n"
+                "<tg-emoji emoji-id='5195033767969839232'>ℹ️</tg-emoji> The bot is currently undergoing server upgrades.\n"
+                "<tg-emoji emoji-id='5420323339723881652'>💡</tg-emoji> Purchases, balance operations, and other services may be temporarily unavailable.\n"
+                "<tg-emoji emoji-id='5116553153419936517'>⏳</tg-emoji> Please check back later."
+            )
+            send_message(user_id, text, "HTML")
+            return True
+    return False
+
 # ============================================================
 # ========== USER COMMANDS ==========
 # ============================================================
@@ -375,6 +396,8 @@ PLAN_NAMES = {
 @command("/START")
 def cmd_start(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     if not User.get_data(user_id, "joined_date"):
         User.save_data(user_id, "joined_date", message.get("date"))
     balance = Resources.another_res("Balance", user=user_id).value()
@@ -422,6 +445,8 @@ def cmd_start(message, params, options=None):
 @command("/shopnawkk")
 def cmd_shopnawkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     
     mods = bot_data.get_data("mods_list") or []
@@ -448,6 +473,10 @@ def cmd_shopnawkk(message, params, options=None):
             emoji = "6210705396449944693"
         else:
             display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
+            # Get custom emoji for mod
+            custom_emoji = bot_data.get_data(f"{mod_id}_emoji")
+            if custom_emoji:
+                emoji = custom_emoji
         
         has_plan = False
         all_keys = bot_data.collection.find()
@@ -488,6 +517,8 @@ def cmd_shopnawkk(message, params, options=None):
 @command("/SHOP_MOD")
 def cmd_shop_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     
     mod_id = params
@@ -537,7 +568,7 @@ def cmd_shop_mod(message, params, options=None):
             plan_key = f"{mod_id}_{day}"
             plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
             markup["inline_keyboard"].append([
-                {"text": f"{plan_display} - ₹{price}", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
+                {"text": f"{plan_display} - ₹{price} <tg-emoji emoji-id='5382194935057372936'>🛒</tg-emoji>", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
             ])
     
     if not markup["inline_keyboard"]:
@@ -575,6 +606,8 @@ Choose a plan <tg-emoji emoji-id="5258336354642697821">👇</tg-emoji>
 @command("/buy_mod")
 def cmd_buy_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     if not params:
         send_message(user_id, "❌ Invalid Product")
         return True
@@ -639,6 +672,8 @@ def cmd_buy_mod(message, params, options=None):
 @command("/buybahha")
 def cmd_buybahha(message, params, options):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     if not options:
         send_message(user_id, "Product configuration error.")
         return True
@@ -698,6 +733,8 @@ def cmd_buybahha(message, params, options):
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     amount = User.get_data(user_id, "last_deposit_amount")
     pt = User.get_data(user_id, "last_product1") or "Unknown"
     plan = User.get_data(user_id, "last_plan") or "Unknown"
@@ -767,6 +804,8 @@ def cmd_autobuy1(message, params, options=None):
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     
     order_id = params
@@ -873,6 +912,8 @@ def cmd_verify_payment(message, params, options=None):
 @command("/cancel")
 def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     
     if params:
@@ -913,6 +954,8 @@ current_amount = {}
 @command("/addpayment")
 def cmd_addpayment(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
     reply_markup = {
@@ -934,6 +977,8 @@ def cmd_addpayment(message, params, options=None):
 @command("/num0")
 def cmd_num0(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "0" if amt == "0" else amt + "0"
@@ -945,6 +990,8 @@ def cmd_num0(message, params, options=None):
 @command("/num1")
 def cmd_num1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "1" if amt == "0" else amt + "1"
@@ -956,6 +1003,8 @@ def cmd_num1(message, params, options=None):
 @command("/num2")
 def cmd_num2(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "2" if amt == "0" else amt + "2"
@@ -967,6 +1016,8 @@ def cmd_num2(message, params, options=None):
 @command("/num3")
 def cmd_num3(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "3" if amt == "0" else amt + "3"
@@ -978,6 +1029,8 @@ def cmd_num3(message, params, options=None):
 @command("/num4")
 def cmd_num4(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "4" if amt == "0" else amt + "4"
@@ -989,6 +1042,8 @@ def cmd_num4(message, params, options=None):
 @command("/num5")
 def cmd_num5(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "5" if amt == "0" else amt + "5"
@@ -1000,6 +1055,8 @@ def cmd_num5(message, params, options=None):
 @command("/num6")
 def cmd_num6(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "6" if amt == "0" else amt + "6"
@@ -1011,6 +1068,8 @@ def cmd_num6(message, params, options=None):
 @command("/num7")
 def cmd_num7(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "7" if amt == "0" else amt + "7"
@@ -1022,6 +1081,8 @@ def cmd_num7(message, params, options=None):
 @command("/num8")
 def cmd_num8(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "8" if amt == "0" else amt + "8"
@@ -1033,6 +1094,8 @@ def cmd_num8(message, params, options=None):
 @command("/num9")
 def cmd_num9(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     amt = current_amount.get(user_id, "0")
     amt = "9" if amt == "0" else amt + "9"
@@ -1044,6 +1107,8 @@ def cmd_num9(message, params, options=None):
 @command("/clearamt")
 def cmd_clearamt(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
     text = "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below."
@@ -1053,6 +1118,8 @@ def cmd_clearamt(message, params, options=None):
 @command("/done")
 def cmd_done(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     amt = current_amount.get(user_id, "0")
     if not amt or amt == "0":
         send_message(user_id, "Enter amount first")
@@ -1063,6 +1130,8 @@ def cmd_done(message, params, options=None):
 
 def cmd_addpayment_qr(message):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return
     amount = User.get_data(user_id, "last_deposit_amount")
     if not amount:
         send_message(user_id, "Amount missing")
@@ -1121,6 +1190,8 @@ def cmd_addpayment_qr(message):
 @command("/backkkk")
 def cmd_backkkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     balance = Resources.another_res("Balance", user=user_id).value()
     text = (
@@ -1170,6 +1241,8 @@ def cmd_backkkk(message, params, options=None):
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     textn = (
         "━━━━━━━━━━━━━━━━━━━━\n"
@@ -1200,6 +1273,8 @@ def cmd_orderksk(message, params, options=None):
 @command("/profilemmm")
 def cmd_profilemmm(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     first_name = message.get("from", {}).get("first_name", "User")
     balance = Resources.another_res("Balance", user=user_id).value()
@@ -1250,6 +1325,8 @@ def cmd_profilemmm(message, params, options=None):
 @command("/spinj")
 def cmd_spinj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     text = """
 🎥 <b>Watch the full tutorial video below</b>
@@ -1271,6 +1348,8 @@ def cmd_spinj(message, params, options=None):
 @command("/supportj")
 def cmd_supportj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    if check_maintenance(user_id, message):
+        return True
     msg_id = message.get("message_id")
     text = """
 ━━━━━━━━━━━━━━━━━━━━
@@ -1314,18 +1393,28 @@ def cmd_admin(message, params, options=None):
     if not is_admin:
         send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
         return True
+    
+    maintenance_mode = bot_data.get_data("maintenance_mode") or False
+    maint_status = "🔴 OFF"
+    maint_callback = "/maintenance_on"
+    if maintenance_mode:
+        maint_status = "🟢 ON"
+        maint_callback = "/maintenance_off"
+    
     bot_mode = bot_data.get_data("BotMode") or "ON"
     bot_sta = "🟢 On"
     bot_change = "BotMode OFF"
     if bot_mode == "OFF":
         bot_sta = "🔴 Off"
         bot_change = "BotMode ON"
+    
     markup = {
         "inline_keyboard": [
             [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
             [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bot: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
             [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Recent Admin Actions", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
             [{"text": "📦 Manage Mods", "callback_data": "/manage_mods", "style": "success"}],
+            [{"text": "🔧 Maintenance", "callback_data": maint_callback, "style": "danger"}, {"text": f"Status: {maint_status}", "callback_data": "none", "style": "primary"}],
             [{"text": "💰 Add Reseller", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Remove Reseller", "callback_data": "/removereseller", "style": "danger"}],
             [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
         ]
@@ -1335,6 +1424,7 @@ def cmd_admin(message, params, options=None):
 
 ━━━━━━━━━━━━━━━
 🤖 Bot Status : {bot_sta}
+🔧 Maintenance : {maint_status}
 ━━━━━━━━━━━━━━━
 </b>"""
     if str(message.get("text")) == "/admin":
@@ -1344,6 +1434,184 @@ def cmd_admin(message, params, options=None):
             edit_message(user_id, msg_id, txt, "HTML", markup)
         except:
             send_message(user_id, txt, "HTML", markup)
+    return True
+
+
+# ============================================================
+# ========== MAINTENANCE COMMANDS ==========
+# ============================================================
+
+@command("/maintenance_on")
+def cmd_maintenance_on(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    
+    bot_data.save_data("maintenance_mode", True)
+    send_message(user_id, "✅ Maintenance Mode Activated!", "HTML")
+    
+    # Update admin panel
+    cmd_admin(message, params, options)
+    return True
+
+
+@command("/maintenance_off")
+def cmd_maintenance_off(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    
+    bot_data.save_data("maintenance_mode", False)
+    send_message(user_id, "✅ Maintenance Mode Deactivated!", "HTML")
+    
+    cmd_admin(message, params, options)
+    return True
+
+
+@command("/TUSHAR_Admins")
+def cmd_tushar_admins(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    if params and params in admins:
+        admins.remove(params)
+        bot_data.save_data("AllBotAdminss", admins)
+    markup = {"inline_keyboard": []}
+    for admin in admins:
+        markup["inline_keyboard"].append([
+            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
+            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
+        ])
+    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
+    text = "<b>Here You Can Manage Your Admins</b>"
+    try:
+        edit_message(user_id, msg_id, text, "HTML", markup)
+    except:
+        send_message(user_id, text, "HTML", markup)
+    return True
+
+
+@command("/TUSHAR_AddAdmin")
+def cmd_tushar_addadmin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
+    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
+    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
+    return True
+
+
+@command("/TUSHAR_AddAdmin1")
+def cmd_tushar_addadmin1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    new_admin = message.get("text")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    if new_admin in admins:
+        send_message(user_id, "Admin Already Exists")
+    else:
+        admins.append(new_admin)
+        bot_data.save_data("AllBotAdminss", admins)
+        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/TUSHAR_AdminAction")
+def cmd_tushar_adminaction(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    adm_ac = bot_data.get_data("AdmAC") or []
+    latest_10 = adm_ac[-10:][::-1]
+    if latest_10:
+        send_message(user_id, "\n\n".join(latest_10), "HTML")
+    else:
+        send_message(user_id, "No admin actions recorded yet.")
+    return True
+
+
+@command("/ChangeAnyUserBal")
+def cmd_change_balance(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(
+        user_id,
+        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/ChangeAnyUserBal2"
+    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
+    return True
+
+
+@command("/ChangeAnyUserBal2")
+def cmd_change_balance2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    parts = text.split(" ")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid format. Use: user_id amount")
+        return True
+    target_user = parts[0]
+    try:
+        amount = float(parts[1])
+    except:
+        send_message(user_id, "Invalid amount")
+        return True
+    bal = Resources.another_res("Balance", user=target_user)
+    bal.add(amount)
+    easy_time = get_easy_time()
+    adm_ac = bot_data.get_data("AdmAC") or []
+    adm_ac.append(
+        f"📆 Time: {easy_time}\n"
+        f"👥 By {message.get('from', {}).get('first_name', 'Admin')} [ID: {user_id}]\n"
+        f"🔍 Action: Added {amount} Rs To {target_user}"
+    )
+    bot_data.save_data("AdmAC", adm_ac)
+    send_message(
+        user_id,
+        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
+        "HTML"
+    )
+    send_message(
+        target_user,
+        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
     return True
 
 
@@ -1478,6 +1746,9 @@ def cmd_manage_mod(message, params, options=None):
         markup["inline_keyboard"].append([
             {"text": "✏️ CHANGE MOD NAME", "callback_data": f"/rename_mod {mod_id}", "style": "success"}
         ])
+        markup["inline_keyboard"].append([
+            {"text": "🎨 CHANGE MOD EMOJI", "callback_data": f"/change_mod_emoji {mod_id}", "style": "success"}
+        ])
     
     markup["inline_keyboard"].append([
         {"text": "🔙 BACK", "callback_data": "/manage_mods", "style": "danger"}
@@ -1495,6 +1766,73 @@ def cmd_manage_mod(message, params, options=None):
         edit_message(user_id, msg_id, txt, "HTML", markup)
     except:
         send_message(user_id, txt, "HTML", markup)
+    return True
+
+
+@command("/change_mod_emoji")
+def cmd_change_mod_emoji(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    
+    mod_id = params
+    if not mod_id:
+        send_message(user_id, "❌ Invalid Mod")
+        return True
+    
+    User.save_data(user_id, "change_emoji_mod", mod_id)
+    
+    current_emoji = bot_data.get_data(f"{mod_id}_emoji") or "None"
+    
+    send_message(
+        user_id,
+        f"<b>🎨 Change Emoji For {mod_id.upper()}</b>\n\n"
+        f"Current Emoji ID: <code>{current_emoji}</code>\n\n"
+        f"Send new emoji ID.\n"
+        f"Example: <code>6323104647636589287</code>\n\n"
+        f"Type /cancel to stop.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/change_mod_emoji_process"
+    pending_commands_store.set(user_id, "/change_mod_emoji_process")
+    return True
+
+
+@command("/change_mod_emoji_process")
+def cmd_change_mod_emoji_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    mod_id = User.get_data(user_id, "change_emoji_mod")
+    if not mod_id:
+        send_message(user_id, "❌ Error", "HTML")
+        return True
+    
+    emoji_id = text.strip()
+    if not emoji_id or not emoji_id.isdigit():
+        send_message(user_id, "❌ Invalid Emoji ID! Send only numbers.", "HTML")
+        return True
+    
+    bot_data.save_data(f"{mod_id}_emoji", emoji_id)
+    
+    send_message(
+        user_id,
+        f"✅ <b>Emoji Updated!</b>\n\n"
+        f"{mod_id.upper()} → Emoji ID: <code>{emoji_id}</code>",
+        "HTML"
+    )
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    User.save_data(user_id, "change_emoji_mod", None)
     return True
 
 
@@ -2093,6 +2431,7 @@ def cmd_add_new_mod(message, params, options=None):
         "<b>➕ Add New Mod</b>\n\n"
         "Send mod name:\n"
         "Example: <code>VIP MOD</code> or <code>MEGA CHEATS</code>\n\n"
+        "You can also add emoji later using 'Change Mod Emoji' option.\n\n"
         "<b>✅ Mod will appear in shop automatically!</b>\n\n"
         "Type /cancel to stop.",
         "HTML"
@@ -2127,10 +2466,14 @@ def cmd_add_new_mod_process(message, params, options=None):
     
     bot_data.save_data(f"{mod_id}_display_name", mod_name)
     
+    # Default emoji for new mod
+    bot_data.save_data(f"{mod_id}_emoji", "6179339404906079822")
+    
     send_message(
         user_id,
         f"✅ <b>Mod '{mod_name}' Created!</b>\n\n"
-        f"Now add plans using 'Add New Plan' button.\n\n"
+        f"Now add plans using 'Add New Plan' button.\n"
+        f"Change emoji using 'Change Mod Emoji' button.\n\n"
         f"<b>✅ Mod will appear in shop automatically!</b>",
         "HTML"
     )
@@ -2286,6 +2629,7 @@ def cmd_confirm_delete_mod(message, params, options=None):
     
     bot_data.collection.delete_one({"key": f"{mod_id}_display_name"})
     bot_data.collection.delete_one({"key": f"{mod_id}_product_name"})
+    bot_data.collection.delete_one({"key": f"{mod_id}_emoji"})
     
     plan_names = bot_data.get_data("plan_names") or {}
     to_delete = []
