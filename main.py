@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FINAL FIXED
+# tusharbot.py - COMPLETE FINAL FIXED WITH PREMIUM EMOJIS
 import requests
 import json
 import time
@@ -422,19 +422,19 @@ def cmd_start(message, params, options=None):
     )
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
             [
-                {"text": "📦 MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
-                {"text": "👤 PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
+                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
             ],
             [
-                {"text": "🎥 HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
-                {"text": "💬 SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
+                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
             ],
-            [{"text": "💰 ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
             [
                 {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": "5258134813302332906", "style": "success"},
-                {"text": "📥 DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
             ]
         ]
     }
@@ -496,7 +496,7 @@ def cmd_shopnawkk(message, params, options=None):
         ])
     
     markup["inline_keyboard"].append([
-        {"text": "🔙 BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
+        {"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
     ])
     
     text = """
@@ -567,7 +567,7 @@ def cmd_shop_mod(message, params, options=None):
             plan_key = f"{mod_id}_{day}"
             plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
             markup["inline_keyboard"].append([
-                {"text": f"{plan_display} - ₹{price} 🛒", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
+                {"text": f"{plan_display} - ₹{price} <tg-emoji emoji-id='5382194935057372936'>🛒</tg-emoji>", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
             ])
     
     if not markup["inline_keyboard"]:
@@ -575,7 +575,7 @@ def cmd_shop_mod(message, params, options=None):
         return True
     
     markup["inline_keyboard"].append([
-        {"text": "🔙 BACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
+        {"text": "BACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
     ])
     
     display_name = mod_id.upper()
@@ -962,7 +962,7 @@ def cmd_addpayment(message, params, options=None):
             [{"text": "4", "callback_data": "/num4", "style": "success"}, {"text": "5", "callback_data": "/num5", "style": "success"}, {"text": "6", "callback_data": "/num6", "style": "success"}],
             [{"text": "7", "callback_data": "/num7", "style": "success"}, {"text": "8", "callback_data": "/num8", "style": "success"}, {"text": "9", "callback_data": "/num9", "style": "success"}],
             [{"text": "CLEAR", "callback_data": "/clearamt", "style": "danger"}, {"text": "0", "callback_data": "/num0", "style": "success"}, {"text": "CONFIRM", "callback_data": "/done", "style": "success"}],
-            [{"text": "🔙 BACK", "callback_data": "/backkkk", "style": "danger"}]
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     text = "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below."
@@ -1213,19 +1213,19 @@ def cmd_backkkk(message, params, options=None):
     )
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
             [
-                {"text": "📦 MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
-                {"text": "👤 PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
+                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
             ],
             [
-                {"text": "🎥 HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
-                {"text": "💬 SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
+                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
             ],
-            [{"text": "💰 ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
             [
                 {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": "5258134813302332906", "style": "success"},
-                {"text": "📥 DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
             ]
         ]
     }
@@ -1251,7 +1251,7 @@ def cmd_orderksk(message, params, options=None):
     )
     adm_ac = User.get_data(user_id, "userhAC") or []
     if not adm_ac:
-        reply_markup = {"inline_keyboard": [[{"text": "🔙 BACK", "callback_data": "/backkkk", "style": "danger"}]]}
+        reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]]}
         try:
             edit_message(user_id, msg_id, textn, "HTML", reply_markup)
         except:
@@ -1261,7 +1261,7 @@ def cmd_orderksk(message, params, options=None):
         safe_list = [str(item) for item in latest_10 if item]
         if safe_list:
             text = "\n\n".join(safe_list)
-            reply_markup = {"inline_keyboard": [[{"text": "🔙 BACK", "callback_data": "/backkkk", "style": "danger"}]]}
+            reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]]}
             try:
                 edit_message(user_id, msg_id, text, reply_markup=reply_markup)
             except:
@@ -1306,8 +1306,8 @@ def cmd_profilemmm(message, params, options=None):
     
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk", "style": "success"}, {"text": "📦 MY KEYS", "callback_data": "/orderksk", "style": "success"}],
-            [{"text": "🔙 BACK", "callback_data": "/backkkk", "style": "danger"}]
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "style": "success"}, {"text": "MY KEYS", "callback_data": "/orderksk", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     
@@ -1334,7 +1334,7 @@ def cmd_spinj(message, params, options=None):
     reply_markup = {
         "inline_keyboard": [
             [{"text": "Watch Tutorial", "url": "https://t.me/hehehehhhsljg/162", "style": "success"}],
-            [{"text": "🔙 BACK", "callback_data": "/backkkk", "style": "danger"}]
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     try:
@@ -1364,8 +1364,8 @@ Need help? We're here for you! ⚡
 """
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "📱 WHATSAPP", "url": "https://wa.me/917908696630", "style": "success"}],
-            [{"text": "🔙 BACK", "callback_data": "/backkkk", "style": "danger"}]
+            [{"text": "WHATSAPP", "url": "https://wa.me/917908696630", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     try:
@@ -2143,16 +2143,15 @@ def cmd_add_keys_plan(message, params, options=None):
         send_message(user_id, "❌ Invalid")
         return True
     
-    parts = params.split("_")
-    if len(parts) != 2:
+    # FIXED: Better parsing using rfind
+    last_underscore = params.rfind("_")
+    if last_underscore == -1:
         send_message(user_id, "❌ Invalid format! Use: mod_id_day")
         return True
     
-    mod_id = parts[0]
-    day = parts[1]
-    
+    mod_id = params[:last_underscore]
     try:
-        day_num = int(day)
+        day_num = int(params[last_underscore + 1:])
     except:
         send_message(user_id, "❌ Invalid day format!")
         return True
