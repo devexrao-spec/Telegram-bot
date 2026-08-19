@@ -13,6 +13,41 @@ BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 MONGO_URI = "mongodb+srv://crasher3210_db_user:devex5656@cluster0.9y5axka.mongodb.net/?appName=Cluster0&compressors=zlib"
 DB_NAME = "telegram_bot1"
 
+# ========== PREMIUM EMOJI IDs (19-digit format) ==========
+EMOJIS = {
+    "cart": "5382194935057372936",      # 🛒
+    "back": "6039539366177541657",      # 🔙
+    "shop": "6093739864883207194",      # 🏪
+    "key": "5967456680940671207",       # 🔑
+    "profile": "5346136537123801643",   # 👤
+    "howto": "5345783284653636765",     # 📖
+    "support": "5897567714674741148",   # 💬
+    "addfund": "6278302366303260172",   # 💳
+    "payproof": "5258134813302332906",  # 📄
+    "download": "6028115612163641653",  # 📥
+    "balance": "5348392971207194994",   # 💰
+    "success": "5348129380474306311",   # ✅
+    "danger": "6278116707751956084",    # ❌
+    "warning": "5447644880824181073",   # ⚠️
+    "info": "5195033767969839232",      # ℹ️
+    "lightbulb": "5420323339723881652", # 💡
+    "clock": "5116553153419936517",     # ⏳
+    "package": "6179339404906079822",   # 📦
+    "drip_emoji": "6323104647636589287", # DRIP specific
+    "silent_emoji": "6325561995995126107", # SILENT specific
+    "hg_emoji": "6210705396449944693",   # HG specific
+    "orders": "6008118472066732010",     # 📦 Orders
+    "video": "5258601973167539896",      # 🎥
+    "money": "6089104607328342288",      # 💰
+    "time": "6278102040438640835",       # ⏰
+    "announce": "6264989131621798851",   # 📢
+    "buy": "6172208745582433583",        # 🛒
+    "stock": "5278467510604160626",      # 📦
+    "user": "5317006024517912643",       # 👤
+    "fund": "6089104607328342288",       # 💰
+    "mykeys": "6176966310920983412",     # 📦
+}
+
 class MongoDB:
     _instance = None
     
@@ -64,6 +99,9 @@ class DataStore:
     
     def save_data(self, key, value):
         self.set(key, value)
+    
+    def delete(self, key):
+        self.collection.delete_one({"key": key})
 
 bot_data = DataStore()
 
@@ -340,6 +378,9 @@ def get_easy_time():
     MONTHS = {"01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun", "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"}
     return f"{int(day)} {MONTHS[month]}, {hour:02}:{minute} {ampm}"
 
+def emoji(id, char=""):
+    return f"<tg-emoji emoji-id='{id}'>{char}</tg-emoji>"
+
 commands = {}
 
 def command(name):
@@ -374,14 +415,10 @@ def check_maintenance(user_id, message):
         is_admin = str(user_id) in [str(a) for a in admins]
         if not is_admin:
             text = (
-                "<blockquote>"
-                "<tg-emoji emoji-id='5447644880824181073'>🔧</tg-emoji> "
-                "MAINTENANCE MODE ACTIVE "
-                "<tg-emoji emoji-id='5444856076954520455'>🔴</tg-emoji>"
-                "</blockquote>\n\n"
-                "<tg-emoji emoji-id='5195033767969839232'>ℹ️</tg-emoji> The bot is currently undergoing server upgrades.\n"
-                "<tg-emoji emoji-id='5420323339723881652'>💡</tg-emoji> Purchases, balance operations, and other services may be temporarily unavailable.\n"
-                "<tg-emoji emoji-id='5116553153419936517'>⏳</tg-emoji> Please check back later."
+                f"{emoji(EMOJIS['warning'])} MAINTENANCE MODE ACTIVE {emoji(EMOJIS['danger'])}\n\n"
+                f"{emoji(EMOJIS['info'])} The bot is currently undergoing server upgrades.\n"
+                f"{emoji(EMOJIS['lightbulb'])} Purchases, balance operations, and other services may be temporarily unavailable.\n"
+                f"{emoji(EMOJIS['clock'])} Please check back later."
             )
             send_message(user_id, text, "HTML")
             return True
@@ -402,45 +439,35 @@ def cmd_start(message, params, options=None):
         User.save_data(user_id, "joined_date", message.get("date"))
     balance = Resources.another_res("Balance", user=user_id).value()
     text = (
-        "<b>"
-        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n"
-        "<b>"
-        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n"
-        "<b>"
-        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n"
-        "<b>"
-        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n"
-        "<b>"
-        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n"
-        "<b>"
-        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n"
-        "<b>"
-        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
-        "</blockquote>"
+        f"{emoji(EMOJIS['shop'])} <b>Buy Hack :</b> All key purchase & instantly delivery\n"
+        f"{emoji(EMOJIS['user'])} <b>Profile :</b> Check your account information\n"
+        f"{emoji(EMOJIS['money'])} <b>Add Fund :</b> Deposit balance & secure service\n"
+        f"{emoji(EMOJIS['mykeys'])} <b>My Key :</b> Check all key purchase history\n"
+        f"{emoji(EMOJIS['video'])} <b>How To Use :</b> View tutorial and work this bot\n"
+        f"{emoji(EMOJIS['support'])} <b>Support :</b> Bot problem fixed for support admin\n"
+        f"{emoji(EMOJIS['download'])} <b>Download Apk :</b> Download latest apk for safety\n"
+        f"{emoji(EMOJIS['balance'])} Your Balance: ₹{balance}"
     )
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": EMOJIS['shop'], "style": "success"}],
             [
-                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
-                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
+                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": EMOJIS['key'], "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": EMOJIS['profile'], "style": "success"}
             ],
             [
-                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
-                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
+                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": EMOJIS['howto'], "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": EMOJIS['support'], "style": "success"}
             ],
-            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": EMOJIS['addfund'], "style": "success"}],
             [
-                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": "5258134813302332906", "style": "success"},
-                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
+                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": EMOJIS['payproof'], "style": "success"},
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": EMOJIS['download'], "style": "success"}
             ]
         ]
     }
     send_message(user_id, text, "HTML", reply_markup)
     return True
-
 
 @command("/shopnawkk")
 def cmd_shopnawkk(message, params, options=None):
@@ -461,21 +488,21 @@ def cmd_shopnawkk(message, params, options=None):
     
     for mod_id in mods:
         display_name = mod_id.upper()
-        emoji = "6179339404906079822"
+        emoji_id = EMOJIS['package']
         if mod_id == "drip":
             display_name = "DRIP CLIENT NON-ROOT"
-            emoji = "6323104647636589287"
+            emoji_id = EMOJIS['drip_emoji']
         elif mod_id == "SILENT":
             display_name = "SILENT CHEATS ANDROID"
-            emoji = "6325561995995126107"
+            emoji_id = EMOJIS['silent_emoji']
         elif mod_id == "HG":
             display_name = "PRIME HOOK"
-            emoji = "6210705396449944693"
+            emoji_id = EMOJIS['hg_emoji']
         else:
             display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
             custom_emoji = bot_data.get_data(f"{mod_id}_emoji")
             if custom_emoji:
-                emoji = custom_emoji
+                emoji_id = custom_emoji
         
         has_plan = False
         all_keys = bot_data.collection.find()
@@ -487,7 +514,7 @@ def cmd_shopnawkk(message, params, options=None):
         
         if has_plan:
             markup["inline_keyboard"].append([
-                {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji, "style": "success"}
+                {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji_id, "style": "success"}
             ])
     
     if not markup["inline_keyboard"]:
@@ -496,22 +523,21 @@ def cmd_shopnawkk(message, params, options=None):
         ])
     
     markup["inline_keyboard"].append([
-        {"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
+        {"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": EMOJIS['back'], "style": "danger"}
     ])
     
-    text = """
+    text = f"""
 ━━━━━━━━━━━━━━━━━━━━
-<tg-emoji emoji-id="6093562529978522804">🛒</tg-emoji> <b>PANNEL STORE — SHOP</b>
+{emoji(EMOJIS['shop'])} <b>PANNEL STORE — SHOP</b>
 ━━━━━━━━━━━━━━━━━━━━
 
-<tg-emoji emoji-id="6179339404906079822">📦</tg-emoji> Choose a product:
+{emoji(EMOJIS['package'])} Choose a product:
 """
     try:
         edit_message(user_id, msg_id, text, "HTML", markup)
     except:
         send_message(user_id, text, "HTML", markup)
     return True
-
 
 @command("/SHOP_MOD")
 def cmd_shop_mod(message, params, options=None):
@@ -567,7 +593,9 @@ def cmd_shop_mod(message, params, options=None):
             plan_key = f"{mod_id}_{day}"
             plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
             markup["inline_keyboard"].append([
-                {"text": f"{plan_display} - ₹{price} <tg-emoji emoji-id='5382194935057372936'>🛒</tg-emoji>", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
+                {"text": f"{plan_display} - ₹{price} {emoji(EMOJIS['cart'])}", 
+                 "callback_data": f"/buy_mod {mod_id}_{day}", 
+                 "style": "success"}
             ])
     
     if not markup["inline_keyboard"]:
@@ -575,7 +603,7 @@ def cmd_shop_mod(message, params, options=None):
         return True
     
     markup["inline_keyboard"].append([
-        {"text": "BACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
+        {"text": "BACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": EMOJIS['back'], "style": "danger"}
     ])
     
     display_name = mod_id.upper()
@@ -601,7 +629,6 @@ Choose a plan 👇
         send_message(user_id, txt, "HTML", markup)
     return True
 
-
 @command("/buy_mod")
 def cmd_buy_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -611,17 +638,21 @@ def cmd_buy_mod(message, params, options=None):
         send_message(user_id, "❌ Invalid Product")
         return True
     
-    last_underscore = params.rfind("_")
-    if last_underscore == -1:
+    # FIXED: Better parsing for mod_id and day
+    parts = params.split("_")
+    if len(parts) < 2:
         send_message(user_id, "❌ Invalid Product Format")
         return True
     
-    mod_id = params[:last_underscore]
+    # Last part is day, rest is mod_id
+    day_str = parts[-1]
     try:
-        day = int(params[last_underscore + 1:])
+        day = int(day_str)
     except:
         send_message(user_id, "❌ Invalid Day")
         return True
+    
+    mod_id = "_".join(parts[:-1])  # Handle mod_id with underscores
     
     price_key = f"{mod_id}_{day}d_price"
     keys_key = f"{mod_id}_{day}d_keys"
@@ -641,8 +672,7 @@ def cmd_buy_mod(message, params, options=None):
     if is_reseller:
         reseller_key = f"{mod_id}_{day}d_reseller_price"
         if bot_data.get_data(reseller_key):
-            price_key = reseller_key
-            price = bot_data.get_data(price_key)
+            price = bot_data.get_data(reseller_key)
     
     display_name = mod_id.upper()
     if mod_id == "drip":
@@ -663,9 +693,8 @@ def cmd_buy_mod(message, params, options=None):
     User.save_data(user_id, "last_product1", title)
     User.save_data(user_id, "last_plan", str(day))
     
-    cmd_buybahha(message, None, {"price": price_key, "key": keys_key, "title": title})
+    cmd_buybahha(message, None, {"price": price, "key": keys_key, "title": title})
     return True
-
 
 @command("/buybahha")
 def cmd_buybahha(message, params, options):
@@ -675,13 +704,12 @@ def cmd_buybahha(message, params, options):
     if not options:
         send_message(user_id, "Product configuration error.")
         return True
-    price_key = options.get("price")
+    price = options.get("price")
     key_key = options.get("key")
     title = options.get("title")
-    if not price_key or not key_key or not title:
+    if not price or not key_key or not title:
         send_message(user_id, "Product configuration error.")
         return True
-    price = bot_data.get_data(price_key) or 0
     try:
         price = float(price)
     except:
@@ -708,12 +736,12 @@ def cmd_buybahha(message, params, options):
     easy_time = get_easy_time()
     send_message(
         user_id,
-        f"<tg-emoji emoji-id='6172208745582433583'>🛒</tg-emoji> {title}\n\n"
-        f"<tg-emoji emoji-id='6005570495603282482'>🔑</tg-emoji> <b>Your Key:</b>\n<code>{key}</code>\n\n"
-        f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Deducted: ₹{price}\n"
-        f"<tg-emoji emoji-id='5967456680940671207'>📦</tg-emoji> Remaining Stock: {len(keys)}\n"
-        f"<tg-emoji emoji-id='6278102040438640835'>📦</tg-emoji> Time: {easy_time}\n\n"
-        f"<tg-emoji emoji-id='6264989131621798851'>📢</tg-emoji> <b>ALL FILES UPDATE</b>\n"
+        f"{emoji(EMOJIS['buy'])} {title}\n\n"
+        f"{emoji(EMOJIS['key'])} <b>Your Key:</b>\n<code>{key}</code>\n\n"
+        f"{emoji(EMOJIS['money'])} Deducted: ₹{price}\n"
+        f"{emoji(EMOJIS['mykeys'])} Remaining Stock: {len(keys)}\n"
+        f"{emoji(EMOJIS['time'])} Time: {easy_time}\n\n"
+        f"{emoji(EMOJIS['announce'])} <b>ALL FILES UPDATE</b>\n"
         f"@SUBHAJIT_UPDATES",
         "HTML"
     )
@@ -726,7 +754,6 @@ def cmd_buybahha(message, params, options):
     )
     User.save_data(user_id, "userhAC", adm_ac)
     return True
-
 
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
@@ -777,27 +804,26 @@ def cmd_autobuy1(message, params, options=None):
     pending_payments_store.set(user_id, pending_payments[user_id])
     
     caption = (
-        f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> INSUFFICIENT BALANCE</blockquote>\n\n"
+        f"{emoji(EMOJIS['money'])} INSUFFICIENT BALANCE\n\n"
         f"┣ Product: {pt}\n"
         f"┣ Plan: {plan_display}\n"
         f"┣ Price: ₹{amount}\n"
         f"┣ Your Balance: ₹{balance}\n"
         f"┗ Need: ₹{need}\n\n"
         f"Scan the QR and complete payment.\n\n"
-        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b>\n"
+        f"{emoji(EMOJIS['info'])} <b>Order ID:</b>\n"
         f"<code>{order_id}</code>\n\n"
         f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
     )
     
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
+            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": EMOJIS['addfund'], "style": "success"}],
+            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": EMOJIS['danger'], "style": "danger"}]
         ]
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
     return True
-
 
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
@@ -842,7 +868,7 @@ def cmd_verify_payment(message, params, options=None):
         send_message(user_id, "No pending payment found for you.", "HTML")
         return True
     
-    send_message(user_id, "<tg-emoji emoji-id='5348374038991357363'>⏳</tg-emoji> Checking payment status...", "HTML")
+    send_message(user_id, f"{emoji(EMOJIS['clock'])} Checking payment status...", "HTML")
     
     url = f"https://fampay.anujbots.xyz/verify.php?order_id={order_id}&api_key=FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8"
     
@@ -877,9 +903,9 @@ def cmd_verify_payment(message, params, options=None):
         
         send_message(
             user_id,
-            f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> <b>Payment Success!</b>\n\n"
-            f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Added: ₹{amount}\n"
-            f"<tg-emoji emoji-id='5346227465876423936'>💳</tg-emoji> New Balance: ₹{bal.value()}",
+            f"{emoji(EMOJIS['success'])} <b>Payment Success!</b>\n\n"
+            f"{emoji(EMOJIS['money'])} Added: ₹{amount}\n"
+            f"{emoji(EMOJIS['balance'])} New Balance: ₹{bal.value()}",
             "HTML"
         )
         
@@ -887,7 +913,7 @@ def cmd_verify_payment(message, params, options=None):
         for admin in admins:
             send_message(
                 admin,
-                f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> New Payment Received!\n\n"
+                f"{emoji(EMOJIS['success'])} New Payment Received!\n\n"
                 f"👤 User ID: <code>{user_id}</code>\n"
                 f"💰 Amount: ₹{amount}\n"
                 f"🧾 Order ID: <code>{order_id}</code>\n"
@@ -899,13 +925,12 @@ def cmd_verify_payment(message, params, options=None):
     else:
         send_message(
             user_id,
-            f"<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> <b>Payment Not Found</b>\n\n"
+            f"{emoji(EMOJIS['danger'])} <b>Payment Not Found</b>\n\n"
             f"Order ID: <code>{order_id}</code>\n\n"
             f"Please complete the payment and try again.",
             "HTML"
         )
         return True
-
 
 @command("/cancel")
 def cmd_cancel(message, params, options=None):
@@ -939,9 +964,8 @@ def cmd_cancel(message, params, options=None):
     User.save_data(user_id, "last_order_id", "")
     User.save_data(user_id, "addpay_order_id", "")
     User.save_data(user_id, "payment_processed", False)
-    send_message(user_id, "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Cancelled", "HTML")
+    send_message(user_id, f"{emoji(EMOJIS['danger'])} Cancelled", "HTML")
     return True
-
 
 # ============================================================
 # ========== ADD FUNDS COMMANDS ==========
@@ -965,7 +989,7 @@ def cmd_addpayment(message, params, options=None):
             [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
-    text = "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹0\n\nUse the keypad below."
     try:
         edit_message(user_id, msg_id, text, "HTML", reply_markup)
     except:
@@ -981,7 +1005,7 @@ def cmd_num0(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "0" if amt == "0" else amt + "0"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -994,7 +1018,7 @@ def cmd_num1(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "1" if amt == "0" else amt + "1"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1007,7 +1031,7 @@ def cmd_num2(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "2" if amt == "0" else amt + "2"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1020,7 +1044,7 @@ def cmd_num3(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "3" if amt == "0" else amt + "3"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1033,7 +1057,7 @@ def cmd_num4(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "4" if amt == "0" else amt + "4"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1046,7 +1070,7 @@ def cmd_num5(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "5" if amt == "0" else amt + "5"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1059,7 +1083,7 @@ def cmd_num6(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "6" if amt == "0" else amt + "6"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1072,7 +1096,7 @@ def cmd_num7(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "7" if amt == "0" else amt + "7"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1085,7 +1109,7 @@ def cmd_num8(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "8" if amt == "0" else amt + "8"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1098,7 +1122,7 @@ def cmd_num9(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "9" if amt == "0" else amt + "9"
     current_amount[user_id] = amt
-    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1109,7 +1133,7 @@ def cmd_clearamt(message, params, options=None):
         return True
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
-    text = "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below."
+    text = f"{emoji(EMOJIS['money'])} ENTER CUSTOM AMOUNT\n\nAmount: ₹0\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1165,10 +1189,10 @@ def cmd_addpayment_qr(message):
     pending_payments_store.set(user_id, pending_payments[user_id])
     
     caption = (
-        f"<blockquote>💰 PAYMENT QR GENERATED</blockquote>\n"
+        f"{emoji(EMOJIS['money'])} PAYMENT QR GENERATED\n"
         f"Scan the QR and complete payment.\n\n"
         f"Amount: ₹{amount}\n\n"
-        f"🧾 <b>Order ID:</b>\n<code>{order_id}</code>\n\n"
+        f"{emoji(EMOJIS['info'])} <b>Order ID:</b>\n<code>{order_id}</code>\n\n"
         f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
     )
     
@@ -1179,7 +1203,6 @@ def cmd_addpayment_qr(message):
         ]
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
-
 
 # ============================================================
 # ========== OTHER USER COMMANDS ==========
@@ -1193,39 +1216,30 @@ def cmd_backkkk(message, params, options=None):
     msg_id = message.get("message_id")
     balance = Resources.another_res("Balance", user=user_id).value()
     text = (
-        "<b>"
-        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n"
-        "<b>"
-        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n"
-        "<b>"
-        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n"
-        "<b>"
-        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n"
-        "<b>"
-        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n"
-        "<b>"
-        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n"
-        "<b>"
-        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
-        "</blockquote>"
+        f"{emoji(EMOJIS['shop'])} <b>Buy Hack :</b> All key purchase & instantly delivery\n"
+        f"{emoji(EMOJIS['user'])} <b>Profile :</b> Check your account information\n"
+        f"{emoji(EMOJIS['money'])} <b>Add Fund :</b> Deposit balance & secure service\n"
+        f"{emoji(EMOJIS['mykeys'])} <b>My Key :</b> Check all key purchase history\n"
+        f"{emoji(EMOJIS['video'])} <b>How To Use :</b> View tutorial and work this bot\n"
+        f"{emoji(EMOJIS['support'])} <b>Support :</b> Bot problem fixed for support admin\n"
+        f"{emoji(EMOJIS['download'])} <b>Download Apk :</b> Download latest apk for safety\n"
+        f"{emoji(EMOJIS['balance'])} Your Balance: ₹{balance}"
     )
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": EMOJIS['shop'], "style": "success"}],
             [
-                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
-                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
+                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": EMOJIS['key'], "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": EMOJIS['profile'], "style": "success"}
             ],
             [
-                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
-                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
+                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": EMOJIS['howto'], "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": EMOJIS['support'], "style": "success"}
             ],
-            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": EMOJIS['addfund'], "style": "success"}],
             [
-                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": "5258134813302332906", "style": "success"},
-                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
+                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": EMOJIS['payproof'], "style": "success"},
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": EMOJIS['download'], "style": "success"}
             ]
         ]
     }
@@ -1235,7 +1249,6 @@ def cmd_backkkk(message, params, options=None):
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1244,10 +1257,10 @@ def cmd_orderksk(message, params, options=None):
     msg_id = message.get("message_id")
     textn = (
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "<tg-emoji emoji-id='6008118472066732010'>📦</tg-emoji> <b>MY ORDERS</b>\n"
+        f"{emoji(EMOJIS['orders'])} <b>MY ORDERS</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "You haven't placed any orders yet.\n"
-        "Tap <tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Shop Now!"
+        f"Tap {emoji(EMOJIS['shop'])} Shop Now!"
     )
     adm_ac = User.get_data(user_id, "userhAC") or []
     if not adm_ac:
@@ -1294,13 +1307,13 @@ def cmd_profilemmm(message, params, options=None):
     
     text = (
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "👤 YOUR PROFILE\n"
+        f"{emoji(EMOJIS['user'])} YOUR PROFILE\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         f"📛 Name: {first_name}\n"
         f"🆔 User ID: {user_id}\n"
-        f"💰 Balance: ₹{balance}\n"
+        f"{emoji(EMOJIS['balance'])} Balance: ₹{balance}\n"
         f"📅 Member Since: {member_since}\n"
-        f"🛒 Total Orders: {orders}\n\n"
+        f"{emoji(EMOJIS['orders'])} Total Orders: {orders}\n\n"
         "━━━━━━━━━━━━━━━━━━━━"
     )
     
@@ -1326,8 +1339,8 @@ def cmd_spinj(message, params, options=None):
     if check_maintenance(user_id, message):
         return True
     msg_id = message.get("message_id")
-    text = """
-🎥 <b>Watch the full tutorial video below</b>
+    text = f"""
+{emoji(EMOJIS['video'])} <b>Watch the full tutorial video below</b>
 
 👇
 """
@@ -1374,9 +1387,8 @@ Need help? We're here for you! ⚡
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-
 # ============================================================
-# ========== ADMIN COMMANDS ==========
+# ========== KEY ADD FIX - ADMIN COMMANDS ==========
 # ============================================================
 
 @command("/admin")
@@ -1434,7 +1446,6 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
-
 # ============================================================
 # ========== MAINTENANCE COMMANDS ==========
 # ============================================================
@@ -1454,7 +1465,6 @@ def cmd_maintenance_on(message, params, options=None):
     cmd_admin(message, params, options)
     return True
 
-
 @command("/maintenance_off")
 def cmd_maintenance_off(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1469,7 +1479,6 @@ def cmd_maintenance_off(message, params, options=None):
     
     cmd_admin(message, params, options)
     return True
-
 
 @command("/TUSHAR_Admins")
 def cmd_tushar_admins(message, params, options=None):
@@ -1498,7 +1507,6 @@ def cmd_tushar_admins(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
-
 @command("/TUSHAR_AddAdmin")
 def cmd_tushar_addadmin(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1511,7 +1519,6 @@ def cmd_tushar_addadmin(message, params, options=None):
     pending_commands[user_id] = "/TUSHAR_AddAdmin1"
     pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
     return True
-
 
 @command("/TUSHAR_AddAdmin1")
 def cmd_tushar_addadmin1(message, params, options=None):
@@ -1532,7 +1539,6 @@ def cmd_tushar_addadmin1(message, params, options=None):
     pending_commands_store.delete(user_id)
     return True
 
-
 @command("/TUSHAR_AdminAction")
 def cmd_tushar_adminaction(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1548,7 +1554,6 @@ def cmd_tushar_adminaction(message, params, options=None):
     else:
         send_message(user_id, "No admin actions recorded yet.")
     return True
-
 
 @command("/ChangeAnyUserBal")
 def cmd_change_balance(message, params, options=None):
@@ -1566,7 +1571,6 @@ def cmd_change_balance(message, params, options=None):
     pending_commands[user_id] = "/ChangeAnyUserBal2"
     pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
     return True
-
 
 @command("/ChangeAnyUserBal2")
 def cmd_change_balance2(message, params, options=None):
@@ -1610,7 +1614,6 @@ def cmd_change_balance2(message, params, options=None):
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
     return True
-
 
 # ============================================================
 # ========== MANAGE MODS ==========
@@ -1674,7 +1677,6 @@ def cmd_manage_mods(message, params, options=None):
     except:
         send_message(user_id, txt, "HTML", markup)
     return True
-
 
 @command("/manage_mod")
 def cmd_manage_mod(message, params, options=None):
@@ -1765,7 +1767,6 @@ def cmd_manage_mod(message, params, options=None):
         send_message(user_id, txt, "HTML", markup)
     return True
 
-
 @command("/change_mod_emoji")
 def cmd_change_mod_emoji(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1795,7 +1796,6 @@ def cmd_change_mod_emoji(message, params, options=None):
     pending_commands[user_id] = "/change_mod_emoji_process"
     pending_commands_store.set(user_id, "/change_mod_emoji_process")
     return True
-
 
 @command("/change_mod_emoji_process")
 def cmd_change_mod_emoji_process(message, params, options=None):
@@ -1831,7 +1831,6 @@ def cmd_change_mod_emoji_process(message, params, options=None):
     pending_commands_store.delete(user_id)
     User.save_data(user_id, "change_emoji_mod", None)
     return True
-
 
 @command("/edit_plan")
 def cmd_edit_plan(message, params, options=None):
@@ -1900,7 +1899,6 @@ def cmd_edit_plan(message, params, options=None):
         send_message(user_id, txt, "HTML", markup)
     return True
 
-
 @command("/edit_plan_name")
 def cmd_edit_plan_name(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1939,7 +1937,6 @@ def cmd_edit_plan_name(message, params, options=None):
     pending_commands_store.set(user_id, "/edit_plan_name_process")
     return True
 
-
 @command("/edit_plan_name_process")
 def cmd_edit_plan_name_process(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1977,7 +1974,6 @@ def cmd_edit_plan_name_process(message, params, options=None):
     User.save_data(user_id, "editing_plan_name", None)
     return True
 
-
 @command("/edit_price")
 def cmd_edit_price(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2013,7 +2009,6 @@ def cmd_edit_price(message, params, options=None):
     pending_commands[user_id] = "/edit_price_process"
     pending_commands_store.set(user_id, "/edit_price_process")
     return True
-
 
 @command("/edit_price_process")
 def cmd_edit_price_process(message, params, options=None):
@@ -2053,7 +2048,6 @@ def cmd_edit_price_process(message, params, options=None):
         send_message(user_id, "❌ Invalid number!", "HTML")
     return True
 
-
 @command("/edit_reseller_price")
 def cmd_edit_reseller_price(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2089,7 +2083,6 @@ def cmd_edit_reseller_price(message, params, options=None):
     pending_commands[user_id] = "/edit_reseller_price_process"
     pending_commands_store.set(user_id, "/edit_reseller_price_process")
     return True
-
 
 @command("/edit_reseller_price_process")
 def cmd_edit_reseller_price_process(message, params, options=None):
@@ -2129,7 +2122,7 @@ def cmd_edit_reseller_price_process(message, params, options=None):
         send_message(user_id, "❌ Invalid number!", "HTML")
     return True
 
-
+# ========== FIXED KEY ADD COMMAND ==========
 @command("/add_keys_plan")
 def cmd_add_keys_plan(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2143,18 +2136,21 @@ def cmd_add_keys_plan(message, params, options=None):
         send_message(user_id, "❌ Invalid")
         return True
     
-    # FIXED: Better parsing using rfind
-    last_underscore = params.rfind("_")
-    if last_underscore == -1:
+    # FIXED: Better parsing for mod_id and day
+    parts = params.split("_")
+    if len(parts) < 2:
         send_message(user_id, "❌ Invalid format! Use: mod_id_day")
         return True
     
-    mod_id = params[:last_underscore]
+    # Last part is day, rest is mod_id
+    day_str = parts[-1]
     try:
-        day_num = int(params[last_underscore + 1:])
+        day_num = int(day_str)
     except:
         send_message(user_id, "❌ Invalid day format!")
         return True
+    
+    mod_id = "_".join(parts[:-1])  # Handle mod_id with underscores
     
     key_name = f"{mod_id}_{day_num}d_keys"
     
@@ -2165,7 +2161,10 @@ def cmd_add_keys_plan(message, params, options=None):
     
     current_stock = len(existing)
     
+    # Store both the key name and the mod_id/day for better tracking
     User.save_data(user_id, "add_keys_key_name", key_name)
+    User.save_data(user_id, "add_keys_mod_id", mod_id)
+    User.save_data(user_id, "add_keys_day", day_num)
     
     send_message(
         user_id,
@@ -2180,7 +2179,6 @@ def cmd_add_keys_plan(message, params, options=None):
     pending_commands_store.set(user_id, "/add_keys_process_final")
     return True
 
-
 @command("/add_keys_process_final")
 def cmd_add_keys_process_final(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2191,6 +2189,8 @@ def cmd_add_keys_process_final(message, params, options=None):
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         User.save_data(user_id, "add_keys_key_name", None)
+        User.save_data(user_id, "add_keys_mod_id", None)
+        User.save_data(user_id, "add_keys_day", None)
         return True
     
     key_name = User.get_data(user_id, "add_keys_key_name")
@@ -2201,10 +2201,23 @@ def cmd_add_keys_process_final(message, params, options=None):
         return True
     
     if text.upper() == "DONE":
-        send_message(user_id, f"✅ <b>All Keys Added To</b>\n\n<code>{key_name}</code>", "HTML")
+        mod_id = User.get_data(user_id, "add_keys_mod_id") or "Unknown"
+        day = User.get_data(user_id, "add_keys_day") or "Unknown"
+        existing = bot_data.get_data(key_name) or []
+        send_message(
+            user_id, 
+            f"✅ <b>All Keys Added To</b>\n\n"
+            f"📦 Mod: {mod_id.upper()}\n"
+            f"📅 Day: {day}\n"
+            f"🔑 Total Keys: {len(existing)}\n"
+            f"📂 Key Name: <code>{key_name}</code>",
+            "HTML"
+        )
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         User.save_data(user_id, "add_keys_key_name", None)
+        User.save_data(user_id, "add_keys_mod_id", None)
+        User.save_data(user_id, "add_keys_day", None)
         return True
     
     existing = bot_data.get_data(key_name) or []
@@ -2221,15 +2234,18 @@ def cmd_add_keys_process_final(message, params, options=None):
     
     bot_data.save_data(key_name, existing)
     
+    # Verify the keys were saved
+    verify_keys = bot_data.get_data(key_name) or []
+    
     send_message(
         user_id,
         f"✅ <b>Added {added} Key(s)</b>\n\n"
-        f"Total Stock: {len(existing)}\n\n"
+        f"Total Stock: {len(verify_keys)}\n"
+        f"📂 Key Name: <code>{key_name}</code>\n\n"
         f"Send more keys or type <b>DONE</b> to finish.",
         "HTML"
     )
     return True
-
 
 @command("/remove_plan")
 def cmd_remove_plan(message, params, options=None):
@@ -2275,7 +2291,6 @@ def cmd_remove_plan(message, params, options=None):
         reply_markup=markup
     )
     return True
-
 
 @command("/confirm_remove_plan")
 def cmd_confirm_remove_plan(message, params, options=None):
@@ -2324,7 +2339,6 @@ def cmd_confirm_remove_plan(message, params, options=None):
     cmd_manage_mod(message, mod_id, None)
     return True
 
-
 @command("/add_new_plan")
 def cmd_add_new_plan(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2352,7 +2366,6 @@ def cmd_add_new_plan(message, params, options=None):
     pending_commands[user_id] = "/add_new_plan_process"
     pending_commands_store.set(user_id, "/add_new_plan_process")
     return True
-
 
 @command("/add_new_plan_process")
 def cmd_add_new_plan_process(message, params, options=None):
@@ -2429,7 +2442,6 @@ def cmd_add_new_plan_process(message, params, options=None):
     User.save_data(user_id, "add_plan_mod", None)
     return True
 
-
 @command("/add_new_mod")
 def cmd_add_new_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2451,7 +2463,6 @@ def cmd_add_new_mod(message, params, options=None):
     pending_commands[user_id] = "/add_new_mod_process"
     pending_commands_store.set(user_id, "/add_new_mod_process")
     return True
-
 
 @command("/add_new_mod_process")
 def cmd_add_new_mod_process(message, params, options=None):
@@ -2477,7 +2488,7 @@ def cmd_add_new_mod_process(message, params, options=None):
         bot_data.save_data("mods_list", mods)
     
     bot_data.save_data(f"{mod_id}_display_name", mod_name)
-    bot_data.save_data(f"{mod_id}_emoji", "6179339404906079822")
+    bot_data.save_data(f"{mod_id}_emoji", EMOJIS['package'])
     
     send_message(
         user_id,
@@ -2490,7 +2501,6 @@ def cmd_add_new_mod_process(message, params, options=None):
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
     return True
-
 
 @command("/rename_mod")
 def cmd_rename_mod(message, params, options=None):
@@ -2529,7 +2539,6 @@ def cmd_rename_mod(message, params, options=None):
     pending_commands_store.set(user_id, "/rename_mod_process")
     return True
 
-
 @command("/rename_mod_process")
 def cmd_rename_mod_process(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2564,7 +2573,6 @@ def cmd_rename_mod_process(message, params, options=None):
     pending_commands_store.delete(user_id)
     User.save_data(user_id, "rename_mod_id", None)
     return True
-
 
 @command("/delete_mod")
 def cmd_delete_mod(message, params, options=None):
@@ -2609,7 +2617,6 @@ def cmd_delete_mod(message, params, options=None):
         reply_markup=markup
     )
     return True
-
 
 @command("/confirm_delete_mod")
 def cmd_confirm_delete_mod(message, params, options=None):
@@ -2660,7 +2667,6 @@ def cmd_confirm_delete_mod(message, params, options=None):
     User.save_data(user_id, "delete_mod_id", None)
     return True
 
-
 @command("/addreseller")
 def cmd_addreseller(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2673,7 +2679,6 @@ def cmd_addreseller(message, params, options=None):
     pending_commands[user_id] = "/add_reseller_process"
     pending_commands_store.set(user_id, "/add_reseller_process")
     return True
-
 
 @command("/add_reseller_process")
 def cmd_add_reseller_process(message, params, options=None):
@@ -2703,7 +2708,6 @@ def cmd_add_reseller_process(message, params, options=None):
     pending_commands_store.delete(user_id)
     return True
 
-
 @command("/removereseller")
 def cmd_removereseller(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2711,7 +2715,6 @@ def cmd_removereseller(message, params, options=None):
     pending_commands[user_id] = "/remove_reseller_process"
     pending_commands_store.set(user_id, "/remove_reseller_process")
     return True
-
 
 @command("/remove_reseller_process")
 def cmd_remove_reseller_process(message, params, options=None):
@@ -2741,7 +2744,6 @@ def cmd_remove_reseller_process(message, params, options=None):
     pending_commands_store.delete(user_id)
     return True
 
-
 @command("/resellerlist")
 def cmd_resellerlist(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2757,7 +2759,6 @@ def cmd_resellerlist(message, params, options=None):
     text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
     send_message(user_id, text, "HTML")
     return True
-
 
 # ============================================================
 # ========== BROADCAST & MAIN ==========
@@ -2795,7 +2796,6 @@ def cmd_broadcast(message, params, options=None):
     pending_commands[user_id] = "/broadcast_send_media"
     pending_commands_store.set(user_id, "/broadcast_send_media")
     return True
-
 
 @command("/broadcast_send_media")
 def cmd_broadcast_send_media(message, params, options=None):
@@ -2847,7 +2847,6 @@ def cmd_broadcast_send_media(message, params, options=None):
     User.save_data(user_id, "broadcast_users", None)
     return True
 
-
 @command("/setMyCommands")
 def cmd_set_commands(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -2859,7 +2858,6 @@ def cmd_set_commands(message, params, options=None):
     except:
         send_message(user_id, "Error setting commands")
     return True
-
 
 def handle_update(update):
     if "callback_query" in update:
@@ -2907,7 +2905,6 @@ def handle_update(update):
                 except Exception as e:
                     print(f"Command error: {e}")
 
-
 def main():
     print("🤖 Bot Started with MongoDB!")
     print(f"📁 Connected to MongoDB: {DB_NAME}")
@@ -2930,7 +2927,6 @@ def main():
         except Exception as e:
             print(f"❌ Error in main loop: {e}")
             time.sleep(1)
-
 
 if __name__ == "__main__":
     main()
