@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FINAL WITH FULL PRODUCT MANAGEMENT
+# tusharbot.py - COMPLETE FINAL WITH FULL MOD MANAGEMENT
 import requests
 import json
 import time
@@ -410,10 +410,6 @@ def cmd_start(message, params, options=None):
     send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# ============================================================
-# ========== SHOP COMMANDS ==========
-# ============================================================
-
 @command("/shopnawkk")
 def cmd_shopnawkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -423,16 +419,12 @@ def cmd_shopnawkk(message, params, options=None):
     mods = bot_data.get_data("mods_list") or []
     
     # Default mods
-    default_mods = [
-        {"id": "drip", "name": "DRIP CLIENT NON-ROOT", "emoji": "6323104647636589287"},
-        {"id": "SILENT", "name": "SILENT CHEATS ANDROID", "emoji": "6325561995995126107"},
-        {"id": "HG", "name": "PRIME HOOK", "emoji": "6210705396449944693"}
-    ]
+    default_mods = ["drip", "SILENT", "HG"]
     
     # Add default mods if not in database
     for dm in default_mods:
-        if dm["id"] not in mods:
-            mods.append(dm["id"])
+        if dm not in mods:
+            mods.append(dm)
     bot_data.save_data("mods_list", mods)
     
     markup = {"inline_keyboard": []}
@@ -440,6 +432,7 @@ def cmd_shopnawkk(message, params, options=None):
     # Add all mods
     for mod_id in mods:
         display_name = mod_id.upper()
+        emoji = "6179339404906079822"
         if mod_id == "drip":
             display_name = "DRIP CLIENT NON-ROOT"
             emoji = "6323104647636589287"
@@ -450,12 +443,22 @@ def cmd_shopnawkk(message, params, options=None):
             display_name = "PRIME HOOK"
             emoji = "6210705396449944693"
         else:
-            display_name = mod_id.replace("_", " ").title()
-            emoji = "6179339404906079822"
+            # Custom mod - check if display name exists
+            display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
         
-        markup["inline_keyboard"].append([
-            {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji, "style": "success"}
-        ])
+        # Only show mods that have at least one plan
+        has_plan = False
+        all_keys = bot_data.collection.find()
+        for doc in all_keys:
+            key = doc.get("key", "")
+            if key.startswith(mod_id + "_") and "d_price" in key:
+                has_plan = True
+                break
+        
+        if has_plan:
+            markup["inline_keyboard"].append([
+                {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji, "style": "success"}
+            ])
     
     markup["inline_keyboard"].append([
         {"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
@@ -490,6 +493,8 @@ def cmd_shop_mod(message, params, options=None):
     # Get plans for this mod
     all_keys = bot_data.collection.find()
     plans = []
+    plan_names = bot_data.get_data("plan_names") or {}
+    
     for doc in all_keys:
         key = doc.get("key", "")
         if key.startswith(mod_id + "_") and "d_price" in key:
@@ -524,9 +529,11 @@ def cmd_shop_mod(message, params, options=None):
             price = bot_data.get_data(price_key) or 0
         
         if price:
-            plan_name = f"{day} Day{'s' if day > 1 else ''}"
+            # Get custom plan name if exists
+            plan_key = f"{mod_id}_{day}"
+            plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
             markup["inline_keyboard"].append([
-                {"text": f"{plan_name} - ₹{price}", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
+                {"text": f"{plan_display} - ₹{price}", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
             ])
     
     markup["inline_keyboard"].append([
@@ -541,7 +548,7 @@ def cmd_shop_mod(message, params, options=None):
     elif mod_id == "HG":
         display_name = "PRIME HOOK"
     else:
-        display_name = mod_id.replace("_", " ").title()
+        display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
     
     txt = f"""
 ━━━━━━━━━━━━━━━━━━━━
@@ -579,6 +586,12 @@ def cmd_buy_mod(message, params, options=None):
     price_key = f"{mod_id}_{day}d_price"
     keys_key = f"{mod_id}_{day}d_keys"
     
+    # Check if price exists
+    price = bot_data.get_data(price_key)
+    if not price:
+        send_message(user_id, "❌ Product not available")
+        return True
+    
     # Check if reseller
     resellers = bot_data.get_data("resellers_list") or []
     is_reseller = str(user_id) in [str(u) for u in resellers]
@@ -595,9 +608,13 @@ def cmd_buy_mod(message, params, options=None):
     elif mod_id == "HG":
         display_name = "PRIME HOOK"
     else:
-        display_name = mod_id.replace("_", " ").title()
+        display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
     
-    title = f"{display_name}\n{day} Day{'s' if day > 1 else ''}"
+    plan_names = bot_data.get_data("plan_names") or {}
+    plan_key = f"{mod_id}_{day}"
+    plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
+    
+    title = f"{display_name}\n{plan_display}"
     
     User.save_data(user_id, "last_product1", title)
     User.save_data(user_id, "last_plan", str(day))
@@ -1356,11 +1373,15 @@ def cmd_manage_mods(message, params, options=None):
         return True
     
     mods = bot_data.get_data("mods_list") or []
+    default_mods = ["drip", "SILENT", "HG"]
+    
+    # Ensure default mods are in list
+    for dm in default_mods:
+        if dm not in mods:
+            mods.append(dm)
+    bot_data.save_data("mods_list", mods)
     
     markup = {"inline_keyboard": []}
-    
-    # Add default mods
-    default_mods = ["drip", "SILENT", "HG"]
     
     for mod in mods:
         display_name = mod.upper()
@@ -1371,7 +1392,7 @@ def cmd_manage_mods(message, params, options=None):
         elif mod == "HG":
             display_name = "PRIME HOOK"
         else:
-            display_name = mod.replace("_", " ").title()
+            display_name = bot_data.get_data(f"{mod}_display_name") or mod.replace("_", " ").title()
         
         # Show delete button only for custom mods (not default)
         if mod in default_mods:
@@ -1446,9 +1467,10 @@ def cmd_manage_mod(message, params, options=None):
     elif mod_id == "HG":
         display_name = "PRIME HOOK"
     else:
-        display_name = mod_id.replace("_", " ").title()
+        display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
     
     markup = {"inline_keyboard": []}
+    plan_names = bot_data.get_data("plan_names") or {}
     
     # Add each plan
     for day in plans:
@@ -1460,17 +1482,24 @@ def cmd_manage_mod(message, params, options=None):
         reseller = bot_data.get_data(reseller_key) or 0
         stock = len(bot_data.get_data(keys_key) or [])
         
+        plan_key = f"{mod_id}_{day}"
+        plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
+        
         markup["inline_keyboard"].append([
-            {"text": f"📅 {day}D - ₹{price} | R: ₹{reseller} | 🔑{stock}", "callback_data": f"/edit_plan {mod_id}_{day}", "style": "primary"}
+            {"text": f"📅 {plan_display} - ₹{price} | R: ₹{reseller} | 🔑{stock}", "callback_data": f"/edit_plan {mod_id}_{day}", "style": "primary"}
         ])
     
     # Add buttons
     markup["inline_keyboard"].append([
         {"text": "➕ ADD NEW PLAN", "callback_data": f"/add_new_plan {mod_id}", "style": "success"}
     ])
-    markup["inline_keyboard"].append([
-        {"text": "✏️ CHANGE MOD NAME", "callback_data": f"/rename_mod {mod_id}", "style": "success"}
-    ])
+    
+    # Only show rename for custom mods
+    if mod_id not in ["drip", "SILENT", "HG"]:
+        markup["inline_keyboard"].append([
+            {"text": "✏️ CHANGE MOD NAME", "callback_data": f"/rename_mod {mod_id}", "style": "success"}
+        ])
+    
     markup["inline_keyboard"].append([
         {"text": "🔙 BACK", "callback_data": "/manage_mods", "style": "danger"}
     ])
@@ -1525,6 +1554,10 @@ def cmd_edit_plan(message, params, options=None):
     current_reseller = bot_data.get_data(reseller_key) or 0
     current_stock = len(bot_data.get_data(keys_key) or [])
     
+    plan_names = bot_data.get_data("plan_names") or {}
+    plan_key = f"{mod_id}_{day}"
+    current_plan_name = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
+    
     markup = {
         "inline_keyboard": [
             [{"text": "💰 Eᴅɪᴛ Pʀɪᴄᴇ", "callback_data": f"/edit_price {mod_id}_{day}", "style": "success"}],
@@ -1537,7 +1570,7 @@ def cmd_edit_plan(message, params, options=None):
     }
     
     txt = f"""
-<b>📅 Eᴅɪᴛɪɴɢ Pʟᴀɴ: {mod_id.upper()} - {day} Dᴀʏ{'s' if day > 1 else ''}</b>
+<b>📅 Eᴅɪᴛɪɴɢ Pʟᴀɴ: {mod_id.upper()} - {current_plan_name}</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 
 💰 Cᴜʀʀᴇɴᴛ Pʀɪᴄᴇ: ₹{current_price}
@@ -1576,10 +1609,14 @@ def cmd_edit_plan_name(message, params, options=None):
     
     User.save_data(user_id, "editing_plan_name", f"{mod_id}_{day}")
     
+    plan_names = bot_data.get_data("plan_names") or {}
+    plan_key = f"{mod_id}_{day}"
+    current_name = plan_names.get(plan_key, f"{day} Day{'s' if int(day) > 1 else ''}")
+    
     send_message(
         user_id,
-        f"<b>✏️ Eɴᴛᴇʀ Nᴇᴡ Nᴀᴍᴇ Fᴏʀ {mod_id.upper()} - {day} Dᴀʏ</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: {day} Day{'s' if int(day) > 1 else ''}\n\n"
+        f"<b>✏️ Eɴᴛᴇʀ Nᴇᴡ Nᴀᴍᴇ Fᴏʀ {mod_id.upper()} Pʟᴀɴ</b>\n\n"
+        f"Cᴜʀʀᴇɴᴛ: {current_name}\n\n"
         f"Exᴀᴍᴘʟᴇ: <code>1 Week</code> ᴏʀ <code>Monthly</code>\n\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
         "HTML"
@@ -1618,7 +1655,7 @@ def cmd_edit_plan_name_process(message, params, options=None):
     send_message(
         user_id,
         f"✅ <b>Pʟᴀɴ Nᴀᴍᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
-        f"<code>{plan_key}</code> = {new_name}",
+        f"{plan_key} → {new_name}",
         "HTML"
     )
     
@@ -1652,7 +1689,7 @@ def cmd_edit_price(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()} - {day} Dᴀʏ</b>\n\n"
+        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()}</b>\n\n"
         f"Cᴜʀʀᴇɴᴛ: ₹{bot_data.get_data(f'{mod_id}_{day}d_price') or 0}\n\n"
         f"Sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴏɴʟʏ.\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
@@ -1687,7 +1724,7 @@ def cmd_edit_price_process(message, params, options=None):
         send_message(
             user_id,
             f"✅ <b>Pʀɪᴄᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
-            f"<code>{key}</code> = ₹{price}",
+            f"₹{price}",
             "HTML"
         )
         pending_commands.pop(user_id, None)
@@ -1722,7 +1759,7 @@ def cmd_edit_reseller_price(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()} - {day} Dᴀʏ</b>\n\n"
+        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()}</b>\n\n"
         f"Cᴜʀʀᴇɴᴛ: ₹{bot_data.get_data(f'{mod_id}_{day}d_reseller_price') or 0}\n\n"
         f"Sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴏɴʟʏ.\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
@@ -1757,7 +1794,7 @@ def cmd_edit_reseller_price_process(message, params, options=None):
         send_message(
             user_id,
             f"✅ <b>Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
-            f"<code>{key}</code> = ₹{price}",
+            f"₹{price}",
             "HTML"
         )
         pending_commands.pop(user_id, None)
@@ -1793,7 +1830,7 @@ def cmd_add_keys_plan(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>🔑 Aᴅᴅ Kᴇʏs Fᴏʀ {mod_id.upper()} - {day} Dᴀʏ</b>\n\n"
+        f"<b>🔑 Aᴅᴅ Kᴇʏs Fᴏʀ {mod_id.upper()}</b>\n\n"
         f"Cᴜʀʀᴇɴᴛ Sᴛᴏᴄᴋ: {len(bot_data.get_data(key_name) or [])}\n\n"
         f"Sᴇɴᴅ ᴋᴇʏs ᴏɴᴇ ᴘᴇʀ ʟɪɴᴇ.\n"
         f"Tʏᴘᴇ <b>DONE</b> ᴛᴏ ғɪɴɪsʜ.\n"
@@ -1883,9 +1920,13 @@ def cmd_remove_plan(message, params, options=None):
         ]
     }
     
+    plan_names = bot_data.get_data("plan_names") or {}
+    plan_key = f"{mod_id}_{day}"
+    plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
+    
     send_message(
         user_id,
-        f"⚠️ <b>Rᴇᴍᴏᴠᴇ Pʟᴀɴ: {mod_id.upper()} - {day} Dᴀʏ</b>\n\n"
+        f"⚠️ <b>Rᴇᴍᴏᴠᴇ Pʟᴀɴ: {mod_id.upper()} - {plan_display}</b>\n\n"
         f"Aʀᴇ ʏᴏᴜ sᴜʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ᴘʟᴀɴ?\n\n"
         f"Tʜɪs ᴡɪʟʟ ᴅᴇʟᴇᴛᴇ ALL ᴋᴇʏs ғᴏʀ ᴛʜɪs ᴘʟᴀɴ!",
         "HTML",
@@ -1926,9 +1967,16 @@ def cmd_confirm_remove_plan(message, params, options=None):
     bot_data.collection.delete_one({"key": reseller_key})
     bot_data.collection.delete_one({"key": keys_key})
     
+    # Remove from plan names
+    plan_names = bot_data.get_data("plan_names") or {}
+    plan_key = f"{mod_id}_{day}"
+    if plan_key in plan_names:
+        del plan_names[plan_key]
+        bot_data.save_data("plan_names", plan_names)
+    
     send_message(
         user_id,
-        f"✅ <b>Rᴇᴍᴏᴠᴇᴅ {day} Dᴀʏ Pʟᴀɴ Fᴏʀ {mod_id.upper()}</b>",
+        f"✅ <b>Pʟᴀɴ Rᴇᴍᴏᴠᴇᴅ!</b>",
         "HTML"
     )
     
@@ -2008,6 +2056,12 @@ def cmd_add_new_plan_process(message, params, options=None):
     bot_data.save_data(reseller_key, reseller_price)
     bot_data.save_data(keys_key, [])
     
+    # Add to mods list if not exists
+    mods = bot_data.get_data("mods_list") or []
+    if mod_id not in mods:
+        mods.append(mod_id)
+        bot_data.save_data("mods_list", mods)
+    
     send_message(
         user_id,
         f"✅ <b>Pʟᴀɴ Aᴅᴅᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ!</b>\n\n"
@@ -2015,7 +2069,8 @@ def cmd_add_new_plan_process(message, params, options=None):
         f"📅 Dᴀʏs: {days}\n"
         f"💰 Pʀɪᴄᴇ: ₹{price}\n"
         f"💰 Rᴇsᴇʟʟᴇʀ: ₹{reseller_price}\n"
-        f"🔑 Kᴇʏs: 0",
+        f"🔑 Kᴇʏs: 0\n\n"
+        f"<b>✅ Now available in shop!</b>",
         "HTML"
     )
     
@@ -2058,13 +2113,13 @@ def cmd_add_new_mod_process(message, params, options=None):
         pending_commands_store.delete(user_id)
         return True
     
-    mod_name = text.strip().upper()
+    mod_name = text.strip()
     if not mod_name:
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
         return True
     
     # Replace spaces with underscore for database key
-    mod_id = mod_name.replace(" ", "_")
+    mod_id = mod_name.replace(" ", "_").upper()
     
     # Add to mods list
     mods = bot_data.get_data("mods_list") or []
@@ -2153,7 +2208,7 @@ def cmd_rename_mod_process(message, params, options=None):
     # Save display name
     bot_data.save_data(f"{mod_id}_display_name", new_name)
     
-    # Update mods list display name
+    # Update mods list
     mods = bot_data.get_data("mods_list") or []
     if mod_id not in mods:
         mods.append(mod_id)
@@ -2250,6 +2305,16 @@ def cmd_confirm_delete_mod(message, params, options=None):
     # Delete display name
     bot_data.collection.delete_one({"key": f"{mod_id}_display_name"})
     bot_data.collection.delete_one({"key": f"{mod_id}_product_name"})
+    
+    # Delete plan names
+    plan_names = bot_data.get_data("plan_names") or {}
+    to_delete = []
+    for key in plan_names:
+        if key.startswith(mod_id + "_"):
+            to_delete.append(key)
+    for key in to_delete:
+        del plan_names[key]
+    bot_data.save_data("plan_names", plan_names)
     
     send_message(
         user_id,
@@ -2601,6 +2666,16 @@ def cmd_set_commands(message, params, options=None):
     except:
         send_message(user_id, "Error setting commands")
     return True
+
+
+def forward_message(chat_id, from_chat_id, message_id):
+    url = f"{BASE_URL}/forwardMessage"
+    payload = {"chat_id": chat_id, "from_chat_id": from_chat_id, "message_id": message_id}
+    try:
+        return requests.post(url, json=payload).json()
+    except Exception as e:
+        print(f"Forward error: {e}")
+        return None
 
 
 def handle_update(update):
