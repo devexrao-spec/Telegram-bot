@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FINAL FIXED WITH ALL FEATURES
+# tusharbot.py - COMPLETE FINAL FIXED
 import requests
 import json
 import time
@@ -6,7 +6,7 @@ from datetime import datetime
 import threading
 from pymongo import MongoClient
 
-BOT_TOKEN = "8388786589:AAHHDG2n0VBeSd7cSb5OsWjbmTkdEcvJLY4"
+BOT_TOKEN = "8388786589:AAFlxWhA0Jyg72HNsQydRlIqkkTedX54qjs"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # MongoDB Connection
@@ -384,16 +384,20 @@ def cmd_start(message, params, options=None):
         "WELCOME TO HACK STORE "
         "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
         "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
-        "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n\n"
         "<blockquote>"
         "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
         "</blockquote>"
@@ -419,9 +423,6 @@ def cmd_start(message, params, options=None):
     send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# ============================================================
-# ========== SHOP COMMANDS ==========
-# ============================================================
 
 @command("/shopnawkk")
 def cmd_shopnawkk(message, params, options=None):
@@ -583,14 +584,15 @@ def cmd_buy_mod(message, params, options=None):
         send_message(user_id, "❌ Invalid Product")
         return True
     
-    parts = params.split("_")
-    if len(parts) != 2:
+    # Find last underscore to split mod_id and day
+    last_underscore = params.rfind("_")
+    if last_underscore == -1:
         send_message(user_id, "❌ Invalid Product Format")
         return True
     
-    mod_id = parts[0]
+    mod_id = params[:last_underscore]
     try:
-        day = int(parts[1])
+        day = int(params[last_underscore + 1:])
     except:
         send_message(user_id, "❌ Invalid Day")
         return True
@@ -906,6 +908,7 @@ def cmd_cancel(message, params, options=None):
     send_message(user_id, "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Cancelled", "HTML")
     return True
 
+
 # ============================================================
 # ========== ADD FUNDS COMMANDS ==========
 # ============================================================
@@ -1115,6 +1118,7 @@ def cmd_addpayment_qr(message):
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
 
+
 # ============================================================
 # ========== OTHER USER COMMANDS ==========
 # ============================================================
@@ -1130,16 +1134,20 @@ def cmd_backkkk(message, params, options=None):
         "WELCOME TO HACK STORE "
         "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
         "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
-        "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5312361253610475399'>🛒</tg-emoji> Buy Hack :</b> All key purchase & instantly delivery\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5317006024517912643'>👤</tg-emoji> Profile :</b> Check your account information\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5278467510604160626'>💰</tg-emoji> Add Fund :</b> Deposit balance & secure service\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='6176966310920983412'>📦</tg-emoji> My Key :</b> Check all key purchase history\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> How To Use :</b> View tutorial and work this bot\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='5897567714674741148'>💬</tg-emoji> Support :</b> Bot problem fixed for support admin\n\n"
+        "<b>"
+        "<tg-emoji emoji-id='6012363763770990258'>📥</tg-emoji> Download Apk :</b> Download latest apk for safety\n\n"
         "<blockquote>"
         "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
         "</blockquote>"
@@ -1167,6 +1175,7 @@ def cmd_backkkk(message, params, options=None):
     except:
         send_message(user_id, text, "HTML", reply_markup)
     return True
+
 
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
@@ -1298,6 +1307,7 @@ Need help? We're here for you! ⚡
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
+
 # ============================================================
 # ========== ADMIN COMMANDS ==========
 # ============================================================
@@ -1346,244 +1356,6 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
-
-@command("/TUSHAR_Admins")
-def cmd_tushar_admins(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    if params and params in admins:
-        admins.remove(params)
-        bot_data.save_data("AllBotAdminss", admins)
-    markup = {"inline_keyboard": []}
-    for admin in admins:
-        markup["inline_keyboard"].append([
-            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
-            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
-        ])
-    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
-    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
-    text = "<b>Here You Can Manage Your Admins</b>"
-    try:
-        edit_message(user_id, msg_id, text, "HTML", markup)
-    except:
-        send_message(user_id, text, "HTML", markup)
-    return True
-
-
-@command("/TUSHAR_AddAdmin")
-def cmd_tushar_addadmin(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
-    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
-    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
-    return True
-
-
-@command("/TUSHAR_AddAdmin1")
-def cmd_tushar_addadmin1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    new_admin = message.get("text")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    if new_admin in admins:
-        send_message(user_id, "Admin Already Exists")
-    else:
-        admins.append(new_admin)
-        bot_data.save_data("AllBotAdminss", admins)
-        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/TUSHAR_AdminAction")
-def cmd_tushar_adminaction(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    adm_ac = bot_data.get_data("AdmAC") or []
-    latest_10 = adm_ac[-10:][::-1]
-    if latest_10:
-        send_message(user_id, "\n\n".join(latest_10), "HTML")
-    else:
-        send_message(user_id, "No admin actions recorded yet.")
-    return True
-
-
-@command("/ChangeAnyUserBal")
-def cmd_change_balance(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(
-        user_id,
-        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
-        "HTML"
-    )
-    pending_commands[user_id] = "/ChangeAnyUserBal2"
-    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
-    return True
-
-
-@command("/ChangeAnyUserBal2")
-def cmd_change_balance2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    parts = text.split(" ")
-    if len(parts) < 2:
-        send_message(user_id, "Invalid format. Use: user_id amount")
-        return True
-    target_user = parts[0]
-    try:
-        amount = float(parts[1])
-    except:
-        send_message(user_id, "Invalid amount")
-        return True
-    bal = Resources.another_res("Balance", user=target_user)
-    bal.add(amount)
-    easy_time = get_easy_time()
-    adm_ac = bot_data.get_data("AdmAC") or []
-    adm_ac.append(
-        f"📆 Time: {easy_time}\n"
-        f"👥 By {message.get('from', {}).get('first_name', 'Admin')} [ID: {user_id}]\n"
-        f"🔍 Action: Added {amount} Rs To {target_user}"
-    )
-    bot_data.save_data("AdmAC", adm_ac)
-    send_message(
-        user_id,
-        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
-        "HTML"
-    )
-    send_message(
-        target_user,
-        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/addreseller")
-def cmd_addreseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(user_id, "📩 Send me id reseller", "HTML")
-    pending_commands[user_id] = "/add_reseller_process"
-    pending_commands_store.set(user_id, "/add_reseller_process")
-    return True
-
-
-@command("/add_reseller_process")
-def cmd_add_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user in [str(u) for u in resellers]:
-        send_message(user_id, "User already a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers.append(target_user)
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
-    try:
-        send_message(target_user, "You are now a Reseller", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/removereseller")
-def cmd_removereseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    send_message(user_id, "Send me reseller id to remove", "HTML")
-    pending_commands[user_id] = "/remove_reseller_process"
-    pending_commands_store.set(user_id, "/remove_reseller_process")
-    return True
-
-
-@command("/remove_reseller_process")
-def cmd_remove_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user not in [str(u) for u in resellers]:
-        send_message(user_id, "User is not a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = [u for u in resellers if str(u) != target_user]
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
-    try:
-        send_message(target_user, "You are no longer a Reseller.", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/resellerlist")
-def cmd_resellerlist(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    resellers = bot_data.get_data("resellers_list") or []
-    if not resellers:
-        send_message(user_id, "No resellers found.")
-        return True
-    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
-    count = 1
-    for res in resellers:
-        text += f"{count}. ID: <code>{res}</code>\n"
-        count += 1
-    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
-    send_message(user_id, text, "HTML")
-    return True
 
 # ============================================================
 # ========== MANAGE MODS ==========
@@ -2543,6 +2315,105 @@ def cmd_confirm_delete_mod(message, params, options=None):
     
     User.save_data(user_id, "delete_mod_id", None)
     return True
+
+
+@command("/addreseller")
+def cmd_addreseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(user_id, "📩 Send me id reseller", "HTML")
+    pending_commands[user_id] = "/add_reseller_process"
+    pending_commands_store.set(user_id, "/add_reseller_process")
+    return True
+
+
+@command("/add_reseller_process")
+def cmd_add_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user in [str(u) for u in resellers]:
+        send_message(user_id, "User already a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers.append(target_user)
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
+    try:
+        send_message(target_user, "You are now a Reseller", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/removereseller")
+def cmd_removereseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    send_message(user_id, "Send me reseller id to remove", "HTML")
+    pending_commands[user_id] = "/remove_reseller_process"
+    pending_commands_store.set(user_id, "/remove_reseller_process")
+    return True
+
+
+@command("/remove_reseller_process")
+def cmd_remove_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user not in [str(u) for u in resellers]:
+        send_message(user_id, "User is not a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = [u for u in resellers if str(u) != target_user]
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
+    try:
+        send_message(target_user, "You are no longer a Reseller.", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/resellerlist")
+def cmd_resellerlist(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    resellers = bot_data.get_data("resellers_list") or []
+    if not resellers:
+        send_message(user_id, "No resellers found.")
+        return True
+    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
+    count = 1
+    for res in resellers:
+        text += f"{count}. ID: <code>{res}</code>\n"
+        count += 1
+    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
+    send_message(user_id, text, "HTML")
+    return True
+
 
 # ============================================================
 # ========== BROADCAST & MAIN ==========
