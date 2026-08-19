@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FINAL FIXED
+# tusharbot.py - COMPLETE WORKING
 import requests
 import json
 import time
@@ -371,8 +371,6 @@ PLAN_NAMES = {
 # ============================================================
 
 @command("/start")
-@command("/Start")
-@command("/START")
 def cmd_start(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     if not User.get_data(user_id, "joined_date"):
@@ -424,13 +422,9 @@ def cmd_shopnawkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     
-    # Get all mods from database
     mods = bot_data.get_data("mods_list") or []
-    
-    # Default mods
     default_mods = ["drip", "SILENT", "HG"]
     
-    # Add default mods if not in database
     for dm in default_mods:
         if dm not in mods:
             mods.append(dm)
@@ -438,7 +432,6 @@ def cmd_shopnawkk(message, params, options=None):
     
     markup = {"inline_keyboard": []}
     
-    # Add all mods
     for mod_id in mods:
         display_name = mod_id.upper()
         emoji = "6179339404906079822"
@@ -454,7 +447,6 @@ def cmd_shopnawkk(message, params, options=None):
         else:
             display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
         
-        # Check if mod has at least one plan
         has_plan = False
         all_keys = bot_data.collection.find()
         for doc in all_keys:
@@ -467,6 +459,11 @@ def cmd_shopnawkk(message, params, options=None):
             markup["inline_keyboard"].append([
                 {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji, "style": "success"}
             ])
+    
+    if not markup["inline_keyboard"]:
+        markup["inline_keyboard"].append([
+            {"text": "No Products Available", "callback_data": "/backkkk", "style": "danger"}
+        ])
     
     markup["inline_keyboard"].append([
         {"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
@@ -498,7 +495,6 @@ def cmd_shop_mod(message, params, options=None):
     
     User.save_data(user_id, "current_mod", mod_id)
     
-    # Get plans for this mod
     all_keys = bot_data.collection.find()
     plans = []
     plan_names = bot_data.get_data("plan_names") or {}
@@ -522,7 +518,6 @@ def cmd_shop_mod(message, params, options=None):
         send_message(user_id, "❌ No plans available for this product")
         return True
     
-    # Check if user is reseller
     resellers = bot_data.get_data("resellers_list") or []
     is_reseller = str(user_id) in [str(u) for u in resellers]
     
@@ -597,19 +592,16 @@ def cmd_buy_mod(message, params, options=None):
     price_key = f"{mod_id}_{day}d_price"
     keys_key = f"{mod_id}_{day}d_keys"
     
-    # Check if price exists
     price = bot_data.get_data(price_key)
     if not price or price <= 0:
         send_message(user_id, "❌ Product not available")
         return True
     
-    # Check if keys exist
     keys = bot_data.get_data(keys_key) or []
     if len(keys) == 0:
         send_message(user_id, "❌ Out of Stock")
         return True
     
-    # Check if reseller
     resellers = bot_data.get_data("resellers_list") or []
     is_reseller = str(user_id) in [str(u) for u in resellers]
     if is_reseller:
@@ -638,56 +630,6 @@ def cmd_buy_mod(message, params, options=None):
     User.save_data(user_id, "last_plan", str(day))
     
     cmd_buybahha(message, None, {"price": price_key, "key": keys_key, "title": title})
-    return True
-
-
-@command("/backkkk")
-def cmd_backkkk(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    balance = Resources.another_res("Balance", user=user_id).value()
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
-        "WELCOME TO HACK STORE "
-        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
-        "</blockquote>\n\n"
-        "<i>"
-        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
-        "Your ultimate destination for premium mods, cheats & clients!"
-        "</i>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
-        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
-        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
-        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
-        "</blockquote>\n\n"
-        "<blockquote>"
-        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
-        "</blockquote>"
-    )
-    reply_markup = {
-        "inline_keyboard": [
-            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
-            [
-                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
-                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
-            ],
-            [
-                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
-                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
-            ],
-            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [
-                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": "5258134813302332906", "style": "success"},
-                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
-            ]
-        ]
-    }
-    try:
-        edit_message(user_id, msg_id, text, "HTML", reply_markup)
-    except:
-        send_message(user_id, text, "HTML", reply_markup)
     return True
 
 
@@ -749,9 +691,6 @@ def cmd_buybahha(message, params, options):
     User.save_data(user_id, "userhAC", adm_ac)
     return True
 
-# ============================================================
-# ========== PAYMENT COMMANDS ==========
-# ============================================================
 
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
@@ -820,6 +759,7 @@ def cmd_autobuy1(message, params, options=None):
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
     return True
+
 
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
@@ -926,6 +866,7 @@ def cmd_verify_payment(message, params, options=None):
         )
         return True
 
+
 @command("/cancel")
 def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
@@ -960,7 +901,7 @@ def cmd_cancel(message, params, options=None):
     return True
 
 # ============================================================
-# ========== ADD FUNDS COMMANDS ==========
+# ========== ADD FUNDS ==========
 # ============================================================
 
 current_amount = {}
@@ -972,36 +913,14 @@ def cmd_addpayment(message, params, options=None):
     current_amount[user_id] = "0"
     reply_markup = {
         "inline_keyboard": [
-            [
-                {"text": "1", "callback_data": "/num1", "style": "success"},
-                {"text": "2", "callback_data": "/num2", "style": "success"},
-                {"text": "3", "callback_data": "/num3", "style": "success"}
-            ],
-            [
-                {"text": "4", "callback_data": "/num4", "style": "success"},
-                {"text": "5", "callback_data": "/num5", "style": "success"},
-                {"text": "6", "callback_data": "/num6", "style": "success"}
-            ],
-            [
-                {"text": "7", "callback_data": "/num7", "style": "success"},
-                {"text": "8", "callback_data": "/num8", "style": "success"},
-                {"text": "9", "callback_data": "/num9", "style": "success"}
-            ],
-            [
-                {"text": "CLEAR", "callback_data": "/clearamt", "style": "danger"},
-                {"text": "0", "callback_data": "/num0", "style": "success"},
-                {"text": "CONFIRM", "callback_data": "/done", "style": "success"}
-            ],
-            [{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]
+            [{"text": "1", "callback_data": "/num1", "style": "success"}, {"text": "2", "callback_data": "/num2", "style": "success"}, {"text": "3", "callback_data": "/num3", "style": "success"}],
+            [{"text": "4", "callback_data": "/num4", "style": "success"}, {"text": "5", "callback_data": "/num5", "style": "success"}, {"text": "6", "callback_data": "/num6", "style": "success"}],
+            [{"text": "7", "callback_data": "/num7", "style": "success"}, {"text": "8", "callback_data": "/num8", "style": "success"}, {"text": "9", "callback_data": "/num9", "style": "success"}],
+            [{"text": "CLEAR", "callback_data": "/clearamt", "style": "danger"}, {"text": "0", "callback_data": "/num0", "style": "success"}, {"text": "CONFIRM", "callback_data": "/done", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
-    text = (
-        "<blockquote>"
-        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
-        "</blockquote>\n\n"
-        "Amount: ₹0\n\n"
-        "Use the keypad below to enter amount."
-    )
+    text = "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below."
     try:
         edit_message(user_id, msg_id, text, "HTML", reply_markup)
     except:
@@ -1015,7 +934,7 @@ def cmd_num0(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "0" if amt == "0" else amt + "0"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1026,7 +945,7 @@ def cmd_num1(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "1" if amt == "0" else amt + "1"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1037,7 +956,7 @@ def cmd_num2(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "2" if amt == "0" else amt + "2"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1048,7 +967,7 @@ def cmd_num3(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "3" if amt == "0" else amt + "3"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1059,7 +978,7 @@ def cmd_num4(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "4" if amt == "0" else amt + "4"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1070,7 +989,7 @@ def cmd_num5(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "5" if amt == "0" else amt + "5"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1081,7 +1000,7 @@ def cmd_num6(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "6" if amt == "0" else amt + "6"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1092,7 +1011,7 @@ def cmd_num7(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "7" if amt == "0" else amt + "7"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1103,7 +1022,7 @@ def cmd_num8(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "8" if amt == "0" else amt + "8"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1114,7 +1033,7 @@ def cmd_num9(message, params, options=None):
     amt = current_amount.get(user_id, "0")
     amt = "9" if amt == "0" else amt + "9"
     current_amount[user_id] = amt
-    text = f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below to enter amount."
+    text = f"<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹{amt}\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1123,7 +1042,7 @@ def cmd_clearamt(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
-    text = "<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below to enter amount."
+    text = "<blockquote>💰 ENTER CUSTOM AMOUNT</blockquote>\n\nAmount: ₹0\n\nUse the keypad below."
     edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
     return True
 
@@ -1175,18 +1094,17 @@ def cmd_addpayment_qr(message):
     pending_payments_store.set(user_id, pending_payments[user_id])
     
     caption = (
-        f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED</blockquote>\n"
+        f"<blockquote>💰 PAYMENT QR GENERATED</blockquote>\n"
         f"Scan the QR and complete payment.\n\n"
         f"Amount: ₹{amount}\n\n"
-        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b>\n"
-        f"<code>{order_id}</code>\n\n"
+        f"🧾 <b>Order ID:</b>\n<code>{order_id}</code>\n\n"
         f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
     )
     
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
-            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "icon_custom_emoji_id": "6278116707751956084", "style": "danger"}]
+            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "style": "success"}],
+            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "style": "danger"}]
         ]
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
@@ -1194,6 +1112,55 @@ def cmd_addpayment_qr(message):
 # ============================================================
 # ========== OTHER USER COMMANDS ==========
 # ============================================================
+
+@command("/backkkk")
+def cmd_backkkk(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    balance = Resources.another_res("Balance", user=user_id).value()
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
+        "WELCOME TO HACK STORE "
+        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
+        "</blockquote>\n\n"
+        "<i>"
+        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
+        "Your ultimate destination for premium mods, cheats & clients!"
+        "</i>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
+        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
+        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
+        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
+        "</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
+        "</blockquote>"
+    )
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"}],
+            [
+                {"text": "MY KEY", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "icon_custom_emoji_id": "5346136537123801643", "style": "success"}
+            ],
+            [
+                {"text": "HOW TO USE", "callback_data": "/spinj", "icon_custom_emoji_id": "5345783284653636765", "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "icon_custom_emoji_id": "5897567714674741148", "style": "success"}
+            ],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "icon_custom_emoji_id": "6278302366303260172", "style": "success"}],
+            [
+                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "icon_custom_emoji_id": "5258134813302332906", "style": "success"},
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "icon_custom_emoji_id": "6028115612163641653", "style": "success"}
+            ]
+        ]
+    }
+    try:
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
 
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
@@ -1204,11 +1171,11 @@ def cmd_orderksk(message, params, options=None):
         "<tg-emoji emoji-id='6008118472066732010'>📦</tg-emoji> <b>MY ORDERS</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
         "You haven't placed any orders yet.\n"
-        "Tap <tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Shop Now to get started!"
+        "Tap <tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Shop Now!"
     )
     adm_ac = User.get_data(user_id, "userhAC") or []
     if not adm_ac:
-        reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]]}
+        reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]]}
         try:
             edit_message(user_id, msg_id, textn, "HTML", reply_markup)
         except:
@@ -1218,7 +1185,7 @@ def cmd_orderksk(message, params, options=None):
         safe_list = [str(item) for item in latest_10 if item]
         if safe_list:
             text = "\n\n".join(safe_list)
-            reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]]}
+            reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]]}
             try:
                 edit_message(user_id, msg_id, text, reply_markup=reply_markup)
             except:
@@ -1249,23 +1216,20 @@ def cmd_profilemmm(message, params, options=None):
     
     text = (
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "<tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> YOUR PROFILE\n"
+        "👤 YOUR PROFILE\n"
         "━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"<tg-emoji emoji-id='6008118472066732010'>📛</tg-emoji> Name: {first_name}\n"
-        f"<tg-emoji emoji-id='5841693351249710667'>🆔</tg-emoji> User ID: {user_id}\n"
-        f"<tg-emoji emoji-id='5348374038991357363'>💰</tg-emoji> Balance: ₹{balance}\n"
-        f"<tg-emoji emoji-id='5348490024583185697'>📅</tg-emoji> Member Since: {member_since}\n"
-        f"<tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Total Orders: {orders}\n\n"
+        f"📛 Name: {first_name}\n"
+        f"🆔 User ID: {user_id}\n"
+        f"💰 Balance: ₹{balance}\n"
+        f"📅 Member Since: {member_since}\n"
+        f"🛒 Total Orders: {orders}\n\n"
         "━━━━━━━━━━━━━━━━━━━━"
     )
     
     reply_markup = {
         "inline_keyboard": [
-            [
-                {"text": "BUY HACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6093739864883207194", "style": "success"},
-                {"text": "MY KEYS", "callback_data": "/orderksk", "icon_custom_emoji_id": "5967456680940671207", "style": "success"}
-            ],
-            [{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "style": "success"}, {"text": "MY KEYS", "callback_data": "/orderksk", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     
@@ -1283,14 +1247,14 @@ def cmd_spinj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     text = """
-<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> <b>Watch the full tutorial video below</b>
+🎥 <b>Watch the full tutorial video below</b>
 
-<tg-emoji emoji-id='6222198028854367391'>👇</tg-emoji>
+👇
 """
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "Watch Tutorial", "url": "https://t.me/hehehehhhsljg/162", "icon_custom_emoji_id": "6179339404906079822", "style": "success"}],
-            [{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]
+            [{"text": "Watch Tutorial", "url": "https://t.me/hehehehhhsljg/162", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     try:
@@ -1305,22 +1269,21 @@ def cmd_supportj(message, params, options=None):
     msg_id = message.get("message_id")
     text = """
 ━━━━━━━━━━━━━━━━━━━━
-<tg-emoji emoji-id='5891120964468480450'>💬</tg-emoji> <b>Support — Seller</b> <tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji>
+💬 <b>Support — Seller</b> 🛡
 ━━━━━━━━━━━━━━━━━━━━
 
-Need help? We're here for you! <tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji>
+Need help? We're here for you! ⚡
 
-📩 <b>Telegram:</b> <tg-emoji emoji-id='5776182936638329359'>⭐</tg-emoji>
+📩 <b>Telegram:</b> ⭐
 
-<a href="https://t.me/UR_SUBHAJIT0">𝐒υвʜᴀᎫιт</a> <tg-emoji emoji-id='6118314396440596568'>⭐</tg-emoji>
+<a href="https://t.me/UR_SUBHAJIT0">𝐒υвʜᴀᎫιт</a> ⭐
 
-<tg-emoji emoji-id='5891120964468480450'>💡</tg-emoji> <i>Include your User ID (from Profile)
-when contacting for faster help.</i>
+💡 <i>Include your User ID when contacting.</i>
 """
     reply_markup = {
         "inline_keyboard": [
-            [{"text": "WHATSAPP", "url": "https://wa.me/917908696630", "icon_custom_emoji_id": "6109296665926047025", "style": "success"}],
-            [{"text": "BACK", "callback_data": "/backkkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}]
+            [{"text": "WHATSAPP", "url": "https://wa.me/917908696630", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     try:
@@ -1343,29 +1306,29 @@ def cmd_admin(message, params, options=None):
         bot_data.save_data("AllBotAdminss", admins)
     is_admin = str(user_id) in [str(a) for a in admins]
     if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
         return True
     bot_mode = bot_data.get_data("BotMode") or "ON"
-    bot_sta = "🟢 Oɴ"
+    bot_sta = "🟢 On"
     bot_change = "BotMode OFF"
     if bot_mode == "OFF":
-        bot_sta = "🔴 Oғғ"
+        bot_sta = "🔴 Off"
         bot_change = "BotMode ON"
     markup = {
         "inline_keyboard": [
-            [{"text": "👑 Aᴅᴍɪɴs", "callback_data": "/TUSHAR_Admins", "style": "success"}],
-            [{"text": "📣 Bʀᴏᴀᴅᴄᴀsᴛ", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bᴏᴛ: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
-            [{"text": "💰 Aᴅᴅ Bᴀʟᴀɴᴄᴇ", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Rᴇᴄᴇɴᴛ Aᴄᴛɪᴏɴs", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
-            [{"text": "📦 Mᴀɴᴀɢᴇ Mᴏᴅs", "callback_data": "/manage_mods", "style": "success"}],
-            [{"text": "💰 Aᴅᴅ Rᴇsᴇʟʟᴇʀ", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Rᴇᴍᴏᴠᴇ Rᴇsᴇʟʟᴇʀ", "callback_data": "/removereseller", "style": "danger"}],
-            [{"text": "📝 Rᴇsᴇʟʟᴇʀ Lɪsᴛ", "callback_data": "/resellerlist", "style": "success"}]
+            [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
+            [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bot: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
+            [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Recent Admin Actions", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
+            [{"text": "📦 Manage Mods", "callback_data": "/manage_mods", "style": "success"}],
+            [{"text": "💰 Add Reseller", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Remove Reseller", "callback_data": "/removereseller", "style": "danger"}],
+            [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
         ]
     }
     txt = f"""<b>
-👋 Wᴇʟᴄᴏᴍᴇ {message.get('from', {}).get('first_name', 'Admin')} 🎉
+👋 Welcome {message.get('from', {}).get('first_name', 'Admin')} 🎉
 
 ━━━━━━━━━━━━━━━
-🤖 Bᴏᴛ Sᴛᴀᴛᴜs : {bot_sta}
+🤖 Bot Status : {bot_sta}
 ━━━━━━━━━━━━━━━
 </b>"""
     if str(message.get("text")) == "/admin":
@@ -1377,8 +1340,143 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
+@command("/TUSHAR_Admins")
+def cmd_tushar_admins(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    if params and params in admins:
+        admins.remove(params)
+        bot_data.save_data("AllBotAdminss", admins)
+    markup = {"inline_keyboard": []}
+    for admin in admins:
+        markup["inline_keyboard"].append([
+            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
+            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
+        ])
+    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
+    text = "<b>Here You Can Manage Your Admins</b>"
+    try:
+        edit_message(user_id, msg_id, text, "HTML", markup)
+    except:
+        send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/TUSHAR_AddAdmin")
+def cmd_tushar_addadmin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
+    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
+    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
+    return True
+
+@command("/TUSHAR_AddAdmin1")
+def cmd_tushar_addadmin1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    new_admin = message.get("text")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    if new_admin in admins:
+        send_message(user_id, "Admin Already Exists")
+    else:
+        admins.append(new_admin)
+        bot_data.save_data("AllBotAdminss", admins)
+        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/TUSHAR_AdminAction")
+def cmd_tushar_adminaction(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    adm_ac = bot_data.get_data("AdmAC") or []
+    latest_10 = adm_ac[-10:][::-1]
+    if latest_10:
+        send_message(user_id, "\n\n".join(latest_10), "HTML")
+    else:
+        send_message(user_id, "No admin actions recorded yet.")
+    return True
+
+@command("/ChangeAnyUserBal")
+def cmd_change_balance(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(
+        user_id,
+        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/ChangeAnyUserBal2"
+    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
+    return True
+
+@command("/ChangeAnyUserBal2")
+def cmd_change_balance2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    parts = text.split(" ")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid format. Use: user_id amount")
+        return True
+    target_user = parts[0]
+    try:
+        amount = float(parts[1])
+    except:
+        send_message(user_id, "Invalid amount")
+        return True
+    bal = Resources.another_res("Balance", user=target_user)
+    bal.add(amount)
+    easy_time = get_easy_time()
+    adm_ac = bot_data.get_data("AdmAC") or []
+    adm_ac.append(
+        f"📆 Time: {easy_time}\n"
+        f"👥 By {message.get('from', {}).get('first_name', 'Admin')} [ID: {user_id}]\n"
+        f"🔍 Action: Added {amount} Rs To {target_user}"
+    )
+    bot_data.save_data("AdmAC", adm_ac)
+    send_message(
+        user_id,
+        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
+        "HTML"
+    )
+    send_message(
+        target_user,
+        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
 # ============================================================
-# ========== MANAGE MODS - COMPLETE ==========
+# ========== MANAGE MODS ==========
 # ============================================================
 
 @command("/manage_mods")
@@ -1432,14 +1530,13 @@ def cmd_manage_mods(message, params, options=None):
 <b>📦 MANAGE MODS</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 
-<b>Sᴇʟᴇᴄᴛ ᴀ ᴍᴏᴅ ᴛᴏ ᴍᴀɴᴀɢᴇ ᴏʀ ᴀᴅᴅ ɴᴇᴡ:</b>
+<b>Select a mod to manage or add new:</b>
 """
     try:
         edit_message(user_id, msg_id, txt, "HTML", markup)
     except:
         send_message(user_id, txt, "HTML", markup)
     return True
-
 
 @command("/manage_mod")
 def cmd_manage_mod(message, params, options=None):
@@ -1452,7 +1549,7 @@ def cmd_manage_mod(message, params, options=None):
     
     mod_id = params
     if not mod_id:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Mᴏᴅ")
+        send_message(user_id, "❌ Invalid Mod")
         return True
     
     User.save_data(user_id, "current_mod", mod_id)
@@ -1491,14 +1588,11 @@ def cmd_manage_mod(message, params, options=None):
         price_key = f"{mod_id}_{day}d_price"
         reseller_key = f"{mod_id}_{day}d_reseller_price"
         keys_key = f"{mod_id}_{day}d_keys"
-        
         price = bot_data.get_data(price_key) or 0
         reseller = bot_data.get_data(reseller_key) or 0
         stock = len(bot_data.get_data(keys_key) or [])
-        
         plan_key = f"{mod_id}_{day}"
         plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
-        
         markup["inline_keyboard"].append([
             {"text": f"📅 {plan_display} - ₹{price} | R: ₹{reseller} | 🔑{stock}", "callback_data": f"/edit_plan {mod_id}_{day}", "style": "primary"}
         ])
@@ -1517,19 +1611,18 @@ def cmd_manage_mod(message, params, options=None):
     ])
     
     txt = f"""
-<b>📦 Mᴀɴᴀɢɪɴɢ: {display_name}</b>
+<b>📦 Managing: {display_name}</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 
 <b>Total Plans: {len(plans)}</b>
 
-<b>Sᴇʟᴇᴄᴛ ᴀ ᴘʟᴀɴ ᴛᴏ ᴇᴅɪᴛ:</b>
+<b>Select a plan to edit:</b>
 """
     try:
         edit_message(user_id, msg_id, txt, "HTML", markup)
     except:
         send_message(user_id, txt, "HTML", markup)
     return True
-
 
 @command("/edit_plan")
 def cmd_edit_plan(message, params, options=None):
@@ -1541,19 +1634,19 @@ def cmd_edit_plan(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
     try:
         day = int(parts[1])
     except:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     User.save_data(user_id, "editing_plan", f"{mod_id}_{day}")
@@ -1572,25 +1665,25 @@ def cmd_edit_plan(message, params, options=None):
     
     markup = {
         "inline_keyboard": [
-            [{"text": "💰 Eᴅɪᴛ Pʀɪᴄᴇ", "callback_data": f"/edit_price {mod_id}_{day}", "style": "success"}],
-            [{"text": "💰 Eᴅɪᴛ Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ", "callback_data": f"/edit_reseller_price {mod_id}_{day}", "style": "success"}],
-            [{"text": "🔑 Aᴅᴅ Kᴇʏs", "callback_data": f"/add_keys_plan {mod_id}_{day}", "style": "success"}],
-            [{"text": "🗑️ Rᴇᴍᴏᴠᴇ Tʜɪs Pʟᴀɴ", "callback_data": f"/remove_plan {mod_id}_{day}", "style": "danger"}],
-            [{"text": "✏️ Eᴅɪᴛ Pʟᴀɴ Nᴀᴍᴇ", "callback_data": f"/edit_plan_name {mod_id}_{day}", "style": "success"}],
-            [{"text": "🔙 Bᴀᴄᴋ", "callback_data": f"/manage_mod {mod_id}", "style": "danger"}]
+            [{"text": "💰 Edit Price", "callback_data": f"/edit_price {mod_id}_{day}", "style": "success"}],
+            [{"text": "💰 Edit Reseller Price", "callback_data": f"/edit_reseller_price {mod_id}_{day}", "style": "success"}],
+            [{"text": "🔑 Add Keys", "callback_data": f"/add_keys_plan {mod_id}_{day}", "style": "success"}],
+            [{"text": "🗑️ Remove This Plan", "callback_data": f"/remove_plan {mod_id}_{day}", "style": "danger"}],
+            [{"text": "✏️ Edit Plan Name", "callback_data": f"/edit_plan_name {mod_id}_{day}", "style": "success"}],
+            [{"text": "🔙 Back", "callback_data": f"/manage_mod {mod_id}", "style": "danger"}]
         ]
     }
     
     txt = f"""
-<b>📅 Eᴅɪᴛɪɴɢ Pʟᴀɴ: {mod_id.upper()} - {current_plan_name}</b>
+<b>📅 Editing Plan: {mod_id.upper()} - {current_plan_name}</b>
 ━━━━━━━━━━━━━━━━━━━━━━
 
-💰 Cᴜʀʀᴇɴᴛ Pʀɪᴄᴇ: ₹{current_price}
-💰 Cᴜʀʀᴇɴᴛ Rᴇsᴇʟʟᴇʀ: ₹{current_reseller}
-🔑 Kᴇʏs Sᴛᴏᴄᴋ: {current_stock}
+💰 Current Price: ₹{current_price}
+💰 Current Reseller: ₹{current_reseller}
+🔑 Keys Stock: {current_stock}
 
 ━━━━━━━━━━━━━━━━━━━━━━
-<b>Sᴇʟᴇᴄᴛ ᴡʜᴀᴛ ᴛᴏ ᴇᴅɪᴛ:</b>
+<b>Select what to edit:</b>
 """
     try:
         edit_message(user_id, msg_id, txt, "HTML", markup)
@@ -1598,6 +1691,11 @@ def cmd_edit_plan(message, params, options=None):
         send_message(user_id, txt, "HTML", markup)
     return True
 
+# CONTINUE WITH REMAINING COMMANDS...
+
+# ============================================================
+# ========== REMAINING ADMIN & MOD MANAGEMENT COMMANDS ==========
+# ============================================================
 
 @command("/edit_plan_name")
 def cmd_edit_plan_name(message, params, options=None):
@@ -1608,12 +1706,12 @@ def cmd_edit_plan_name(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
@@ -1627,10 +1725,10 @@ def cmd_edit_plan_name(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>✏️ Eɴᴛᴇʀ Nᴇᴡ Nᴀᴍᴇ Fᴏʀ {mod_id.upper()} Pʟᴀɴ</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: {current_name}\n\n"
-        f"Exᴀᴍᴘʟᴇ: <code>1 Week</code> ᴏʀ <code>Monthly</code>\n\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        f"<b>✏️ Enter New Name For {mod_id.upper()} Plan</b>\n\n"
+        f"Current: {current_name}\n\n"
+        f"Example: <code>1 Week</code> or <code>Monthly</code>\n\n"
+        f"Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/edit_plan_name_process"
@@ -1644,19 +1742,19 @@ def cmd_edit_plan_name_process(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     plan_key = User.get_data(user_id, "editing_plan_name")
     if not plan_key:
-        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        send_message(user_id, "❌ Error", "HTML")
         return True
     
     new_name = text.strip()
     if not new_name:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
+        send_message(user_id, "❌ Invalid name!", "HTML")
         return True
     
     plan_names = bot_data.get_data("plan_names") or {}
@@ -1665,7 +1763,7 @@ def cmd_edit_plan_name_process(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ <b>Pʟᴀɴ Nᴀᴍᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
+        f"✅ <b>Plan Name Updated!</b>\n\n"
         f"{plan_key} → {new_name}",
         "HTML"
     )
@@ -1685,12 +1783,12 @@ def cmd_edit_price(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
@@ -1702,10 +1800,10 @@ def cmd_edit_price(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: ₹{current_price}\n\n"
-        f"Sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴏɴʟʏ.\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        f"<b>💰 Enter New Price For {mod_id.upper()}</b>\n\n"
+        f"Current: ₹{current_price}\n\n"
+        f"Send number only.\n"
+        f"Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/edit_price_process"
@@ -1719,20 +1817,20 @@ def cmd_edit_price_process(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     price_key = User.get_data(user_id, "editing_price_key")
     if not price_key:
-        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        send_message(user_id, "❌ Error", "HTML")
         return True
     
     try:
         price = float(text)
         if price <= 0:
-            send_message(user_id, "❌ Pʀɪᴄᴇ ᴍᴜsᴛ ʙᴇ ɢʀᴇᴀᴛᴇʀ ᴛʜᴀɴ 0!", "HTML")
+            send_message(user_id, "❌ Price must be greater than 0!", "HTML")
             return True
         
         key = f"{price_key}d_price"
@@ -1740,7 +1838,7 @@ def cmd_edit_price_process(message, params, options=None):
         
         send_message(
             user_id,
-            f"✅ <b>Pʀɪᴄᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
+            f"✅ <b>Price Updated!</b>\n\n"
             f"₹{price}",
             "HTML"
         )
@@ -1748,7 +1846,7 @@ def cmd_edit_price_process(message, params, options=None):
         pending_commands_store.delete(user_id)
         User.save_data(user_id, "editing_price_key", None)
     except:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀ!", "HTML")
+        send_message(user_id, "❌ Invalid number!", "HTML")
     return True
 
 
@@ -1761,12 +1859,12 @@ def cmd_edit_reseller_price(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
@@ -1778,10 +1876,10 @@ def cmd_edit_reseller_price(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: ₹{current_price}\n\n"
-        f"Sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴏɴʟʏ.\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        f"<b>💰 Enter New Reseller Price For {mod_id.upper()}</b>\n\n"
+        f"Current: ₹{current_price}\n\n"
+        f"Send number only.\n"
+        f"Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/edit_reseller_price_process"
@@ -1795,20 +1893,20 @@ def cmd_edit_reseller_price_process(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     price_key = User.get_data(user_id, "editing_reseller_key")
     if not price_key:
-        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        send_message(user_id, "❌ Error", "HTML")
         return True
     
     try:
         price = float(text)
         if price <= 0:
-            send_message(user_id, "❌ Pʀɪᴄᴇ ᴍᴜsᴛ ʙᴇ ɢʀᴇᴀᴛᴇʀ ᴛʜᴀɴ 0!", "HTML")
+            send_message(user_id, "❌ Price must be greater than 0!", "HTML")
             return True
         
         key = f"{price_key}d_reseller_price"
@@ -1816,7 +1914,7 @@ def cmd_edit_reseller_price_process(message, params, options=None):
         
         send_message(
             user_id,
-            f"✅ <b>Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
+            f"✅ <b>Reseller Price Updated!</b>\n\n"
             f"₹{price}",
             "HTML"
         )
@@ -1824,7 +1922,7 @@ def cmd_edit_reseller_price_process(message, params, options=None):
         pending_commands_store.delete(user_id)
         User.save_data(user_id, "editing_reseller_key", None)
     except:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀ!", "HTML")
+        send_message(user_id, "❌ Invalid number!", "HTML")
     return True
 
 
@@ -1837,12 +1935,12 @@ def cmd_add_keys_plan(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
@@ -1855,11 +1953,11 @@ def cmd_add_keys_plan(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>🔑 Aᴅᴅ Kᴇʏs Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ Sᴛᴏᴄᴋ: {current_stock}\n\n"
-        f"Sᴇɴᴅ ᴋᴇʏs ᴏɴᴇ ᴘᴇʀ ʟɪɴᴇ.\n"
-        f"Tʏᴘᴇ <b>DONE</b> ᴛᴏ ғɪɴɪsʜ.\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        f"<b>🔑 Add Keys For {mod_id.upper()}</b>\n\n"
+        f"Current Stock: {current_stock}\n\n"
+        f"Send keys one per line.\n"
+        f"Type <b>DONE</b> to finish.\n"
+        f"Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/add_keys_process_final"
@@ -1873,18 +1971,18 @@ def cmd_add_keys_process_final(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     key_name = User.get_data(user_id, "add_keys_key_name")
     if not key_name:
-        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        send_message(user_id, "❌ Error", "HTML")
         return True
     
     if text.upper() == "DONE":
-        send_message(user_id, f"✅ <b>Aʟʟ Kᴇʏs Aᴅᴅᴇᴅ Tᴏ</b>\n\n<code>{key_name}</code>", "HTML")
+        send_message(user_id, f"✅ <b>All Keys Added To</b>\n\n<code>{key_name}</code>", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         User.save_data(user_id, "add_keys_key_name", None)
@@ -1906,9 +2004,9 @@ def cmd_add_keys_process_final(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ <b>Aᴅᴅᴇᴅ {added} Kᴇʏ(s)</b>\n\n"
-        f"Tᴏᴛᴀʟ Sᴛᴏᴄᴋ: {len(existing)}\n\n"
-        f"Sᴇɴᴅ ᴍᴏʀᴇ ᴋᴇʏs ᴏʀ ᴛʏᴘᴇ <b>DONE</b> ᴛᴏ ғɪɴɪsʜ.",
+        f"✅ <b>Added {added} Key(s)</b>\n\n"
+        f"Total Stock: {len(existing)}\n\n"
+        f"Send more keys or type <b>DONE</b> to finish.",
         "HTML"
     )
     return True
@@ -1923,19 +2021,19 @@ def cmd_remove_plan(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
     try:
         day = int(parts[1])
     except:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     markup = {
@@ -1951,9 +2049,9 @@ def cmd_remove_plan(message, params, options=None):
     
     send_message(
         user_id,
-        f"⚠️ <b>Rᴇᴍᴏᴠᴇ Pʟᴀɴ: {mod_id.upper()} - {plan_display}</b>\n\n"
-        f"Aʀᴇ ʏᴏᴜ sᴜʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ᴘʟᴀɴ?\n\n"
-        f"Tʜɪs ᴡɪʟʟ ᴅᴇʟᴇᴛᴇ ALL ᴋᴇʏs ғᴏʀ ᴛʜɪs ᴘʟᴀɴ!",
+        f"⚠️ <b>Remove Plan: {mod_id.upper()} - {plan_display}</b>\n\n"
+        f"Are you sure you want to remove this plan?\n\n"
+        f"This will delete ALL keys for this plan!",
         "HTML",
         reply_markup=markup
     )
@@ -1969,19 +2067,19 @@ def cmd_confirm_remove_plan(message, params, options=None):
         return True
     
     if not params:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     mod_id = parts[0]
     try:
         day = int(parts[1])
     except:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     price_key = f"{mod_id}_{day}d_price"
@@ -2000,7 +2098,7 @@ def cmd_confirm_remove_plan(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ <b>Pʟᴀɴ Rᴇᴍᴏᴠᴇᴅ!</b>",
+        f"✅ <b>Plan Removed!</b>",
         "HTML"
     )
     
@@ -2018,18 +2116,18 @@ def cmd_add_new_plan(message, params, options=None):
     
     mod_id = params
     if not mod_id:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Mᴏᴅ")
+        send_message(user_id, "❌ Invalid Mod")
         return True
     
     User.save_data(user_id, "add_plan_mod", mod_id)
     
     send_message(
         user_id,
-        f"<b>➕ Aᴅᴅ Nᴇᴡ Pʟᴀɴ Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Sᴇɴᴅ ᴅᴇᴛᴀɪʟs ɪɴ ᴛʜɪs ғᴏʀᴍᴀᴛ:\n\n"
+        f"<b>➕ Add New Plan For {mod_id.upper()}</b>\n\n"
+        f"Send details in this format:\n\n"
         f"<code>DAYS|PRICE|RESELLER_PRICE</code>\n\n"
-        f"Exᴀᴍᴘʟᴇ: <code>7|250|200</code>\n\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        f"Example: <code>7|250|200</code>\n\n"
+        f"Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/add_new_plan_process"
@@ -2043,23 +2141,23 @@ def cmd_add_new_plan_process(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     mod_id = User.get_data(user_id, "add_plan_mod")
     if not mod_id:
-        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        send_message(user_id, "❌ Error", "HTML")
         return True
     
     parts = text.split("|")
     if len(parts) != 3:
         send_message(
             user_id,
-            "❌ Iɴᴠᴀʟɪᴅ ғᴏʀᴍᴀᴛ!\n\n"
-            "Usᴇ: <code>DAYS|PRICE|RESELLER_PRICE</code>\n"
-            "Exᴀᴍᴘʟᴇ: <code>7|250|200</code>",
+            "❌ Invalid format!\n\n"
+            "Use: <code>DAYS|PRICE|RESELLER_PRICE</code>\n"
+            "Example: <code>7|250|200</code>",
             "HTML"
         )
         return True
@@ -2069,7 +2167,7 @@ def cmd_add_new_plan_process(message, params, options=None):
         price = float(parts[1].strip())
         reseller_price = float(parts[2].strip())
     except:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀs!", "HTML")
+        send_message(user_id, "❌ Invalid numbers!", "HTML")
         return True
     
     if days <= 0 or price <= 0 or reseller_price <= 0:
@@ -2091,12 +2189,12 @@ def cmd_add_new_plan_process(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ <b>Pʟᴀɴ Aᴅᴅᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ!</b>\n\n"
-        f"📦 Mᴏᴅ: {mod_id.upper()}\n"
-        f"📅 Dᴀʏs: {days}\n"
-        f"💰 Pʀɪᴄᴇ: ₹{price}\n"
-        f"💰 Rᴇsᴇʟʟᴇʀ: ₹{reseller_price}\n"
-        f"🔑 Kᴇʏs: 0\n\n"
+        f"✅ <b>Plan Added Successfully!</b>\n\n"
+        f"📦 Mod: {mod_id.upper()}\n"
+        f"📅 Days: {days}\n"
+        f"💰 Price: ₹{price}\n"
+        f"💰 Reseller: ₹{reseller_price}\n"
+        f"🔑 Keys: 0\n\n"
         f"<b>✅ Now available in shop!</b>",
         "HTML"
     )
@@ -2117,11 +2215,11 @@ def cmd_add_new_mod(message, params, options=None):
     
     send_message(
         user_id,
-        "<b>➕ Aᴅᴅ Nᴇᴡ Mᴏᴅ</b>\n\n"
-        "Sᴇɴᴅ ᴍᴏᴅ ɴᴀᴍᴇ:\n"
-        "Exᴀᴍᴘʟᴇ: <code>VIP MOD</code> ᴏʀ <code>MEGA CHEATS</code>\n\n"
+        "<b>➕ Add New Mod</b>\n\n"
+        "Send mod name:\n"
+        "Example: <code>VIP MOD</code> or <code>MEGA CHEATS</code>\n\n"
         "<b>✅ Mod will appear in shop automatically!</b>\n\n"
-        "Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        "Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/add_new_mod_process"
@@ -2135,14 +2233,14 @@ def cmd_add_new_mod_process(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     mod_name = text.strip()
     if not mod_name:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
+        send_message(user_id, "❌ Invalid name!", "HTML")
         return True
     
     mod_id = mod_name.replace(" ", "_").upper()
@@ -2156,8 +2254,8 @@ def cmd_add_new_mod_process(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ <b>Mᴏᴅ '{mod_name}' Cʀᴇᴀᴛᴇᴅ!</b>\n\n"
-        f"Nᴏᴡ ᴀᴅᴅ ᴘʟᴀɴs ᴜsɪɴɢ 'Aᴅᴅ Nᴇᴡ Pʟᴀɴ' ʙᴜᴛᴛᴏɴ.\n\n"
+        f"✅ <b>Mod '{mod_name}' Created!</b>\n\n"
+        f"Now add plans using 'Add New Plan' button.\n\n"
         f"<b>✅ Mod will appear in shop automatically!</b>",
         "HTML"
     )
@@ -2176,7 +2274,7 @@ def cmd_rename_mod(message, params, options=None):
     
     mod_id = params
     if not mod_id:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Mᴏᴅ")
+        send_message(user_id, "❌ Invalid Mod")
         return True
     
     default_mods = ["drip", "SILENT", "HG"]
@@ -2194,9 +2292,9 @@ def cmd_rename_mod(message, params, options=None):
     
     send_message(
         user_id,
-        f"<b>✏️ Eɴᴛᴇʀ Nᴇᴡ Nᴀᴍᴇ Fᴏʀ Mᴏᴅ</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: {current_name}\n\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
+        f"<b>✏️ Enter New Name For Mod</b>\n\n"
+        f"Current: {current_name}\n\n"
+        f"Type /cancel to stop.",
         "HTML"
     )
     pending_commands[user_id] = "/rename_mod_process"
@@ -2210,26 +2308,26 @@ def cmd_rename_mod_process(message, params, options=None):
     text = message.get("text", "")
     
     if text == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
+        send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
         return True
     
     mod_id = User.get_data(user_id, "rename_mod_id")
     if not mod_id:
-        send_message(user_id, "❌ Eʀʀᴏʀ", "HTML")
+        send_message(user_id, "❌ Error", "HTML")
         return True
     
     new_name = text.strip()
     if not new_name:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
+        send_message(user_id, "❌ Invalid name!", "HTML")
         return True
     
     bot_data.save_data(f"{mod_id}_display_name", new_name)
     
     send_message(
         user_id,
-        f"✅ <b>Mᴏᴅ Nᴀᴍᴇ Uᴘᴅᴀᴛᴇᴅ!</b>\n\n"
+        f"✅ <b>Mod Name Updated!</b>\n\n"
         f"{mod_id} → {new_name}",
         "HTML"
     )
@@ -2250,7 +2348,7 @@ def cmd_delete_mod(message, params, options=None):
     
     mod_id = params
     if not mod_id:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Mᴏᴅ")
+        send_message(user_id, "❌ Invalid Mod")
         return True
     
     default_mods = ["drip", "SILENT", "HG"]
@@ -2276,9 +2374,9 @@ def cmd_delete_mod(message, params, options=None):
     
     send_message(
         user_id,
-        f"⚠️ <b>Dᴇʟᴇᴛᴇ Mᴏᴅ: {display_name}</b>\n\n"
-        f"Aʀᴇ ʏᴏᴜ sᴜʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅᴇʟᴇᴛᴇ ᴛʜɪs ᴍᴏᴅ?\n\n"
-        f"Tʜɪs ᴡɪʟʟ ʀᴇᴍᴏᴠᴇ ALL ᴘʟᴀɴs ᴀɴᴅ ᴋᴇʏs!",
+        f"⚠️ <b>Delete Mod: {display_name}</b>\n\n"
+        f"Are you sure you want to delete this mod?\n\n"
+        f"This will remove ALL plans and keys for this mod!",
         "HTML",
         reply_markup=markup
     )
@@ -2295,7 +2393,7 @@ def cmd_confirm_delete_mod(message, params, options=None):
     
     mod_id = params
     if not mod_id:
-        send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
+        send_message(user_id, "❌ Invalid")
         return True
     
     all_keys = bot_data.collection.find()
@@ -2325,12 +2423,284 @@ def cmd_confirm_delete_mod(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ <b>Mᴏᴅ Dᴇʟᴇᴛᴇᴅ!</b>\n\n"
-        f"Rᴇᴍᴏᴠᴇᴅ {deleted} ᴇɴᴛʀɪᴇs.",
+        f"✅ <b>Mod Deleted!</b>\n\n"
+        f"Removed {deleted} entries.",
         "HTML"
     )
     
     User.save_data(user_id, "delete_mod_id", None)
     return True
 
-# ... (CONTINUE WITH REMAINING ADMIN COMMANDS, BROADCAST, MAIN)
+
+@command("/addreseller")
+def cmd_addreseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(user_id, "📩 Send me id reseller", "HTML")
+    pending_commands[user_id] = "/add_reseller_process"
+    pending_commands_store.set(user_id, "/add_reseller_process")
+    return True
+
+
+@command("/add_reseller_process")
+def cmd_add_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user in [str(u) for u in resellers]:
+        send_message(user_id, "User already a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers.append(target_user)
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
+    try:
+        send_message(target_user, "You are now a Reseller", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/removereseller")
+def cmd_removereseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    send_message(user_id, "Send me reseller id to remove", "HTML")
+    pending_commands[user_id] = "/remove_reseller_process"
+    pending_commands_store.set(user_id, "/remove_reseller_process")
+    return True
+
+
+@command("/remove_reseller_process")
+def cmd_remove_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user not in [str(u) for u in resellers]:
+        send_message(user_id, "User is not a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = [u for u in resellers if str(u) != target_user]
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
+    try:
+        send_message(target_user, "You are no longer a Reseller.", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/resellerlist")
+def cmd_resellerlist(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    resellers = bot_data.get_data("resellers_list") or []
+    if not resellers:
+        send_message(user_id, "No resellers found.")
+        return True
+    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
+    count = 1
+    for res in resellers:
+        text += f"{count}. ID: <code>{res}</code>\n"
+        count += 1
+    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
+    send_message(user_id, text, "HTML")
+    return True
+
+# ============================================================
+# ========== BROADCAST & MAIN ==========
+# ============================================================
+
+@command("/broadcast")
+def cmd_broadcast(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    
+    all_users = user_data_store.get_all_users()
+    for doc in pending_payments_store.collection.find({}, {"user_id": 1}):
+        if doc.get("user_id") not in all_users:
+            all_users.append(doc.get("user_id"))
+    
+    admins_list = bot_data.get_data("AllBotAdminss") or []
+    for admin in admins_list:
+        if admin not in all_users:
+            all_users.append(admin)
+    
+    all_users = list(set(all_users))
+    User.save_data(user_id, "broadcast_users", all_users)
+    
+    send_message(
+        user_id, 
+        f"📢 <b>BROADCAST MODE</b>\n\n"
+        f"👥 Total Users: {len(all_users)}\n\n"
+        f"Send ANY message\n"
+        f"Type /cancel to stop.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/broadcast_send_media"
+    pending_commands_store.set(user_id, "/broadcast_send_media")
+    return True
+
+
+@command("/broadcast_send_media")
+def cmd_broadcast_send_media(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    if message.get("text") and message.get("text", "").strip() == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        User.save_data(user_id, "broadcast_users", None)
+        return True
+    
+    users = User.get_data(user_id, "broadcast_users") or []
+    if not users:
+        send_message(user_id, "No users to broadcast.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    from_chat_id = message.get("chat", {}).get("id")
+    msg_id_to_forward = message.get("message_id")
+    
+    success = 0
+    failed = 0
+    
+    for target_user in users:
+        try:
+            forward_message(target_user, from_chat_id, msg_id_to_forward)
+            success += 1
+        except:
+            failed += 1
+        time.sleep(0.1)
+    
+    send_message(
+        user_id, 
+        f"✅ <b>Broadcast Complete</b>\n\n"
+        f"📤 Success: {success}\n"
+        f"❌ Failed: {failed}\n"
+        f"👥 Total: {len(users)}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    User.save_data(user_id, "broadcast_users", None)
+    return True
+
+
+@command("/setMyCommands")
+def cmd_set_commands(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    commands_list = [{"command": "start", "description": "START TO BUY"}]
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setMyCommands"
+    try:
+        response = requests.post(url, json={"commands": commands_list})
+        send_message(user_id, str(response.json()))
+    except:
+        send_message(user_id, "Error setting commands")
+    return True
+
+
+def handle_update(update):
+    if "callback_query" in update:
+        callback = update["callback_query"]
+        data = callback.get("data", "")
+        user_id = callback.get("from", {}).get("id")
+        msg_id = callback.get("message", {}).get("message_id")
+        answer_callback(callback.get("id"))
+        parts = data.split(" ")
+        cmd = parts[0]
+        params = " ".join(parts[1:]) if len(parts) > 1 else None
+        msg = {
+            "message_id": msg_id,
+            "from": callback.get("from", {}),
+            "chat": {"id": user_id},
+            "date": int(time.time()),
+            "text": data,
+            "reply_markup": callback.get("message", {}).get("reply_markup")
+        }
+        if cmd in commands:
+            try:
+                commands[cmd](msg, params)
+            except Exception as e:
+                print(f"Callback error: {e}")
+        return
+    if "message" in update:
+        msg = update["message"]
+        user_id = msg.get("from", {}).get("id")
+        text = msg.get("text", "")
+        if user_id in pending_commands:
+            pending_cmd = pending_commands[user_id]
+            if pending_cmd in commands:
+                try:
+                    commands[pending_cmd](msg, None)
+                except Exception as e:
+                    print(f"Pending command error: {e}")
+                return
+        if text.startswith("/"):
+            parts = text.split(" ")
+            cmd = parts[0]
+            params = " ".join(parts[1:]) if len(parts) > 1 else None
+            if cmd in commands:
+                try:
+                    commands[cmd](msg, params)
+                except Exception as e:
+                    print(f"Command error: {e}")
+
+
+def main():
+    print("🤖 Bot Started with MongoDB!")
+    print(f"📁 Connected to MongoDB: {DB_NAME}")
+    print(f"📋 Registered commands: {list(commands.keys())}")
+    
+    last_update_id = 0
+    while True:
+        try:
+            updates = get_updates(last_update_id + 1)
+            if updates:
+                print(f"📨 Received {len(updates)} updates")
+            for update in updates:
+                if "update_id" in update:
+                    last_update_id = update["update_id"]
+                handle_update(update)
+            time.sleep(0.5)
+        except KeyboardInterrupt:
+            print("🛑 Bot stopped.")
+            break
+        except Exception as e:
+            print(f"❌ Error in main loop: {e}")
+            time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()
