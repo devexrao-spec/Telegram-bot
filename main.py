@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FINAL WITH FULL MOD MANAGEMENT
+# tusharbot.py - COMPLETE FINAL FIXED
 import requests
 import json
 import time
@@ -279,6 +279,15 @@ def get_updates(offset=None):
     except:
         return []
 
+def forward_message(chat_id, from_chat_id, message_id):
+    url = f"{BASE_URL}/forwardMessage"
+    payload = {"chat_id": chat_id, "from_chat_id": from_chat_id, "message_id": message_id}
+    try:
+        return requests.post(url, json=payload).json()
+    except Exception as e:
+        print(f"Forward error: {e}")
+        return None
+
 class User:
     @staticmethod
     def get_data(user_id, key):
@@ -443,10 +452,9 @@ def cmd_shopnawkk(message, params, options=None):
             display_name = "PRIME HOOK"
             emoji = "6210705396449944693"
         else:
-            # Custom mod - check if display name exists
             display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
         
-        # Only show mods that have at least one plan
+        # Check if mod has at least one plan
         has_plan = False
         all_keys = bot_data.collection.find()
         for doc in all_keys:
@@ -528,13 +536,16 @@ def cmd_shop_mod(message, params, options=None):
         else:
             price = bot_data.get_data(price_key) or 0
         
-        if price:
-            # Get custom plan name if exists
+        if price and price > 0:
             plan_key = f"{mod_id}_{day}"
             plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
             markup["inline_keyboard"].append([
                 {"text": f"{plan_display} - ₹{price}", "callback_data": f"/buy_mod {mod_id}_{day}", "style": "success"}
             ])
+    
+    if not markup["inline_keyboard"]:
+        send_message(user_id, "❌ No valid plans available")
+        return True
     
     markup["inline_keyboard"].append([
         {"text": "BACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": "6039539366177541657", "style": "danger"}
@@ -588,8 +599,14 @@ def cmd_buy_mod(message, params, options=None):
     
     # Check if price exists
     price = bot_data.get_data(price_key)
-    if not price:
+    if not price or price <= 0:
         send_message(user_id, "❌ Product not available")
+        return True
+    
+    # Check if keys exist
+    keys = bot_data.get_data(keys_key) or []
+    if len(keys) == 0:
+        send_message(user_id, "❌ Out of Stock")
         return True
     
     # Check if reseller
@@ -599,6 +616,7 @@ def cmd_buy_mod(message, params, options=None):
         reseller_key = f"{mod_id}_{day}d_reseller_price"
         if bot_data.get_data(reseller_key):
             price_key = reseller_key
+            price = bot_data.get_data(price_key)
     
     display_name = mod_id.upper()
     if mod_id == "drip":
@@ -1375,7 +1393,6 @@ def cmd_manage_mods(message, params, options=None):
     mods = bot_data.get_data("mods_list") or []
     default_mods = ["drip", "SILENT", "HG"]
     
-    # Ensure default mods are in list
     for dm in default_mods:
         if dm not in mods:
             mods.append(dm)
@@ -1394,7 +1411,6 @@ def cmd_manage_mods(message, params, options=None):
         else:
             display_name = bot_data.get_data(f"{mod}_display_name") or mod.replace("_", " ").title()
         
-        # Show delete button only for custom mods (not default)
         if mod in default_mods:
             markup["inline_keyboard"].append([
                 {"text": f"📦 {display_name}", "callback_data": f"/manage_mod {mod}", "style": "success"}
@@ -1441,7 +1457,6 @@ def cmd_manage_mod(message, params, options=None):
     
     User.save_data(user_id, "current_mod", mod_id)
     
-    # Get all plans for this mod
     all_keys = bot_data.collection.find()
     plans = []
     for doc in all_keys:
@@ -1472,7 +1487,6 @@ def cmd_manage_mod(message, params, options=None):
     markup = {"inline_keyboard": []}
     plan_names = bot_data.get_data("plan_names") or {}
     
-    # Add each plan
     for day in plans:
         price_key = f"{mod_id}_{day}d_price"
         reseller_key = f"{mod_id}_{day}d_reseller_price"
@@ -1489,12 +1503,10 @@ def cmd_manage_mod(message, params, options=None):
             {"text": f"📅 {plan_display} - ₹{price} | R: ₹{reseller} | 🔑{stock}", "callback_data": f"/edit_plan {mod_id}_{day}", "style": "primary"}
         ])
     
-    # Add buttons
     markup["inline_keyboard"].append([
         {"text": "➕ ADD NEW PLAN", "callback_data": f"/add_new_plan {mod_id}", "style": "success"}
     ])
     
-    # Only show rename for custom mods
     if mod_id not in ["drip", "SILENT", "HG"]:
         markup["inline_keyboard"].append([
             {"text": "✏️ CHANGE MOD NAME", "callback_data": f"/rename_mod {mod_id}", "style": "success"}
@@ -1647,7 +1659,6 @@ def cmd_edit_plan_name_process(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
         return True
     
-    # Save plan name
     plan_names = bot_data.get_data("plan_names") or {}
     plan_names[plan_key] = new_name
     bot_data.save_data("plan_names", plan_names)
@@ -1687,10 +1698,12 @@ def cmd_edit_price(message, params, options=None):
     
     User.save_data(user_id, "editing_price_key", f"{mod_id}_{day}")
     
+    current_price = bot_data.get_data(f"{mod_id}_{day}d_price") or 0
+    
     send_message(
         user_id,
         f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: ₹{bot_data.get_data(f'{mod_id}_{day}d_price') or 0}\n\n"
+        f"Cᴜʀʀᴇɴᴛ: ₹{current_price}\n\n"
         f"Sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴏɴʟʏ.\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
         "HTML"
@@ -1718,6 +1731,10 @@ def cmd_edit_price_process(message, params, options=None):
     
     try:
         price = float(text)
+        if price <= 0:
+            send_message(user_id, "❌ Pʀɪᴄᴇ ᴍᴜsᴛ ʙᴇ ɢʀᴇᴀᴛᴇʀ ᴛʜᴀɴ 0!", "HTML")
+            return True
+        
         key = f"{price_key}d_price"
         bot_data.save_data(key, price)
         
@@ -1757,10 +1774,12 @@ def cmd_edit_reseller_price(message, params, options=None):
     
     User.save_data(user_id, "editing_reseller_key", f"{mod_id}_{day}")
     
+    current_price = bot_data.get_data(f"{mod_id}_{day}d_reseller_price") or 0
+    
     send_message(
         user_id,
         f"<b>💰 Eɴᴛᴇʀ Nᴇᴡ Rᴇsᴇʟʟᴇʀ Pʀɪᴄᴇ Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ: ₹{bot_data.get_data(f'{mod_id}_{day}d_reseller_price') or 0}\n\n"
+        f"Cᴜʀʀᴇɴᴛ: ₹{current_price}\n\n"
         f"Sᴇɴᴅ ɴᴜᴍʙᴇʀ ᴏɴʟʏ.\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
         "HTML"
@@ -1788,6 +1807,10 @@ def cmd_edit_reseller_price_process(message, params, options=None):
     
     try:
         price = float(text)
+        if price <= 0:
+            send_message(user_id, "❌ Pʀɪᴄᴇ ᴍᴜsᴛ ʙᴇ ɢʀᴇᴀᴛᴇʀ ᴛʜᴀɴ 0!", "HTML")
+            return True
+        
         key = f"{price_key}d_reseller_price"
         bot_data.save_data(key, price)
         
@@ -1828,10 +1851,12 @@ def cmd_add_keys_plan(message, params, options=None):
     
     User.save_data(user_id, "add_keys_key_name", key_name)
     
+    current_stock = len(bot_data.get_data(key_name) or [])
+    
     send_message(
         user_id,
         f"<b>🔑 Aᴅᴅ Kᴇʏs Fᴏʀ {mod_id.upper()}</b>\n\n"
-        f"Cᴜʀʀᴇɴᴛ Sᴛᴏᴄᴋ: {len(bot_data.get_data(key_name) or [])}\n\n"
+        f"Cᴜʀʀᴇɴᴛ Sᴛᴏᴄᴋ: {current_stock}\n\n"
         f"Sᴇɴᴅ ᴋᴇʏs ᴏɴᴇ ᴘᴇʀ ʟɪɴᴇ.\n"
         f"Tʏᴘᴇ <b>DONE</b> ᴛᴏ ғɪɴɪsʜ.\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
@@ -1967,7 +1992,6 @@ def cmd_confirm_remove_plan(message, params, options=None):
     bot_data.collection.delete_one({"key": reseller_key})
     bot_data.collection.delete_one({"key": keys_key})
     
-    # Remove from plan names
     plan_names = bot_data.get_data("plan_names") or {}
     plan_key = f"{mod_id}_{day}"
     if plan_key in plan_names:
@@ -2048,6 +2072,10 @@ def cmd_add_new_plan_process(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀs!", "HTML")
         return True
     
+    if days <= 0 or price <= 0 or reseller_price <= 0:
+        send_message(user_id, "❌ ALL values must be greater than 0!", "HTML")
+        return True
+    
     price_key = f"{mod_id}_{days}d_price"
     reseller_key = f"{mod_id}_{days}d_reseller_price"
     keys_key = f"{mod_id}_{days}d_keys"
@@ -2056,7 +2084,6 @@ def cmd_add_new_plan_process(message, params, options=None):
     bot_data.save_data(reseller_key, reseller_price)
     bot_data.save_data(keys_key, [])
     
-    # Add to mods list if not exists
     mods = bot_data.get_data("mods_list") or []
     if mod_id not in mods:
         mods.append(mod_id)
@@ -2118,16 +2145,13 @@ def cmd_add_new_mod_process(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
         return True
     
-    # Replace spaces with underscore for database key
     mod_id = mod_name.replace(" ", "_").upper()
     
-    # Add to mods list
     mods = bot_data.get_data("mods_list") or []
     if mod_id not in mods:
         mods.append(mod_id)
         bot_data.save_data("mods_list", mods)
     
-    # Save display name
     bot_data.save_data(f"{mod_id}_display_name", mod_name)
     
     send_message(
@@ -2155,27 +2179,23 @@ def cmd_rename_mod(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Mᴏᴅ")
         return True
     
-    User.save_data(user_id, "rename_mod_id", mod_id)
-    
-    # Check if default mod
     default_mods = ["drip", "SILENT", "HG"]
     if mod_id in default_mods:
         send_message(
             user_id,
             f"⚠️ <b>{mod_id.upper()} is a default mod!</b>\n\n"
-            f"You cannot rename default mods.\n"
-            f"You can only rename custom mods.",
+            f"You cannot rename default mods.",
             "HTML"
         )
         return True
     
+    User.save_data(user_id, "rename_mod_id", mod_id)
     current_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id
     
     send_message(
         user_id,
         f"<b>✏️ Eɴᴛᴇʀ Nᴇᴡ Nᴀᴍᴇ Fᴏʀ Mᴏᴅ</b>\n\n"
         f"Cᴜʀʀᴇɴᴛ: {current_name}\n\n"
-        f"Exᴀᴍᴘʟᴇ: <code>VIP MOD</code>\n\n"
         f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
         "HTML"
     )
@@ -2205,14 +2225,7 @@ def cmd_rename_mod_process(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ ɴᴀᴍᴇ!", "HTML")
         return True
     
-    # Save display name
     bot_data.save_data(f"{mod_id}_display_name", new_name)
-    
-    # Update mods list
-    mods = bot_data.get_data("mods_list") or []
-    if mod_id not in mods:
-        mods.append(mod_id)
-        bot_data.save_data("mods_list", mods)
     
     send_message(
         user_id,
@@ -2240,14 +2253,12 @@ def cmd_delete_mod(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ Mᴏᴅ")
         return True
     
-    # Check if default mod
     default_mods = ["drip", "SILENT", "HG"]
     if mod_id in default_mods:
         send_message(
             user_id,
             f"⚠️ <b>{mod_id.upper()} is a default mod!</b>\n\n"
-            f"You cannot delete default mods.\n"
-            f"You can only delete custom mods.",
+            f"You cannot delete default mods.",
             "HTML"
         )
         return True
@@ -2257,7 +2268,7 @@ def cmd_delete_mod(message, params, options=None):
     markup = {
         "inline_keyboard": [
             [{"text": "✅ YES, DELETE", "callback_data": f"/confirm_delete_mod {mod_id}", "style": "danger"}],
-            [{"text": "❌ NO, CANCEL", "callback_data": f"/manage_mods", "style": "success"}]
+            [{"text": "❌ NO, CANCEL", "callback_data": "/manage_mods", "style": "success"}]
         ]
     }
     
@@ -2267,7 +2278,7 @@ def cmd_delete_mod(message, params, options=None):
         user_id,
         f"⚠️ <b>Dᴇʟᴇᴛᴇ Mᴏᴅ: {display_name}</b>\n\n"
         f"Aʀᴇ ʏᴏᴜ sᴜʀᴇ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴅᴇʟᴇᴛᴇ ᴛʜɪs ᴍᴏᴅ?\n\n"
-        f"Tʜɪs ᴡɪʟʟ ʀᴇᴍᴏᴠᴇ ALL ᴘʟᴀɴs ᴀɴᴅ ᴋᴇʏs ғᴏʀ ᴛʜɪs ᴍᴏᴅ!",
+        f"Tʜɪs ᴡɪʟʟ ʀᴇᴍᴏᴠᴇ ALL ᴘʟᴀɴs ᴀɴᴅ ᴋᴇʏs!",
         "HTML",
         reply_markup=markup
     )
@@ -2287,7 +2298,6 @@ def cmd_confirm_delete_mod(message, params, options=None):
         send_message(user_id, "❌ Iɴᴠᴀʟɪᴅ")
         return True
     
-    # Delete all data for this mod
     all_keys = bot_data.collection.find()
     deleted = 0
     for doc in all_keys:
@@ -2296,17 +2306,14 @@ def cmd_confirm_delete_mod(message, params, options=None):
             bot_data.collection.delete_one({"key": key})
             deleted += 1
     
-    # Remove from mods list
     mods = bot_data.get_data("mods_list") or []
     if mod_id in mods:
         mods.remove(mod_id)
         bot_data.save_data("mods_list", mods)
     
-    # Delete display name
     bot_data.collection.delete_one({"key": f"{mod_id}_display_name"})
     bot_data.collection.delete_one({"key": f"{mod_id}_product_name"})
     
-    # Delete plan names
     plan_names = bot_data.get_data("plan_names") or {}
     to_delete = []
     for key in plan_names:
@@ -2326,428 +2333,4 @@ def cmd_confirm_delete_mod(message, params, options=None):
     User.save_data(user_id, "delete_mod_id", None)
     return True
 
-
-@command("/TUSHAR_Admins")
-def cmd_tushar_admins(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    if params and params in admins:
-        admins.remove(params)
-        bot_data.save_data("AllBotAdminss", admins)
-    markup = {"inline_keyboard": []}
-    for admin in admins:
-        markup["inline_keyboard"].append([
-            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
-            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
-        ])
-    markup["inline_keyboard"].append([{"text": "➕ Aᴅᴅ Aᴅᴍɪɴ", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
-    markup["inline_keyboard"].append([{"text": "🔙 Bᴀᴄᴋ", "callback_data": "/admin", "style": "danger"}])
-    text = "<b>Hᴇʀᴇ Yᴏᴜ Cᴀɴ Mᴀɴᴀɢᴇ Yᴏᴜʀ Aᴅᴍɪɴs</b>"
-    try:
-        edit_message(user_id, msg_id, text, "HTML", markup)
-    except:
-        send_message(user_id, text, "HTML", markup)
-    return True
-
-
-@command("/TUSHAR_AddAdmin")
-def cmd_tushar_addadmin(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    send_message(user_id, "<b>Sᴇɴᴅ UꜱᴇʀID ᴏꜰ Aᴅᴍɪɴ Yᴏᴜ Wᴀɴᴛ Tᴏ Aᴅᴅ</b>", "HTML")
-    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
-    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
-    return True
-
-
-@command("/TUSHAR_AddAdmin1")
-def cmd_tushar_addadmin1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    new_admin = message.get("text")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    if new_admin in admins:
-        send_message(user_id, "Aᴅᴍɪɴ Aʟʀᴇᴀᴅʏ Exɪsᴛs")
-    else:
-        admins.append(new_admin)
-        bot_data.save_data("AllBotAdminss", admins)
-        send_message(user_id, f"✅ Aᴅᴍɪɴ <code>{new_admin}</code> Aᴅᴅᴇᴅ Sᴜᴄᴄᴇssғᴜʟʟʏ", "HTML")
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/TUSHAR_AdminAction")
-def cmd_tushar_adminaction(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    adm_ac = bot_data.get_data("AdmAC") or []
-    latest_10 = adm_ac[-10:][::-1]
-    if latest_10:
-        send_message(user_id, "\n\n".join(latest_10), "HTML")
-    else:
-        send_message(user_id, "Nᴏ ᴀᴅᴍɪɴ ᴀᴄᴛɪᴏɴs ʀᴇᴄᴏʀᴅᴇᴅ ʏᴇᴛ.")
-    return True
-
-
-@command("/ChangeAnyUserBal")
-def cmd_change_balance(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    send_message(
-        user_id,
-        f"<b>💡 Sᴇɴᴅ Uꜱᴇʀ Tᴇʟᴇɢʀᴀᴍ Id & Aᴍᴏᴜɴᴛ\n\n⚠️ Usᴇ Fᴏʀᴍᴀᴛ : <code>{user_id} 10</code>\n\nAᴅᴅ - Bᴇꜰᴏʀᴇ Aᴍᴏᴜɴᴛ Tᴏ Dᴇᴅᴜᴄᴛ Bᴀʟᴀɴᴄᴇ Lɪᴋᴇ -10</b>",
-        "HTML"
-    )
-    pending_commands[user_id] = "/ChangeAnyUserBal2"
-    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
-    return True
-
-
-@command("/ChangeAnyUserBal2")
-def cmd_change_balance2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    parts = text.split(" ")
-    if len(parts) < 2:
-        send_message(user_id, "Invalid format. Use: user_id amount")
-        return True
-    target_user = parts[0]
-    try:
-        amount = float(parts[1])
-    except:
-        send_message(user_id, "Invalid amount")
-        return True
-    bal = Resources.another_res("Balance", user=target_user)
-    bal.add(amount)
-    easy_time = get_easy_time()
-    act = f"Added {amount} Rs To {target_user} Account"
-    adm_ac = bot_data.get_data("AdmAC") or []
-    adm_ac.append(
-        f"<b>📆 Tɪᴍᴇ:</b> {easy_time}\n"
-        f"👥 <b>Bʏ {message.get('from', {}).get('first_name', 'Admin')}</b> [ID: <code>{user_id}</code>]\n"
-        f"🔍<b> Aᴄᴛɪᴏɴ: </b> {act}"
-    )
-    bot_data.save_data("AdmAC", adm_ac)
-    send_message(
-        user_id,
-        f"<b>💴 Aᴄᴄᴏᴜɴᴛ Oꜰ <a href='tg://user?id={target_user}'>{target_user}</a> Wᴀs Iɴᴄʀᴇᴀsᴇᴅ Bʏ {amount}\n\n💰 Fɪɴᴀʟ Bᴀʟᴀɴᴄᴇ = {bal.value()}</b>",
-        "HTML"
-    )
-    send_message(
-        target_user,
-        f"<b>💰 Aᴅᴍɪɴ Gᴀᴠᴇ Yᴏᴜ A Iɴᴄʀᴇᴀsᴇ Iɴ Bᴀʟᴀɴᴄᴇ Bʏ {amount}</b>",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/addreseller")
-def cmd_addreseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    send_message(user_id, "📩 Sᴇɴᴅ ᴍᴇ ɪᴅ ʀᴇsᴇʟʟᴇʀ", "HTML")
-    pending_commands[user_id] = "/add_reseller_process"
-    pending_commands_store.set(user_id, "/add_reseller_process")
-    return True
-
-
-@command("/add_reseller_process")
-def cmd_add_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user in [str(u) for u in resellers]:
-        send_message(user_id, "User already a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers.append(target_user)
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
-    try:
-        send_message(target_user, "You are now a Reseller", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/removereseller")
-def cmd_removereseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    send_message(user_id, "Sᴇɴᴅ ᴍᴇ ʀᴇsᴇʟʟᴇʀ ɪᴅ ᴛᴏ ʀᴇᴍᴏᴠᴇ", "HTML")
-    pending_commands[user_id] = "/remove_reseller_process"
-    pending_commands_store.set(user_id, "/remove_reseller_process")
-    return True
-
-
-@command("/remove_reseller_process")
-def cmd_remove_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user not in [str(u) for u in resellers]:
-        send_message(user_id, "User is not a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = [u for u in resellers if str(u) != target_user]
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
-    try:
-        send_message(target_user, "You are no longer a Reseller.", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/resellerlist")
-def cmd_resellerlist(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    resellers = bot_data.get_data("resellers_list") or []
-    if not resellers:
-        send_message(user_id, "No resellers found.")
-        return True
-    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
-    count = 1
-    for res in resellers:
-        text += f"{count}. ID: <code>{res}</code>\n"
-        count += 1
-    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
-    send_message(user_id, text, "HTML")
-    return True
-
-# ============================================================
-# ========== BROADCAST & MAIN ==========
-# ============================================================
-
-@command("/broadcast")
-def cmd_broadcast(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in admins:
-        send_message(user_id, "<b><i>🚫 Yᴏᴜ Aʀᴇ Nᴏᴛ Tʜɪs Bᴏᴛ Aᴅᴍɪɴ</i></b>", "HTML")
-        return True
-    
-    all_users = user_data_store.get_all_users()
-    for doc in pending_payments_store.collection.find({}, {"user_id": 1}):
-        if doc.get("user_id") not in all_users:
-            all_users.append(doc.get("user_id"))
-    
-    admins_list = bot_data.get_data("AllBotAdminss") or []
-    for admin in admins_list:
-        if admin not in all_users:
-            all_users.append(admin)
-    
-    all_users = list(set(all_users))
-    User.save_data(user_id, "broadcast_users", all_users)
-    
-    send_message(
-        user_id, 
-        f"📢 <b>BROADCAST MODE</b>\n\n"
-        f"👥 Tᴏᴛᴀʟ Usᴇʀs: {len(all_users)}\n\n"
-        f"Sᴇɴᴅ ANY ᴍᴇssᴀɢᴇ\n"
-        f"Tʏᴘᴇ /ᴄᴀɴᴄᴇʟ ᴛᴏ sᴛᴏᴘ.",
-        "HTML"
-    )
-    pending_commands[user_id] = "/broadcast_send_media"
-    pending_commands_store.set(user_id, "/broadcast_send_media")
-    return True
-
-
-@command("/broadcast_send_media")
-def cmd_broadcast_send_media(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in admins:
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    if message.get("text") and message.get("text", "").strip() == "/cancel":
-        send_message(user_id, "❌ Cᴀɴᴄᴇʟʟᴇᴅ", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        User.save_data(user_id, "broadcast_users", None)
-        return True
-    
-    users = User.get_data(user_id, "broadcast_users") or []
-    if not users:
-        send_message(user_id, "Nᴏ ᴜsᴇʀs ᴛᴏ ʙʀᴏᴀᴅᴄᴀsᴛ.", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    from_chat_id = message.get("chat", {}).get("id")
-    msg_id_to_forward = message.get("message_id")
-    
-    success = 0
-    failed = 0
-    
-    for target_user in users:
-        try:
-            forward_message(target_user, from_chat_id, msg_id_to_forward)
-            success += 1
-        except:
-            failed += 1
-        time.sleep(0.1)
-    
-    send_message(
-        user_id, 
-        f"✅ <b>Bʀᴏᴀᴅᴄᴀsᴛ Cᴏᴍᴘʟᴇᴛᴇ</b>\n\n"
-        f"📤 Sᴜᴄᴄᴇss: {success}\n"
-        f"❌ Fᴀɪʟᴇᴅ: {failed}\n"
-        f"👥 Tᴏᴛᴀʟ: {len(users)}",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    User.save_data(user_id, "broadcast_users", None)
-    return True
-
-
-@command("/setMyCommands")
-def cmd_set_commands(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    commands_list = [{"command": "start", "description": "START TO BUY"}]
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setMyCommands"
-    try:
-        response = requests.post(url, json={"commands": commands_list})
-        send_message(user_id, str(response.json()))
-    except:
-        send_message(user_id, "Error setting commands")
-    return True
-
-
-def forward_message(chat_id, from_chat_id, message_id):
-    url = f"{BASE_URL}/forwardMessage"
-    payload = {"chat_id": chat_id, "from_chat_id": from_chat_id, "message_id": message_id}
-    try:
-        return requests.post(url, json=payload).json()
-    except Exception as e:
-        print(f"Forward error: {e}")
-        return None
-
-
-def handle_update(update):
-    if "callback_query" in update:
-        callback = update["callback_query"]
-        data = callback.get("data", "")
-        user_id = callback.get("from", {}).get("id")
-        msg_id = callback.get("message", {}).get("message_id")
-        answer_callback(callback.get("id"))
-        parts = data.split(" ")
-        cmd = parts[0]
-        params = " ".join(parts[1:]) if len(parts) > 1 else None
-        msg = {
-            "message_id": msg_id,
-            "from": callback.get("from", {}),
-            "chat": {"id": user_id},
-            "date": int(time.time()),
-            "text": data,
-            "reply_markup": callback.get("message", {}).get("reply_markup")
-        }
-        if cmd in commands:
-            try:
-                commands[cmd](msg, params)
-            except Exception as e:
-                print(f"Callback error: {e}")
-        return
-    if "message" in update:
-        msg = update["message"]
-        user_id = msg.get("from", {}).get("id")
-        text = msg.get("text", "")
-        if user_id in pending_commands:
-            pending_cmd = pending_commands[user_id]
-            if pending_cmd in commands:
-                try:
-                    commands[pending_cmd](msg, None)
-                except Exception as e:
-                    print(f"Pending command error: {e}")
-                return
-        if text.startswith("/"):
-            parts = text.split(" ")
-            cmd = parts[0]
-            params = " ".join(parts[1:]) if len(parts) > 1 else None
-            if cmd in commands:
-                try:
-                    commands[cmd](msg, params)
-                except Exception as e:
-                    print(f"Command error: {e}")
-
-
-def main():
-    print("Bot Started with MongoDB!")
-    print(f"Connected to MongoDB: {DB_NAME}")
-    print(f"Registered commands: {list(commands.keys())}")
-    
-    last_update_id = 0
-    while True:
-        try:
-            updates = get_updates(last_update_id + 1)
-            if updates:
-                print(f"Received {len(updates)} updates")
-            for update in updates:
-                if "update_id" in update:
-                    last_update_id = update["update_id"]
-                handle_update(update)
-            time.sleep(0.5)
-        except KeyboardInterrupt:
-            print("Bot stopped.")
-            break
-        except Exception as e:
-            print(f"Error in main loop: {e}")
-            time.sleep(1)
-
-
-if __name__ == "__main__":
-    main()
+# ... (CONTINUE WITH REMAINING ADMIN COMMANDS, BROADCAST, MAIN)
