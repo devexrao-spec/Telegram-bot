@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE WORKING
+# tusharbot.py - COMPLETE FINAL FIXED WITH ALL FEATURES
 import requests
 import json
 import time
@@ -371,6 +371,8 @@ PLAN_NAMES = {
 # ============================================================
 
 @command("/start")
+@command("/Start")
+@command("/START")
 def cmd_start(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     if not User.get_data(user_id, "joined_date"):
@@ -416,6 +418,10 @@ def cmd_start(message, params, options=None):
     }
     send_message(user_id, text, "HTML", reply_markup)
     return True
+
+# ============================================================
+# ========== SHOP COMMANDS ==========
+# ============================================================
 
 @command("/shopnawkk")
 def cmd_shopnawkk(message, params, options=None):
@@ -574,19 +580,19 @@ Choose a plan <tg-emoji emoji-id="5258336354642697821">👇</tg-emoji>
 def cmd_buy_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     if not params:
-        send_message(user_id, "Invalid Product")
+        send_message(user_id, "❌ Invalid Product")
         return True
     
     parts = params.split("_")
     if len(parts) != 2:
-        send_message(user_id, "Invalid Product")
+        send_message(user_id, "❌ Invalid Product Format")
         return True
     
     mod_id = parts[0]
     try:
         day = int(parts[1])
     except:
-        send_message(user_id, "Invalid Product")
+        send_message(user_id, "❌ Invalid Day")
         return True
     
     price_key = f"{mod_id}_{day}d_price"
@@ -594,7 +600,7 @@ def cmd_buy_mod(message, params, options=None):
     
     price = bot_data.get_data(price_key)
     if not price or price <= 0:
-        send_message(user_id, "❌ Product not available")
+        send_message(user_id, f"❌ Product not available\n\nMod: {mod_id}\nDay: {day}")
         return True
     
     keys = bot_data.get_data(keys_key) or []
@@ -901,7 +907,7 @@ def cmd_cancel(message, params, options=None):
     return True
 
 # ============================================================
-# ========== ADD FUNDS ==========
+# ========== ADD FUNDS COMMANDS ==========
 # ============================================================
 
 current_amount = {}
@@ -1340,6 +1346,7 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
+
 @command("/TUSHAR_Admins")
 def cmd_tushar_admins(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1367,6 +1374,7 @@ def cmd_tushar_admins(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
+
 @command("/TUSHAR_AddAdmin")
 def cmd_tushar_addadmin(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1379,6 +1387,7 @@ def cmd_tushar_addadmin(message, params, options=None):
     pending_commands[user_id] = "/TUSHAR_AddAdmin1"
     pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
     return True
+
 
 @command("/TUSHAR_AddAdmin1")
 def cmd_tushar_addadmin1(message, params, options=None):
@@ -1399,6 +1408,7 @@ def cmd_tushar_addadmin1(message, params, options=None):
     pending_commands_store.delete(user_id)
     return True
 
+
 @command("/TUSHAR_AdminAction")
 def cmd_tushar_adminaction(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1414,6 +1424,7 @@ def cmd_tushar_adminaction(message, params, options=None):
     else:
         send_message(user_id, "No admin actions recorded yet.")
     return True
+
 
 @command("/ChangeAnyUserBal")
 def cmd_change_balance(message, params, options=None):
@@ -1431,6 +1442,7 @@ def cmd_change_balance(message, params, options=None):
     pending_commands[user_id] = "/ChangeAnyUserBal2"
     pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
     return True
+
 
 @command("/ChangeAnyUserBal2")
 def cmd_change_balance2(message, params, options=None):
@@ -1473,6 +1485,104 @@ def cmd_change_balance2(message, params, options=None):
     )
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/addreseller")
+def cmd_addreseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(user_id, "📩 Send me id reseller", "HTML")
+    pending_commands[user_id] = "/add_reseller_process"
+    pending_commands_store.set(user_id, "/add_reseller_process")
+    return True
+
+
+@command("/add_reseller_process")
+def cmd_add_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user in [str(u) for u in resellers]:
+        send_message(user_id, "User already a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers.append(target_user)
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
+    try:
+        send_message(target_user, "You are now a Reseller", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/removereseller")
+def cmd_removereseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    send_message(user_id, "Send me reseller id to remove", "HTML")
+    pending_commands[user_id] = "/remove_reseller_process"
+    pending_commands_store.set(user_id, "/remove_reseller_process")
+    return True
+
+
+@command("/remove_reseller_process")
+def cmd_remove_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user not in [str(u) for u in resellers]:
+        send_message(user_id, "User is not a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = [u for u in resellers if str(u) != target_user]
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
+    try:
+        send_message(target_user, "You are no longer a Reseller.", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+
+@command("/resellerlist")
+def cmd_resellerlist(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    resellers = bot_data.get_data("resellers_list") or []
+    if not resellers:
+        send_message(user_id, "No resellers found.")
+        return True
+    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
+    count = 1
+    for res in resellers:
+        text += f"{count}. ID: <code>{res}</code>\n"
+        count += 1
+    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
+    send_message(user_id, text, "HTML")
     return True
 
 # ============================================================
@@ -1537,6 +1647,7 @@ def cmd_manage_mods(message, params, options=None):
     except:
         send_message(user_id, txt, "HTML", markup)
     return True
+
 
 @command("/manage_mod")
 def cmd_manage_mod(message, params, options=None):
@@ -1624,6 +1735,7 @@ def cmd_manage_mod(message, params, options=None):
         send_message(user_id, txt, "HTML", markup)
     return True
 
+
 @command("/edit_plan")
 def cmd_edit_plan(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1691,11 +1803,6 @@ def cmd_edit_plan(message, params, options=None):
         send_message(user_id, txt, "HTML", markup)
     return True
 
-# CONTINUE WITH REMAINING COMMANDS...
-
-# ============================================================
-# ========== REMAINING ADMIN & MOD MANAGEMENT COMMANDS ==========
-# ============================================================
 
 @command("/edit_plan_name")
 def cmd_edit_plan_name(message, params, options=None):
@@ -2186,6 +2293,12 @@ def cmd_add_new_plan_process(message, params, options=None):
     if mod_id not in mods:
         mods.append(mod_id)
         bot_data.save_data("mods_list", mods)
+        print(f"✅ Added new mod '{mod_id}' to mods_list")
+    
+    plan_names = bot_data.get_data("plan_names") or {}
+    plan_key = f"{mod_id}_{days}"
+    plan_names[plan_key] = f"{days} Day{'s' if days > 1 else ''}"
+    bot_data.save_data("plan_names", plan_names)
     
     send_message(
         user_id,
@@ -2429,104 +2542,6 @@ def cmd_confirm_delete_mod(message, params, options=None):
     )
     
     User.save_data(user_id, "delete_mod_id", None)
-    return True
-
-
-@command("/addreseller")
-def cmd_addreseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(user_id, "📩 Send me id reseller", "HTML")
-    pending_commands[user_id] = "/add_reseller_process"
-    pending_commands_store.set(user_id, "/add_reseller_process")
-    return True
-
-
-@command("/add_reseller_process")
-def cmd_add_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user in [str(u) for u in resellers]:
-        send_message(user_id, "User already a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers.append(target_user)
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
-    try:
-        send_message(target_user, "You are now a Reseller", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/removereseller")
-def cmd_removereseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    send_message(user_id, "Send me reseller id to remove", "HTML")
-    pending_commands[user_id] = "/remove_reseller_process"
-    pending_commands_store.set(user_id, "/remove_reseller_process")
-    return True
-
-
-@command("/remove_reseller_process")
-def cmd_remove_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user not in [str(u) for u in resellers]:
-        send_message(user_id, "User is not a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = [u for u in resellers if str(u) != target_user]
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
-    try:
-        send_message(target_user, "You are no longer a Reseller.", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-
-@command("/resellerlist")
-def cmd_resellerlist(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    resellers = bot_data.get_data("resellers_list") or []
-    if not resellers:
-        send_message(user_id, "No resellers found.")
-        return True
-    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
-    count = 1
-    for res in resellers:
-        text += f"{count}. ID: <code>{res}</code>\n"
-        count += 1
-    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
-    send_message(user_id, text, "HTML")
     return True
 
 # ============================================================
