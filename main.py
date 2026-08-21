@@ -23,7 +23,7 @@ for duration in durations:
     data = {
         'api_key': 'b25eb076f5c0412fa9f1eba94550d02e',
         'action': 'buy',
-        'product_id': '133',
+        'product_id': '62',
         'duration': duration,
         'price': '32',
         'amount': '100'
