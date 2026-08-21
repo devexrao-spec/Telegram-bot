@@ -1,55 +1,59 @@
-# tusharbot.py - COMPLETE FIXED WITH PREMIUM EMOJIS
+# tusharbot.py - API INTEGRATED VERSION
 import requests
 import json
 import time
+import re
 from datetime import datetime
-import threading
 from pymongo import MongoClient
 
 BOT_TOKEN = "8388786589:AAFlxWhA0Jyg72HNsQydRlIqkkTedX54qjs"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+# API Configuration
+API_URL = "https://xyzcheats.com/api/reseller_v1.php"
+API_KEY = "b25eb076f5c0412fa9f1eba94550d02e"
+
 # MongoDB Connection
 MONGO_URI = "mongodb+srv://crasher3210_db_user:devex5656@cluster0.9y5axka.mongodb.net/?appName=Cluster0&compressors=zlib"
 DB_NAME = "telegram_bot1"
 
-# ========== CORRECT PREMIUM EMOJI IDs (19-digit) ==========
+# ========== PREMIUM EMOJI IDs ==========
 EMOJIS = {
-    "cart": "5382194935057372936",      # 🛒
-    "back": "6039539366177541657",      # 🔙
-    "shop": "6093739864883207194",      # 🏪
-    "key": "5967456680940671207",       # 🔑
-    "profile": "5346136537123801643",   # 👤
-    "howto": "5345783284653636765",     # 📖
-    "support": "5897567714674741148",   # 💬
-    "addfund": "6278302366303260172",   # 💳
-    "payproof": "5258134813302332906",  # 📄
-    "download": "6028115612163641653",  # 📥
-    "balance": "5348392971207194994",   # 💰
-    "success": "5348129380474306311",   # ✅
-    "danger": "6278116707751956084",    # ❌
-    "warning": "5447644880824181073",   # ⚠️
-    "info": "5195033767969839232",      # ℹ️
-    "lightbulb": "5420323339723881652", # 💡
-    "clock": "5116553153419936517",     # ⏳
-    "package": "6179339404906079822",   # 📦
-    "drip_emoji": "6323104647636589287", # DRIP
-    "silent_emoji": "6325561995995126107", # SILENT
-    "hg_emoji": "6210705396449944693",   # HG
-    "orders": "6008118472066732010",     # 📦 Orders
-    "video": "5258601973167539896",      # 🎥
-    "money": "6089104607328342288",      # 💰
-    "time": "6278102040438640835",       # ⏰
-    "announce": "6264989131621798851",   # 📢
-    "buy": "6172208745582433583",        # 🛒
-    "stock": "5278467510604160626",      # 📦
-    "user": "5317006024517912643",       # 👤
-    "mykeys": "6176966310920983412",     # 📦
+    "cart": "5382194935057372936",
+    "back": "6039539366177541657",
+    "shop": "6093739864883207194",
+    "key": "5967456680940671207",
+    "profile": "5346136537123801643",
+    "howto": "5345783284653636765",
+    "support": "5897567714674741148",
+    "addfund": "6278302366303260172",
+    "payproof": "5258134813302332906",
+    "download": "6028115612163641653",
+    "balance": "5348392971207194994",
+    "success": "5348129380474306311",
+    "danger": "6278116707751956084",
+    "warning": "5447644880824181073",
+    "info": "5195033767969839232",
+    "lightbulb": "5420323339723881652",
+    "clock": "5116553153419936517",
+    "package": "6179339404906079822",
+    "drip_emoji": "6323104647636589287",
+    "silent_emoji": "6325561995995126107",
+    "hg_emoji": "6210705396449944693",
+    "orders": "6008118472066732010",
+    "video": "5258601973167539896",
+    "money": "6089104607328342288",
+    "time": "6278102040438640835",
+    "announce": "6264989131621798851",
+    "buy": "6172208745582433583",
+    "user": "5317006024517912643",
+    "mykeys": "6176966310920983412",
 }
 
-def emoji_tag(emoji_id, char="🛒"):
-    """Helper to create premium emoji tags with correct format"""
-    return f'<tg-emoji emoji-id="{emoji_id}">{char}</tg-emoji>'
+def emoji_tag(emoji_id, char=""):
+    if char:
+        return f'<tg-emoji emoji-id="{emoji_id}">{char}</tg-emoji>'
+    return f'<tg-emoji emoji-id="{emoji_id}"></tg-emoji>'
 
 class MongoDB:
     _instance = None
@@ -73,8 +77,6 @@ class MongoDB:
         self.db.pending_payments.create_index("user_id", unique=True)
         self.db.processed_payments.create_index("order_id", unique=True)
         self.db.payment_orders.create_index("order_id", unique=True)
-        self.db.payment_orders.create_index("user_id")
-        self.db.payment_orders.create_index("status")
     
     def get_collection(self, name):
         return self.db[name]
@@ -90,11 +92,7 @@ class DataStore:
         return doc.get("value") if doc else default
     
     def set(self, key, value):
-        self.collection.update_one(
-            {"key": key},
-            {"$set": {"value": value}},
-            upsert=True
-        )
+        self.collection.update_one({"key": key}, {"$set": {"value": value}}, upsert=True)
     
     def get_data(self, key):
         return self.get(key)
@@ -119,18 +117,13 @@ class UserDataStore:
         return doc.get("value") if doc else default
     
     def set(self, user_id, key, value):
-        self.collection.update_one(
-            {"user_id": str(user_id), "key": key},
-            {"$set": {"value": value}},
-            upsert=True
-        )
+        self.collection.update_one({"user_id": str(user_id), "key": key}, {"$set": {"value": value}}, upsert=True)
     
     def delete(self, user_id, key):
         self.collection.delete_one({"user_id": str(user_id), "key": key})
     
     def get_all_users(self):
-        users = self.collection.distinct("user_id")
-        return list(users)
+        return list(self.collection.distinct("user_id"))
 
 user_data_store = UserDataStore()
 
@@ -143,11 +136,7 @@ class PendingCommandsStore:
         return doc.get("command") if doc else default
     
     def set(self, user_id, command):
-        self.collection.update_one(
-            {"user_id": str(user_id)},
-            {"$set": {"command": command}},
-            upsert=True
-        )
+        self.collection.update_one({"user_id": str(user_id)}, {"$set": {"command": command}}, upsert=True)
     
     def delete(self, user_id):
         self.collection.delete_one({"user_id": str(user_id)})
@@ -163,18 +152,10 @@ class PendingPaymentsStore:
         return doc.get("data") if doc else None
     
     def set(self, user_id, data):
-        self.collection.update_one(
-            {"user_id": str(user_id)},
-            {"$set": {"data": data}},
-            upsert=True
-        )
+        self.collection.update_one({"user_id": str(user_id)}, {"$set": {"data": data}}, upsert=True)
     
     def delete(self, user_id):
         self.collection.delete_one({"user_id": str(user_id)})
-    
-    def get_all(self):
-        docs = self.collection.find()
-        return {doc["user_id"]: doc["data"] for doc in docs}
 
 pending_payments_store = PendingPaymentsStore()
 
@@ -183,21 +164,8 @@ class ProcessedPaymentsStore:
         self.collection = mongo.get_collection('processed_payments')
     
     def add(self, order_id, user_id, amount):
-        doc = {
-            "order_id": order_id,
-            "user_id": str(user_id),
-            "amount": amount,
-            "processed_at": datetime.now()
-        }
-        self.collection.update_one(
-            {"order_id": order_id},
-            {"$set": doc},
-            upsert=True
-        )
-        print(f"💾 Stored processed payment: order={order_id}, user={user_id}, amount={amount}")
-    
-    def exists(self, order_id):
-        return self.collection.find_one({"order_id": order_id}) is not None
+        doc = {"order_id": order_id, "user_id": str(user_id), "amount": amount, "processed_at": datetime.now()}
+        self.collection.update_one({"order_id": order_id}, {"$set": doc}, upsert=True)
 
 processed_payments_store = ProcessedPaymentsStore()
 
@@ -206,63 +174,69 @@ class PaymentOrdersStore:
         self.collection = mongo.get_collection('payment_orders')
     
     def create(self, order_id, user_id, amount, product_name=None, plan=None):
-        doc = {
-            "order_id": order_id,
-            "user_id": str(user_id),
-            "amount": float(amount),
-            "product_name": product_name,
-            "plan": plan,
-            "created_at": datetime.now(),
-            "status": "pending"
-        }
-        self.collection.update_one(
-            {"order_id": order_id},
-            {"$set": doc},
-            upsert=True
-        )
-        print(f"📝 STORED: order={order_id} -> user={user_id}")
+        doc = {"order_id": order_id, "user_id": str(user_id), "amount": float(amount), "product_name": product_name, "plan": plan, "created_at": datetime.now(), "status": "pending"}
+        self.collection.update_one({"order_id": order_id}, {"$set": doc}, upsert=True)
         return doc
-    
-    def get_user_by_order(self, order_id):
-        doc = self.collection.find_one({"order_id": order_id})
-        return doc.get("user_id") if doc else None
     
     def get_order(self, order_id):
         return self.collection.find_one({"order_id": order_id})
     
     def mark_verified(self, order_id):
-        self.collection.update_one(
-            {"order_id": order_id},
-            {"$set": {"status": "verified", "verified_at": datetime.now()}}
-        )
+        self.collection.update_one({"order_id": order_id}, {"$set": {"status": "verified", "verified_at": datetime.now()}})
     
     def delete(self, order_id):
         self.collection.delete_one({"order_id": order_id})
-        print(f"🗑️ Deleted order mapping for {order_id}")
 
 payment_orders_store = PaymentOrdersStore()
 
-def get_user_data(user_id, key, default=None):
-    return user_data_store.get(user_id, key, default)
+# ========== API FUNCTIONS ==========
+def fetch_key_from_api(product_id, plan_id, user_id):
+    """
+    API se key fetch karne ke liye function
+    """
+    try:
+        params = {
+            "api_key": API_KEY,
+            "action": "get_key",
+            "product_id": product_id,
+            "plan_id": plan_id,
+            "user_id": str(user_id)
+        }
+        
+        response = requests.get(API_URL, params=params, timeout=30)
+        data = response.json()
+        
+        print(f"🔑 API Response: {data}")
+        
+        if data.get("status") == "success":
+            return data.get("key")
+        else:
+            print(f"❌ API Error: {data.get('msg', 'Unknown error')}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ API Exception: {e}")
+        return None
 
-def set_user_data(user_id, key, value):
-    user_data_store.set(user_id, key, value)
+def check_api_connection():
+    """
+    API connection check karne ke liye
+    """
+    try:
+        params = {
+            "api_key": API_KEY,
+            "action": "ping"
+        }
+        response = requests.get(API_URL, params=params, timeout=10)
+        data = response.json()
+        return data.get("status") == "success"
+    except:
+        return False
 
-user_data = {}
-pending_commands = {}
-pending_payments = {}
-
-def load_initial_data():
-    global pending_commands, pending_payments
-    for doc in pending_commands_store.collection.find():
-        pending_commands[doc["user_id"]] = doc["command"]
-    for doc in pending_payments_store.collection.find():
-        pending_payments[doc["user_id"]] = doc["data"]
-
-load_initial_data()
-
+# ========== TELEGRAM FUNCTIONS ==========
 def send_message(chat_id, text, parse_mode="HTML", reply_markup=None, disable_web_page_preview=True):
     url = f"{BASE_URL}/sendMessage"
+    text = re.sub(r'<tg-emoji[^>]*>\s*</tg-emoji>', '', text)
     payload = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode, "disable_web_page_preview": disable_web_page_preview}
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
@@ -286,6 +260,7 @@ def send_photo(chat_id, photo, caption=None, parse_mode="HTML", reply_markup=Non
 
 def edit_message(chat_id, message_id, text, parse_mode="HTML", reply_markup=None):
     url = f"{BASE_URL}/editMessageText"
+    text = re.sub(r'<tg-emoji[^>]*>\s*</tg-emoji>', '', text)
     payload = {"chat_id": chat_id, "message_id": message_id, "text": text, "parse_mode": parse_mode}
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
@@ -323,12 +298,21 @@ def get_updates(offset=None):
 
 def forward_message(chat_id, from_chat_id, message_id):
     url = f"{BASE_URL}/forwardMessage"
-    payload = {"chat_id": chat_id, "from_chat_id": from_chat_id, "message_id": message_id}
     try:
-        return requests.post(url, json=payload).json()
-    except Exception as e:
-        print(f"Forward error: {e}")
+        return requests.post(url, json={"chat_id": chat_id, "from_chat_id": from_chat_id, "message_id": message_id}).json()
+    except:
         return None
+
+# ========== HELPERS ==========
+def get_user_data(user_id, key, default=None):
+    return user_data_store.get(user_id, key, default)
+
+def set_user_data(user_id, key, value):
+    user_data_store.set(user_id, key, value)
+
+def get_easy_time():
+    current = datetime.now()
+    return current.strftime("%d %b, %I:%M %p").replace("AM", "am").replace("PM", "pm")
 
 class User:
     @staticmethod
@@ -338,9 +322,6 @@ class User:
     @staticmethod
     def save_data(user_id, key, value):
         set_user_data(user_id, key, value)
-        if user_id not in user_data:
-            user_data[user_id] = {}
-        user_data[user_id][key] = value
 
 class Resources:
     @staticmethod
@@ -365,22 +346,17 @@ class Resources:
                 return self
         return Resource(resource_type, user)
 
-def get_easy_time():
-    current = datetime.now()
-    date = current.strftime("%Y-%m-%d")
-    time_str = current.strftime("%H:%M")
-    year, month, day = date.split("-")
-    hour, minute = time_str.split(":")
-    hour = int(hour)
-    ampm = "am"
-    if hour >= 12:
-        ampm = "pm"
-    if hour > 12:
-        hour -= 12
-    if hour == 0:
-        hour = 12
-    MONTHS = {"01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun", "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"}
-    return f"{int(day)} {MONTHS[month]}, {hour:02}:{minute} {ampm}"
+pending_commands = {}
+pending_payments = {}
+
+def load_initial_data():
+    global pending_commands, pending_payments
+    for doc in pending_commands_store.collection.find():
+        pending_commands[doc["user_id"]] = doc["command"]
+    for doc in pending_payments_store.collection.find():
+        pending_payments[doc["user_id"]] = doc["data"]
+
+load_initial_data()
 
 commands = {}
 
@@ -391,24 +367,12 @@ def command(name):
     return decorator
 
 PLAN_NAMES = {
-    "1": "1 Day",
-    "2": "3 Days",
-    "3": "7 Days",
-    "4": "15 Days",
-    "5": "30 Days",
-    "6": "1 Day",
-    "7": "3 Days",
-    "8": "7 Days",
-    "9": "14 Days",
-    "10": "1 Day",
-    "11": "3 Days",
-    "12": "7 Days",
-    "13": "14 Days",
-    "14": "21 Days",
-    "15": "28 Days",
+    "1": "1 Day", "2": "3 Days", "3": "7 Days", "4": "15 Days", "5": "30 Days",
+    "6": "1 Day", "7": "3 Days", "8": "7 Days", "9": "14 Days",
+    "10": "1 Day", "11": "3 Days", "12": "7 Days", "13": "14 Days", "14": "21 Days", "15": "28 Days",
 }
 
-# ========== CHECK MAINTENANCE MODE ==========
+# ========== CHECK MAINTENANCE ==========
 def check_maintenance(user_id, message):
     maintenance_mode = bot_data.get_data("maintenance_mode") or False
     if maintenance_mode:
@@ -426,16 +390,67 @@ def check_maintenance(user_id, message):
     return False
 
 # ============================================================
-# ========== FIXED /START WITH PREMIUM EMOJIS ==========
+# ========== PRODUCTS & PLANS FROM API ==========
+# ============================================================
+
+def get_products_from_api():
+    """
+    API se products fetch karna
+    """
+    try:
+        params = {
+            "api_key": API_KEY,
+            "action": "get_products"
+        }
+        response = requests.get(API_URL, params=params, timeout=30)
+        data = response.json()
+        
+        if data.get("status") == "success":
+            return data.get("products", [])
+        else:
+            print(f"❌ API Error: {data.get('msg', 'Unknown error')}")
+            return []
+    except Exception as e:
+        print(f"❌ API Exception: {e}")
+        return []
+
+def get_plans_for_product(product_id):
+    """
+    API se product ke plans fetch karna
+    """
+    try:
+        params = {
+            "api_key": API_KEY,
+            "action": "get_plans",
+            "product_id": product_id
+        }
+        response = requests.get(API_URL, params=params, timeout=30)
+        data = response.json()
+        
+        if data.get("status") == "success":
+            return data.get("plans", [])
+        else:
+            print(f"❌ API Error: {data.get('msg', 'Unknown error')}")
+            return []
+    except Exception as e:
+        print(f"❌ API Exception: {e}")
+        return []
+
+# ============================================================
+# ========== /START ==========
 # ============================================================
 
 @command("/start")
 def cmd_start(message, params, options=None):
     user_id = message.get("from", {}).get("id")
+    print(f"✅ /start received from {user_id}")
+    
     if check_maintenance(user_id, message):
         return True
+    
     if not User.get_data(user_id, "joined_date"):
         User.save_data(user_id, "joined_date", message.get("date"))
+    
     balance = Resources.another_res("Balance", user=user_id).value()
     
     text = f"""<b>
@@ -474,11 +489,13 @@ def cmd_start(message, params, options=None):
             ]
         ]
     }
-    send_message(user_id, text, "HTML", reply_markup)
+    
+    result = send_message(user_id, text, "HTML", reply_markup)
+    print(f"📤 Send result: {result}")
     return True
 
 # ============================================================
-# ========== SHOP COMMANDS ==========
+# ========== SHOP - API BASED ==========
 # ============================================================
 
 @command("/shopnawkk")
@@ -488,46 +505,23 @@ def cmd_shopnawkk(message, params, options=None):
         return True
     msg_id = message.get("message_id")
     
-    mods = bot_data.get_data("mods_list") or []
-    default_mods = ["drip", "SILENT", "HG"]
+    # API se products fetch karo
+    products = get_products_from_api()
     
-    for dm in default_mods:
-        if dm not in mods:
-            mods.append(dm)
-    bot_data.save_data("mods_list", mods)
+    if not products:
+        send_message(user_id, "❌ No products available. Please try again later.", "HTML")
+        return True
     
     markup = {"inline_keyboard": []}
     
-    for mod_id in mods:
-        display_name = mod_id.upper()
+    for product in products:
+        product_id = product.get("id")
+        product_name = product.get("name", "Unknown Product")
         emoji_id = EMOJIS['package']
-        if mod_id == "drip":
-            display_name = "DRIP CLIENT NON-ROOT"
-            emoji_id = EMOJIS['drip_emoji']
-        elif mod_id == "SILENT":
-            display_name = "SILENT CHEATS ANDROID"
-            emoji_id = EMOJIS['silent_emoji']
-        elif mod_id == "HG":
-            display_name = "PRIME HOOK"
-            emoji_id = EMOJIS['hg_emoji']
-        else:
-            display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
-            custom_emoji = bot_data.get_data(f"{mod_id}_emoji")
-            if custom_emoji:
-                emoji_id = custom_emoji
         
-        has_plan = False
-        all_keys = bot_data.collection.find()
-        for doc in all_keys:
-            key = doc.get("key", "")
-            if key.startswith(mod_id + "_") and "d_price" in key:
-                has_plan = True
-                break
-        
-        if has_plan:
-            markup["inline_keyboard"].append([
-                {"text": f"📦 {display_name}", "callback_data": f"/SHOP_MOD {mod_id}", "icon_custom_emoji_id": emoji_id, "style": "success"}
-            ])
+        markup["inline_keyboard"].append([
+            {"text": f"📦 {product_name}", "callback_data": f"/SHOP_MOD {product_id}", "icon_custom_emoji_id": emoji_id, "style": "success"}
+        ])
     
     if not markup["inline_keyboard"]:
         markup["inline_keyboard"].append([
@@ -551,7 +545,6 @@ def cmd_shopnawkk(message, params, options=None):
         send_message(user_id, text, "HTML", markup)
     return True
 
-# ========== FIXED SHOP_MOD ==========
 @command("/SHOP_MOD")
 def cmd_shop_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -559,57 +552,41 @@ def cmd_shop_mod(message, params, options=None):
         return True
     msg_id = message.get("message_id")
     
-    mod_id = params
-    if not mod_id:
+    product_id = params
+    if not product_id:
         send_message(user_id, "Invalid Product")
         return True
     
-    User.save_data(user_id, "current_mod", mod_id)
+    User.save_data(user_id, "current_product", product_id)
     
-    all_keys = bot_data.collection.find()
-    plans = []
-    plan_names = bot_data.get_data("plan_names") or {}
-    
-    for doc in all_keys:
-        key = doc.get("key", "")
-        if key.startswith(mod_id + "_") and "d_price" in key:
-            try:
-                parts = key.split("_")
-                for part in parts:
-                    if "d" in part and part.replace("d", "").isdigit():
-                        day = int(part.replace("d", ""))
-                        plans.append(day)
-                        break
-            except:
-                pass
-    
-    plans = sorted(list(set(plans)))
+    # API se plans fetch karo
+    plans = get_plans_for_product(product_id)
     
     if not plans:
         send_message(user_id, "❌ No plans available for this product")
         return True
     
-    resellers = bot_data.get_data("resellers_list") or []
-    is_reseller = str(user_id) in [str(u) for u in resellers]
+    # Get product name
+    products = get_products_from_api()
+    product_name = "Product"
+    for p in products:
+        if p.get("id") == product_id:
+            product_name = p.get("name", "Product")
+            break
     
     markup = {"inline_keyboard": []}
     
-    for day in plans:
-        price_key = f"{mod_id}_{day}d_price"
-        if is_reseller:
-            reseller_key = f"{mod_id}_{day}d_reseller_price"
-            price = bot_data.get_data(reseller_key) or bot_data.get_data(price_key) or 0
-        else:
-            price = bot_data.get_data(price_key) or 0
+    for plan in plans:
+        plan_id = plan.get("id")
+        days = plan.get("days", 0)
+        price = plan.get("price", 0)
+        plan_display = f"{days} Day{'s' if days > 1 else ''}"
         
-        if price and price > 0:
-            plan_key = f"{mod_id}_{day}"
-            plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
-            markup["inline_keyboard"].append([
-                {"text": f"{plan_display} - ₹{price} {emoji_tag(EMOJIS['cart'], '🛒')}", 
-                 "callback_data": f"/buy_mod {mod_id}_{day}", 
-                 "style": "success"}
-            ])
+        markup["inline_keyboard"].append([
+            {"text": f"{plan_display} - ₹{price} {emoji_tag(EMOJIS['cart'], '🛒')}", 
+             "callback_data": f"/buy_mod {product_id}_{plan_id}", 
+             "style": "success"}
+        ])
     
     if not markup["inline_keyboard"]:
         send_message(user_id, "❌ No valid plans available")
@@ -619,19 +596,9 @@ def cmd_shop_mod(message, params, options=None):
         {"text": "BACK", "callback_data": "/shopnawkk", "icon_custom_emoji_id": EMOJIS['back'], "style": "danger"}
     ])
     
-    display_name = mod_id.upper()
-    if mod_id == "drip":
-        display_name = "DRIP CLIENT NON-ROOT"
-    elif mod_id == "SILENT":
-        display_name = "SILENT CHEATS ANDROID"
-    elif mod_id == "HG":
-        display_name = "PRIME HOOK"
-    else:
-        display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
-    
     txt = f"""
 ━━━━━━━━━━━━━━━━━━━━
-📦 {display_name}
+📦 {product_name}
 ━━━━━━━━━━━━━━━━━━━━
 
 Choose a plan 👇
@@ -642,7 +609,10 @@ Choose a plan 👇
         send_message(user_id, txt, "HTML", markup)
     return True
 
-# ========== FIXED BUY_MOD ==========
+# ============================================================
+# ========== BUY - API KEY FETCH ==========
+# ============================================================
+
 @command("/buy_mod")
 def cmd_buy_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -652,122 +622,103 @@ def cmd_buy_mod(message, params, options=None):
         send_message(user_id, "❌ Invalid Product")
         return True
     
-    # FIXED: Better parsing for mod_id with underscores
     parts = params.split("_")
     if len(parts) < 2:
         send_message(user_id, "❌ Invalid Product Format")
         return True
     
-    # Last part is day
-    day_str = parts[-1]
-    try:
-        day = int(day_str)
-    except:
-        send_message(user_id, "❌ Invalid Day")
+    product_id = parts[0]
+    plan_id = parts[1] if len(parts) > 1 else None
+    
+    if not plan_id:
+        send_message(user_id, "❌ Invalid Plan")
         return True
     
-    # Rest is mod_id (join back with underscores)
-    mod_id = "_".join(parts[:-1])
+    # Get plan details
+    plans = get_plans_for_product(product_id)
+    plan_details = None
+    for p in plans:
+        if p.get("id") == plan_id:
+            plan_details = p
+            break
     
-    price_key = f"{mod_id}_{day}d_price"
-    keys_key = f"{mod_id}_{day}d_keys"
-    
-    price = bot_data.get_data(price_key)
-    if not price or price <= 0:
-        send_message(user_id, f"❌ Product not available\n\nMod: {mod_id}\nDay: {day}")
+    if not plan_details:
+        send_message(user_id, "❌ Plan not found")
         return True
     
-    keys = bot_data.get_data(keys_key) or []
-    if len(keys) == 0:
-        send_message(user_id, "❌ Out of Stock")
-        return True
+    price = plan_details.get("price", 0)
+    days = plan_details.get("days", 0)
+    plan_display = f"{days} Day{'s' if days > 1 else ''}"
     
-    resellers = bot_data.get_data("resellers_list") or []
-    is_reseller = str(user_id) in [str(u) for u in resellers]
-    if is_reseller:
-        reseller_key = f"{mod_id}_{day}d_reseller_price"
-        if bot_data.get_data(reseller_key):
-            price = bot_data.get_data(reseller_key)
+    # Get product name
+    products = get_products_from_api()
+    product_name = "Product"
+    for p in products:
+        if p.get("id") == product_id:
+            product_name = p.get("name", "Product")
+            break
     
-    display_name = mod_id.upper()
-    if mod_id == "drip":
-        display_name = "DRIP CLIENT NON-ROOT"
-    elif mod_id == "SILENT":
-        display_name = "SILENT CHEATS ANDROID"
-    elif mod_id == "HG":
-        display_name = "PRIME HOOK"
-    else:
-        display_name = bot_data.get_data(f"{mod_id}_display_name") or mod_id.replace("_", " ").title()
-    
-    plan_names = bot_data.get_data("plan_names") or {}
-    plan_key = f"{mod_id}_{day}"
-    plan_display = plan_names.get(plan_key, f"{day} Day{'s' if day > 1 else ''}")
-    
-    title = f"{display_name}\n{plan_display}"
+    title = f"{product_name}\n{plan_display}"
     
     User.save_data(user_id, "last_product1", title)
-    User.save_data(user_id, "last_plan", str(day))
+    User.save_data(user_id, "last_plan", str(days))
+    User.save_data(user_id, "last_product_id", product_id)
+    User.save_data(user_id, "last_plan_id", plan_id)
     
-    cmd_buybahha(message, None, {"price": price, "key": keys_key, "title": title})
-    return True
-
-@command("/buybahha")
-def cmd_buybahha(message, params, options):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    if not options:
-        send_message(user_id, "Product configuration error.")
-        return True
-    price = options.get("price")
-    key_key = options.get("key")
-    title = options.get("title")
-    if not price or not key_key or not title:
-        send_message(user_id, "Product configuration error.")
-        return True
-    try:
-        price = float(price)
-    except:
-        send_message(user_id, "Invalid price.")
-        return True
-    if price <= 0:
-        send_message(user_id, "Price not set.")
-        return True
-    keys = bot_data.get_data(key_key) or []
-    if len(keys) == 0:
-        send_message(user_id, "Out of Stock.")
-        return True
+    # Check balance
     balance = Resources.another_res("Balance", user=user_id)
+    
     if balance.value() < price:
         User.save_data(user_id, "last_deposit_amount", price)
         User.save_data(user_id, "last_product", title)
         cmd_autobuy1(message, None)
         return True
+    
+    # Deduct balance
     balance.cut(price)
     Resources.another_res("Order", user=user_id).add(1)
-    key = str(keys[0])
-    keys.pop(0)
-    bot_data.save_data(key_key, keys)
+    
+    # 🔑 FETCH KEY FROM API
+    send_message(user_id, f"{emoji_tag(EMOJIS['clock'], '⏳')} Fetching your key from server...", "HTML")
+    
+    key = fetch_key_from_api(product_id, plan_id, user_id)
+    
+    if not key:
+        # Refund if key not found
+        balance.add(price)
+        send_message(
+            user_id,
+            f"{emoji_tag(EMOJIS['danger'], '❌')} <b>Key Not Available!</b>\n\n"
+            f"We couldn't fetch your key. Amount has been refunded.\n"
+            f"Please try again later or contact support.",
+            "HTML"
+        )
+        return True
+    
     easy_time = get_easy_time()
+    
     send_message(
         user_id,
         f"{emoji_tag(EMOJIS['buy'], '🛒')} {title}\n\n"
         f"{emoji_tag(EMOJIS['key'], '🔑')} <b>Your Key:</b>\n<code>{key}</code>\n\n"
         f"{emoji_tag(EMOJIS['money'], '💰')} Deducted: ₹{price}\n"
-        f"{emoji_tag(EMOJIS['mykeys'], '📦')} Remaining Stock: {len(keys)}\n"
         f"{emoji_tag(EMOJIS['time'], '⏰')} Time: {easy_time}\n\n"
-        f"{emoji_tag(EMOJIS['announce'], '📢')} <b>ALL FILES UPDATE</b>\n"
-        f"@SUBHAJIT_UPDATES",
+        f"{emoji_tag(EMOJIS['announce'], '📢')} <b>ALL FILES UPDATE</b>\n@SUBHAJIT_UPDATES",
         "HTML"
     )
+    
+    # Save order
     adm_ac = User.get_data(user_id, "userhAC") or []
     adm_ac.append(
         f"📆 {easy_time}\n"
         f"👤 {message.get('from', {}).get('first_name', 'User')} [{user_id}]\n"
         f"💰 ₹{price}\n"
         f"🔑 {key}\n"
+        f"📦 {product_name}\n"
+        f"📅 {days} Days"
     )
     User.save_data(user_id, "userhAC", adm_ac)
+    
     return True
 
 @command("/autobuy1")
@@ -826,8 +777,7 @@ def cmd_autobuy1(message, params, options=None):
         f"┣ Your Balance: ₹{balance}\n"
         f"┗ Need: ₹{need}\n\n"
         f"Scan the QR and complete payment.\n\n"
-        f"{emoji_tag(EMOJIS['info'], 'ℹ️')} <b>Order ID:</b>\n"
-        f"<code>{order_id}</code>\n\n"
+        f"{emoji_tag(EMOJIS['info'], 'ℹ️')} <b>Order ID:</b>\n<code>{order_id}</code>\n\n"
         f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
     )
     
@@ -839,6 +789,10 @@ def cmd_autobuy1(message, params, options=None):
     }
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
     return True
+
+# ============================================================
+# ========== VERIFY PAYMENT ==========
+# ============================================================
 
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
@@ -904,6 +858,9 @@ def cmd_verify_payment(message, params, options=None):
         payment_orders_store.mark_verified(order_id)
         processed_payments_store.add(order_id, user_id, amount)
         
+        # After payment, user can buy product
+        User.save_data(user_id, "last_deposit_amount", None)
+        
         User.save_data(user_id, "last_order_id", "")
         User.save_data(user_id, "addpay_order_id", "")
         User.save_data(user_id, "payment_processed", True)
@@ -916,13 +873,25 @@ def cmd_verify_payment(message, params, options=None):
             except:
                 pass
         
-        send_message(
-            user_id,
-            f"{emoji_tag(EMOJIS['success'], '✅')} <b>Payment Success!</b>\n\n"
-            f"{emoji_tag(EMOJIS['money'], '💰')} Added: ₹{amount}\n"
-            f"{emoji_tag(EMOJIS['balance'], '💰')} New Balance: ₹{bal.value()}",
-            "HTML"
-        )
+        # Check if user had a pending purchase
+        last_product = User.get_data(user_id, "last_product")
+        if last_product:
+            send_message(
+                user_id,
+                f"{emoji_tag(EMOJIS['success'], '✅')} <b>Payment Success!</b>\n\n"
+                f"{emoji_tag(EMOJIS['money'], '💰')} Added: ₹{amount}\n"
+                f"{emoji_tag(EMOJIS['balance'], '💰')} New Balance: ₹{bal.value()}\n\n"
+                f"Now go to shop and buy your product! 🛒",
+                "HTML"
+            )
+        else:
+            send_message(
+                user_id,
+                f"{emoji_tag(EMOJIS['success'], '✅')} <b>Payment Success!</b>\n\n"
+                f"{emoji_tag(EMOJIS['money'], '💰')} Added: ₹{amount}\n"
+                f"{emoji_tag(EMOJIS['balance'], '💰')} New Balance: ₹{bal.value()}",
+                "HTML"
+            )
         
         admins = bot_data.get_data("AllBotAdminss") or []
         for admin in admins:
@@ -983,7 +952,7 @@ def cmd_cancel(message, params, options=None):
     return True
 
 # ============================================================
-# ========== ADD FUNDS COMMANDS ==========
+# ========== ADD FUNDS ==========
 # ============================================================
 
 current_amount = {}
@@ -1011,137 +980,25 @@ def cmd_addpayment(message, params, options=None):
         send_message(user_id, text, "HTML", reply_markup)
     return True
 
-# Number buttons (1-9,0,clear,done) - Keep as is from your original
-
-@command("/num0")
-def cmd_num0(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "0" if amt == "0" else amt + "0"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num1")
-def cmd_num1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "1" if amt == "0" else amt + "1"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num2")
-def cmd_num2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "2" if amt == "0" else amt + "2"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num3")
-def cmd_num3(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "3" if amt == "0" else amt + "3"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num4")
-def cmd_num4(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "4" if amt == "0" else amt + "4"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num5")
-def cmd_num5(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "5" if amt == "0" else amt + "5"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num6")
-def cmd_num6(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "6" if amt == "0" else amt + "6"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num7")
-def cmd_num7(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "7" if amt == "0" else amt + "7"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num8")
-def cmd_num8(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "8" if amt == "0" else amt + "8"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
-
-@command("/num9")
-def cmd_num9(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
-    msg_id = message.get("message_id")
-    amt = current_amount.get(user_id, "0")
-    amt = "9" if amt == "0" else amt + "9"
-    current_amount[user_id] = amt
-    text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
-    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
-    return True
+for n in range(10):
+    @command(f"/num{n}")
+    def make_handler(num):
+        def handler(message, params, options=None):
+            user_id = message.get("from", {}).get("id")
+            if check_maintenance(user_id, message):
+                return True
+            msg_id = message.get("message_id")
+            amt = current_amount.get(user_id, "0")
+            if num == 0:
+                amt = "0" if amt == "0" else amt + "0"
+            else:
+                amt = str(num) if amt == "0" else amt + str(num)
+            current_amount[user_id] = amt
+            text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹{amt}\n\nUse the keypad below."
+            edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+            return True
+        return handler
+    globals()[f"cmd_num{n}"] = make_handler(n)
 
 @command("/clearamt")
 def cmd_clearamt(message, params, options=None):
@@ -1405,7 +1262,7 @@ Need help? We're here for you! ⚡
     return True
 
 # ============================================================
-# ========== ADMIN COMMANDS (Keep all from your original) ==========
+# ========== ADMIN COMMANDS ==========
 # ============================================================
 
 @command("/admin")
@@ -1435,14 +1292,16 @@ def cmd_admin(message, params, options=None):
         bot_sta = "🔴 Off"
         bot_change = "BotMode ON"
     
+    # Check API status
+    api_status = "✅ Connected" if check_api_connection() else "❌ Disconnected"
+    
     markup = {
         "inline_keyboard": [
             [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
             [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bot: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
-            [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Recent Admin Actions", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
-            [{"text": "📦 Manage Mods", "callback_data": "/manage_mods", "style": "success"}],
+            [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}],
             [{"text": "🔧 Maintenance", "callback_data": maint_callback, "style": "danger"}, {"text": f"Status: {maint_status}", "callback_data": "none", "style": "primary"}],
-            [{"text": "💰 Add Reseller", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Remove Reseller", "callback_data": "/removereseller", "style": "danger"}],
+            [{"text": f"🔗 API: {api_status}", "callback_data": "/check_api", "style": "primary"}],
             [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
         ]
     }
@@ -1452,6 +1311,7 @@ def cmd_admin(message, params, options=None):
 ━━━━━━━━━━━━━━━
 🤖 Bot Status : {bot_sta}
 🔧 Maintenance : {maint_status}
+🔗 API Status : {api_status}
 ━━━━━━━━━━━━━━━
 </b>"""
     if str(message.get("text")) == "/admin":
@@ -1463,9 +1323,18 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
-# ============================================================
-# ========== MAINTENANCE COMMANDS ==========
-# ============================================================
+@command("/check_api")
+def cmd_check_api(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    if check_api_connection():
+        send_message(user_id, f"{emoji_tag(EMOJIS['success'], '✅')} API is connected successfully!", "HTML")
+    else:
+        send_message(user_id, f"{emoji_tag(EMOJIS['danger'], '❌')} API is not responding! Please check your API key.", "HTML")
+    return True
 
 @command("/maintenance_on")
 def cmd_maintenance_on(message, params, options=None):
@@ -1475,10 +1344,8 @@ def cmd_maintenance_on(message, params, options=None):
     if not is_admin:
         send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
         return True
-    
     bot_data.save_data("maintenance_mode", True)
     send_message(user_id, "✅ Maintenance Mode Activated!", "HTML")
-    
     cmd_admin(message, params, options)
     return True
 
@@ -1490,12 +1357,181 @@ def cmd_maintenance_off(message, params, options=None):
     if not is_admin:
         send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
         return True
-    
     bot_data.save_data("maintenance_mode", False)
     send_message(user_id, "✅ Maintenance Mode Deactivated!", "HTML")
-    
     cmd_admin(message, params, options)
     return True
+
+# ============================================================
+# ========== RESELLER LIST ==========
+# ============================================================
+
+@command("/resellerlist")
+def cmd_resellerlist(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    # Fetch resellers from API
+    try:
+        params = {
+            "api_key": API_KEY,
+            "action": "get_resellers"
+        }
+        response = requests.get(API_URL, params=params, timeout=30)
+        data = response.json()
+        
+        if data.get("status") == "success":
+            resellers = data.get("resellers", [])
+            if not resellers:
+                send_message(user_id, "No resellers found.", "HTML")
+                return True
+            
+            text = "📝 Reseller List\n━━━━━━━━━━━━━━━\n"
+            for i, r in enumerate(resellers, 1):
+                text += f"{i}. <code>{r}</code>\n"
+            text += f"\nTotal: {len(resellers)}"
+            send_message(user_id, text, "HTML")
+        else:
+            send_message(user_id, f"❌ Error: {data.get('msg', 'Unknown error')}", "HTML")
+    except Exception as e:
+        send_message(user_id, f"❌ API Error: {str(e)}", "HTML")
+    return True
+
+# ============================================================
+# ========== BROADCAST ==========
+# ============================================================
+
+@command("/broadcast")
+def cmd_broadcast(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    
+    all_users = user_data_store.get_all_users()
+    admins_list = bot_data.get_data("AllBotAdminss") or []
+    for admin in admins_list:
+        if admin not in all_users:
+            all_users.append(admin)
+    
+    all_users = list(set(all_users))
+    User.save_data(user_id, "broadcast_users", all_users)
+    
+    send_message(
+        user_id,
+        f"📢 <b>BROADCAST MODE</b>\n\n"
+        f"👥 Total Users: {len(all_users)}\n\n"
+        f"Send ANY message\n"
+        f"Type /cancel to stop.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/broadcast_send_media"
+    pending_commands_store.set(user_id, "/broadcast_send_media")
+    return True
+
+@command("/broadcast_send_media")
+def cmd_broadcast_send_media(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    
+    if message.get("text", "").strip() == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    users = User.get_data(user_id, "broadcast_users") or []
+    if not users:
+        send_message(user_id, "No users", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    from_chat = message.get("chat", {}).get("id")
+    msg_id = message.get("message_id")
+    
+    success = 0
+    failed = 0
+    
+    for target in users:
+        try:
+            forward_message(target, from_chat, msg_id)
+            success += 1
+        except:
+            failed += 1
+        time.sleep(0.1)
+    
+    send_message(
+        user_id,
+        f"✅ <b>Broadcast Complete</b>\n✅ Success: {success}\n❌ Failed: {failed}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ============================================================
+# ========== CHANGE USER BALANCE ==========
+# ============================================================
+
+@command("/ChangeAnyUserBal")
+def cmd_change_balance(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(
+        user_id,
+        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/ChangeAnyUserBal2"
+    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
+    return True
+
+@command("/ChangeAnyUserBal2")
+def cmd_change_balance2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    parts = text.split(" ")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid format. Use: user_id amount")
+        return True
+    target_user = parts[0]
+    try:
+        amount = float(parts[1])
+    except:
+        send_message(user_id, "Invalid amount")
+        return True
+    bal = Resources.another_res("Balance", user=target_user)
+    bal.add(amount)
+    easy_time = get_easy_time()
+    send_message(
+        user_id,
+        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
+        "HTML"
+    )
+    send_message(
+        target_user,
+        f"<b>💰 Admin Added ₹{amount} to your balance!</b>\n\nNew Balance: ₹{bal.value()}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ============================================================
+# ========== TUSHAR ADMINS ==========
+# ============================================================
 
 @command("/TUSHAR_Admins")
 def cmd_tushar_admins(message, params, options=None):
@@ -1556,467 +1592,6 @@ def cmd_tushar_addadmin1(message, params, options=None):
     pending_commands_store.delete(user_id)
     return True
 
-@command("/TUSHAR_AdminAction")
-def cmd_tushar_adminaction(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    adm_ac = bot_data.get_data("AdmAC") or []
-    latest_10 = adm_ac[-10:][::-1]
-    if latest_10:
-        send_message(user_id, "\n\n".join(latest_10), "HTML")
-    else:
-        send_message(user_id, "No admin actions recorded yet.")
-    return True
-
-@command("/ChangeAnyUserBal")
-def cmd_change_balance(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(
-        user_id,
-        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
-        "HTML"
-    )
-    pending_commands[user_id] = "/ChangeAnyUserBal2"
-    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
-    return True
-
-@command("/ChangeAnyUserBal2")
-def cmd_change_balance2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    parts = text.split(" ")
-    if len(parts) < 2:
-        send_message(user_id, "Invalid format. Use: user_id amount")
-        return True
-    target_user = parts[0]
-    try:
-        amount = float(parts[1])
-    except:
-        send_message(user_id, "Invalid amount")
-        return True
-    bal = Resources.another_res("Balance", user=target_user)
-    bal.add(amount)
-    easy_time = get_easy_time()
-    adm_ac = bot_data.get_data("AdmAC") or []
-    adm_ac.append(
-        f"📆 Time: {easy_time}\n"
-        f"👥 By {message.get('from', {}).get('first_name', 'Admin')} [ID: {user_id}]\n"
-        f"🔍 Action: Added {amount} Rs To {target_user}"
-    )
-    bot_data.save_data("AdmAC", adm_ac)
-    send_message(
-        user_id,
-        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
-        "HTML"
-    )
-    send_message(
-        target_user,
-        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-# ============================================================
-# ========== MANAGE MODS (Keep all from your original) ==========
-# ============================================================
-
-@command("/manage_mods")
-def cmd_manage_mods(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        return True
-    
-    mods = bot_data.get_data("mods_list") or []
-    default_mods = ["drip", "SILENT", "HG"]
-    
-    for dm in default_mods:
-        if dm not in mods:
-            mods.append(dm)
-    bot_data.save_data("mods_list", mods)
-    
-    markup = {"inline_keyboard": []}
-    
-    for mod in mods:
-        display_name = mod.upper()
-        if mod == "drip":
-            display_name = "DRIP CLIENT"
-        elif mod == "SILENT":
-            display_name = "SILENT CHEATS"
-        elif mod == "HG":
-            display_name = "PRIME HOOK"
-        else:
-            display_name = bot_data.get_data(f"{mod}_display_name") or mod.replace("_", " ").title()
-        
-        if mod in default_mods:
-            markup["inline_keyboard"].append([
-                {"text": f"📦 {display_name}", "callback_data": f"/manage_mod {mod}", "style": "success"}
-            ])
-        else:
-            markup["inline_keyboard"].append([
-                {"text": f"📦 {display_name}", "callback_data": f"/manage_mod {mod}", "style": "success"},
-                {"text": "🗑️", "callback_data": f"/delete_mod {mod}", "style": "danger"}
-            ])
-    
-    markup["inline_keyboard"].append([
-        {"text": "➕ ADD NEW MOD", "callback_data": "/add_new_mod", "style": "success"}
-    ])
-    markup["inline_keyboard"].append([
-        {"text": "🔙 BACK", "callback_data": "/admin", "style": "danger"}
-    ])
-    
-    txt = """
-<b>📦 MANAGE MODS</b>
-━━━━━━━━━━━━━━━━━━━━━━
-
-<b>Select a mod to manage or add new:</b>
-"""
-    try:
-        edit_message(user_id, msg_id, txt, "HTML", markup)
-    except:
-        send_message(user_id, txt, "HTML", markup)
-    return True
-
-# ============================================================
-# ========== KEY ADD FIX ==========
-# ============================================================
-
-@command("/add_keys_plan")
-def cmd_add_keys_plan(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    
-    if not params:
-        send_message(user_id, "❌ Invalid")
-        return True
-    
-    # FIXED: Better parsing for mod_id with underscores
-    parts = params.split("_")
-    if len(parts) < 2:
-        send_message(user_id, "❌ Invalid format! Use: mod_id_day")
-        return True
-    
-    # Last part is day
-    day_str = parts[-1]
-    try:
-        day_num = int(day_str)
-    except:
-        send_message(user_id, "❌ Invalid day format!")
-        return True
-    
-    # Rest is mod_id (join back with underscores)
-    mod_id = "_".join(parts[:-1])
-    
-    key_name = f"{mod_id}_{day_num}d_keys"
-    
-    existing = bot_data.get_data(key_name)
-    if existing is None:
-        bot_data.save_data(key_name, [])
-        existing = []
-    
-    current_stock = len(existing)
-    
-    User.save_data(user_id, "add_keys_key_name", key_name)
-    User.save_data(user_id, "add_keys_mod_id", mod_id)
-    User.save_data(user_id, "add_keys_day", day_num)
-    
-    send_message(
-        user_id,
-        f"<b>🔑 Add Keys For {mod_id.upper()} - {day_num} Day</b>\n\n"
-        f"Current Stock: {current_stock}\n\n"
-        f"Send keys one per line.\n"
-        f"Type <b>DONE</b> to finish.\n"
-        f"Type /cancel to stop.",
-        "HTML"
-    )
-    pending_commands[user_id] = "/add_keys_process_final"
-    pending_commands_store.set(user_id, "/add_keys_process_final")
-    return True
-
-@command("/add_keys_process_final")
-def cmd_add_keys_process_final(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    
-    if text == "/cancel":
-        send_message(user_id, "❌ Cancelled", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        User.save_data(user_id, "add_keys_key_name", None)
-        User.save_data(user_id, "add_keys_mod_id", None)
-        User.save_data(user_id, "add_keys_day", None)
-        return True
-    
-    key_name = User.get_data(user_id, "add_keys_key_name")
-    if not key_name:
-        send_message(user_id, "❌ Error: No key name found", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    if text.upper() == "DONE":
-        mod_id = User.get_data(user_id, "add_keys_mod_id") or "Unknown"
-        day = User.get_data(user_id, "add_keys_day") or "Unknown"
-        existing = bot_data.get_data(key_name) or []
-        send_message(
-            user_id, 
-            f"✅ <b>All Keys Added!</b>\n\n"
-            f"📦 Mod: {mod_id.upper()}\n"
-            f"📅 Day: {day}\n"
-            f"🔑 Total Keys: {len(existing)}\n"
-            f"📂 Key Name: <code>{key_name}</code>",
-            "HTML"
-        )
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        User.save_data(user_id, "add_keys_key_name", None)
-        User.save_data(user_id, "add_keys_mod_id", None)
-        User.save_data(user_id, "add_keys_day", None)
-        return True
-    
-    existing = bot_data.get_data(key_name) or []
-    if isinstance(existing, str):
-        existing = [existing]
-    
-    keys = text.strip().split('\n')
-    added = 0
-    for k in keys:
-        k = k.strip()
-        if k:
-            existing.append(k)
-            added += 1
-    
-    bot_data.save_data(key_name, existing)
-    
-    send_message(
-        user_id,
-        f"✅ <b>Added {added} Key(s)</b>\n\n"
-        f"Total Stock: {len(existing)}\n\n"
-        f"Send more keys or type <b>DONE</b> to finish.",
-        "HTML"
-    )
-    return True
-
-# Keep all other admin commands (manage_mod, edit_plan, etc.) from your original code
-
-# ============================================================
-# ========== BROADCAST ==========
-# ============================================================
-
-@command("/broadcast")
-def cmd_broadcast(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in admins:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    
-    all_users = user_data_store.get_all_users()
-    for doc in pending_payments_store.collection.find({}, {"user_id": 1}):
-        if doc.get("user_id") not in all_users:
-            all_users.append(doc.get("user_id"))
-    
-    admins_list = bot_data.get_data("AllBotAdminss") or []
-    for admin in admins_list:
-        if admin not in all_users:
-            all_users.append(admin)
-    
-    all_users = list(set(all_users))
-    User.save_data(user_id, "broadcast_users", all_users)
-    
-    send_message(
-        user_id, 
-        f"📢 <b>BROADCAST MODE</b>\n\n"
-        f"👥 Total Users: {len(all_users)}\n\n"
-        f"Send ANY message\n"
-        f"Type /cancel to stop.",
-        "HTML"
-    )
-    pending_commands[user_id] = "/broadcast_send_media"
-    pending_commands_store.set(user_id, "/broadcast_send_media")
-    return True
-
-@command("/broadcast_send_media")
-def cmd_broadcast_send_media(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in admins:
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    if message.get("text") and message.get("text", "").strip() == "/cancel":
-        send_message(user_id, "❌ Cancelled", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        User.save_data(user_id, "broadcast_users", None)
-        return True
-    
-    users = User.get_data(user_id, "broadcast_users") or []
-    if not users:
-        send_message(user_id, "No users to broadcast.", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    from_chat_id = message.get("chat", {}).get("id")
-    msg_id_to_forward = message.get("message_id")
-    
-    success = 0
-    failed = 0
-    
-    for target_user in users:
-        try:
-            forward_message(target_user, from_chat_id, msg_id_to_forward)
-            success += 1
-        except:
-            failed += 1
-        time.sleep(0.1)
-    
-    send_message(
-        user_id, 
-        f"✅ <b>Broadcast Complete</b>\n\n"
-        f"📤 Success: {success}\n"
-        f"❌ Failed: {failed}\n"
-        f"👥 Total: {len(users)}",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    User.save_data(user_id, "broadcast_users", None)
-    return True
-
-@command("/setMyCommands")
-def cmd_set_commands(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    commands_list = [{"command": "start", "description": "START TO BUY"}]
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setMyCommands"
-    try:
-        response = requests.post(url, json={"commands": commands_list})
-        send_message(user_id, str(response.json()))
-    except:
-        send_message(user_id, "Error setting commands")
-    return True
-
-# ============================================================
-# ========== RESELLER COMMANDS ==========
-# ============================================================
-
-@command("/addreseller")
-def cmd_addreseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(user_id, "📩 Send me id reseller", "HTML")
-    pending_commands[user_id] = "/add_reseller_process"
-    pending_commands_store.set(user_id, "/add_reseller_process")
-    return True
-
-@command("/add_reseller_process")
-def cmd_add_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user in [str(u) for u in resellers]:
-        send_message(user_id, "User already a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers.append(target_user)
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
-    try:
-        send_message(target_user, "You are now a Reseller", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/removereseller")
-def cmd_removereseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    send_message(user_id, "Send me reseller id to remove", "HTML")
-    pending_commands[user_id] = "/remove_reseller_process"
-    pending_commands_store.set(user_id, "/remove_reseller_process")
-    return True
-
-@command("/remove_reseller_process")
-def cmd_remove_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target_user = message.get("text", "").strip()
-    try:
-        target_user = str(int(target_user))
-    except:
-        send_message(user_id, "Invalid User ID.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = bot_data.get_data("resellers_list") or []
-    if target_user not in [str(u) for u in resellers]:
-        send_message(user_id, "User is not a reseller.")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    resellers = [u for u in resellers if str(u) != target_user]
-    bot_data.save_data("resellers_list", resellers)
-    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
-    try:
-        send_message(target_user, "You are no longer a Reseller.", "HTML")
-    except:
-        pass
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/resellerlist")
-def cmd_resellerlist(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    resellers = bot_data.get_data("resellers_list") or []
-    if not resellers:
-        send_message(user_id, "No resellers found.")
-        return True
-    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
-    count = 1
-    for res in resellers:
-        text += f"{count}. ID: <code>{res}</code>\n"
-        count += 1
-    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
-    send_message(user_id, text, "HTML")
-    return True
-
 # ============================================================
 # ========== MAIN ==========
 # ============================================================
@@ -2028,9 +1603,11 @@ def handle_update(update):
         user_id = callback.get("from", {}).get("id")
         msg_id = callback.get("message", {}).get("message_id")
         answer_callback(callback.get("id"))
+        
         parts = data.split(" ")
         cmd = parts[0]
         params = " ".join(parts[1:]) if len(parts) > 1 else None
+        
         msg = {
             "message_id": msg_id,
             "from": callback.get("from", {}),
@@ -2039,16 +1616,19 @@ def handle_update(update):
             "text": data,
             "reply_markup": callback.get("message", {}).get("reply_markup")
         }
+        
         if cmd in commands:
             try:
                 commands[cmd](msg, params)
             except Exception as e:
                 print(f"Callback error: {e}")
         return
+    
     if "message" in update:
         msg = update["message"]
         user_id = msg.get("from", {}).get("id")
         text = msg.get("text", "")
+        
         if user_id in pending_commands:
             pending_cmd = pending_commands[user_id]
             if pending_cmd in commands:
@@ -2057,6 +1637,7 @@ def handle_update(update):
                 except Exception as e:
                     print(f"Pending command error: {e}")
                 return
+        
         if text.startswith("/"):
             parts = text.split(" ")
             cmd = parts[0]
@@ -2068,9 +1649,16 @@ def handle_update(update):
                     print(f"Command error: {e}")
 
 def main():
-    print("🤖 Bot Started with MongoDB!")
+    print("🤖 Bot Started with API Integration!")
     print(f"📁 Connected to MongoDB: {DB_NAME}")
+    print(f"🔗 API URL: {API_URL}")
     print(f"📋 Registered commands: {list(commands.keys())}")
+    
+    # Check API connection
+    if check_api_connection():
+        print("✅ API Connected Successfully!")
+    else:
+        print("❌ API Connection Failed! Check your API key.")
     
     last_update_id = 0
     while True:
