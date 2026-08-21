@@ -25,7 +25,7 @@ for duration in durations:
         'action': 'buy',
         'product_id': '133',
         'duration': duration,
-        'price': '100',
+        'price': '32',
         'amount': '100'
     }
     
