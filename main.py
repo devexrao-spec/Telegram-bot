@@ -17,6 +17,12 @@ API_KEY = "b25eb076f5c0412fa9f1eba94550d02e"
 MONGO_URI = "mongodb+srv://crasher3210_db_user:devex5656@cluster0.9y5axka.mongodb.net/?appName=Cluster0&compressors=zlib"
 DB_NAME = "telegram_bot1"
 
+# ========== FAMPAY CONFIGURATION ==========
+FAMPAY_UPI = "bablu.xyztb@fam"  # <-- Yahan apna UPI ID daal dijiye
+FAMPAY_API_KEY = "FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8" # <-- Yahan apni FamPay API Key daal dijiye
+FAMPAY_QR_URL = "https://fampay.anujbots.xyz/qr.php"
+FAMPAY_VERIFY_URL = "https://fampay.anujbots.xyz/verify.php"
+
 # ========== PREMIUM EMOJI IDs ==========
 EMOJIS = {
     "cart": "5382194935057372936",
@@ -210,7 +216,6 @@ class ProductStore:
     
     def delete(self, product_id):
         self.collection.delete_one({"product_id": str(product_id)})
-        # Also delete all plans for this product
         plan_store = PlanStore()
         plan_store.delete_by_product(product_id)
 
@@ -240,15 +245,16 @@ class PlanStore:
 product_store = ProductStore()
 plan_store = PlanStore()
 
-# ========== API FUNCTIONS ==========
+# ========== API FUNCTIONS (FIXED: POST & BUY) ==========
 def call_api(action, data=None):
-    """API call karne ke liye generic function"""
+    """API call karne ke liye generic function (POST Request)"""
     try:
         params = {"api_key": API_KEY, "action": action}
         if data:
             params.update(data)
         
-        response = requests.get(API_URL, params=params, timeout=30)
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = requests.post(API_URL, data=params, headers=headers, timeout=30)
         result = response.json()
         print(f"📡 API Response [{action}]: {result}")
         return result
@@ -257,14 +263,16 @@ def call_api(action, data=None):
         return {"status": "error", "msg": str(e)}
 
 def fetch_key_from_api(product_id, plan_id, user_id):
-    """API se key fetch karna"""
-    result = call_api("get_key", {
+    """API se Key GENERATE aur FETCH karna"""
+    # 'buy' action use kar rahe hain taaki naya key generate ho
+    result = call_api("buy", {
         "product_id": str(product_id),
-        "plan_id": str(plan_id),
-        "user_id": str(user_id)
+        "duration": str(plan_id), 
+        "android_id": str(user_id) 
     })
+    
     if result.get("status") == "success":
-        return result.get("key")
+        return result.get("key") or result.get("data", {}).get("key") 
     return None
 
 def check_api_connection():
@@ -564,7 +572,7 @@ Choose a plan 👇
     return True
 
 # ============================================================
-# ========== BUY - API KEY FETCH ==========
+# ========== BUY - API KEY GENERATE & FETCH ==========
 # ============================================================
 
 @command("/buy_mod")
@@ -616,7 +624,7 @@ def cmd_buy_mod(message, params, options=None):
     balance.cut(price)
     Resources.another_res("Order", user=user_id).add(1)
     
-    send_message(user_id, f"{emoji_tag(EMOJIS['clock'], '⏳')} Fetching your key from server...", "HTML")
+    send_message(user_id, f"{emoji_tag(EMOJIS['clock'], '⏳')} Generating your key from server...", "HTML")
     
     key = fetch_key_from_api(product_id, plan_id, user_id)
     
@@ -624,8 +632,8 @@ def cmd_buy_mod(message, params, options=None):
         balance.add(price)
         send_message(
             user_id,
-            f"{emoji_tag(EMOJIS['danger'], '❌')} <b>Key Not Available!</b>\n\n"
-            f"We couldn't fetch your key. Amount has been refunded.\n"
+            f"{emoji_tag(EMOJIS['danger'], '❌')} <b>Key Generation Failed!</b>\n\n"
+            f"Server response error. Amount has been refunded.\n"
             f"Please try again later or contact support.",
             "HTML"
         )
@@ -636,7 +644,7 @@ def cmd_buy_mod(message, params, options=None):
     send_message(
         user_id,
         f"{emoji_tag(EMOJIS['buy'], '🛒')} {title}\n\n"
-        f"{emoji_tag(EMOJIS['key'], '🔑')} <b>Your Key:</b>\n<code>{key}</code>\n\n"
+        f"{emoji_tag(EMOJIS['key'], '🔑')} <b>Your Generated Key:</b>\n<code>{key}</code>\n\n"
         f"{emoji_tag(EMOJIS['money'], '💰')} Deducted: ₹{price}\n"
         f"{emoji_tag(EMOJIS['time'], '⏰')} Time: {easy_time}\n\n"
         f"{emoji_tag(EMOJIS['announce'], '📢')} <b>ALL FILES UPDATE</b>\n@SUBHAJIT_UPDATES",
@@ -675,8 +683,7 @@ def cmd_autobuy1(message, params, options=None):
     need = max(0, float(amount) - float(balance))
     plan_display = f"{plan} Days" if plan.isdigit() else plan
     
-    upi = "bablu.xyztb@fam"
-    url = f"https://fampay.anujbots.xyz/qr.php?upi={upi}&amount={amount}"
+    url = f"{FAMPAY_QR_URL}?upi={FAMPAY_UPI}&amount={amount}"
     try:
         response = requests.get(url)
         data = response.json()
@@ -758,7 +765,7 @@ def cmd_verify_payment(message, params, options=None):
     
     send_message(user_id, f"{emoji_tag(EMOJIS['clock'], '⏳')} Checking payment status...", "HTML")
     
-    url = f"https://fampay.anujbots.xyz/verify.php?order_id={order_id}&api_key=FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8"
+    url = f"{FAMPAY_VERIFY_URL}?order_id={order_id}&api_key={FAMPAY_API_KEY}"
     
     try:
         response = requests.get(url)
@@ -806,9 +813,7 @@ def cmd_verify_payment(message, params, options=None):
             f"Please complete the payment and try again.",
             "HTML"
         )
-        return True
-
-@command("/cancel")
+        return True@command("/cancel")
 def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
     msg_id = message.get("message_id")
@@ -906,8 +911,8 @@ def cmd_addpayment_qr(message):
     if not amount:
         send_message(user_id, "Amount missing")
         return
-    upi = "bablu.xyztb@fam"
-    url = f"https://fampay.anujbots.xyz/qr.php?upi={upi}&amount={amount}"
+    
+    url = f"{FAMPAY_QR_URL}?upi={FAMPAY_UPI}&amount={amount}"
     try:
         response = requests.get(url)
         data = response.json()
@@ -917,6 +922,7 @@ def cmd_addpayment_qr(message):
     if data.get("status") != "success":
         send_message(user_id, "QR GENERATION FAILED")
         return
+    
     order_id = data["data"]["order_id"]
     qr_url = data["data"]["qr_url"]
     
@@ -1175,7 +1181,7 @@ def cmd_admin(message, params, options=None):
     return True
 
 # ============================================================
-# ========== ADD PRODUCT ==========
+# ========== ADD PRODUCT (FIXED: SUPPORTS PID|NAME) ==========
 # ============================================================
 
 @command("/add_product")
@@ -1185,7 +1191,15 @@ def cmd_add_product(message, params, options=None):
     if str(user_id) not in [str(a) for a in admins]:
         return True
     
-    send_message(user_id, f"{emoji_tag(EMOJIS['package'], '📦')} <b>Add New Product</b>\n\nSend product name:\nExample: <code>DRIP CLIENT NON-ROOT</code>", "HTML")
+    send_message(
+        user_id, 
+        f"{emoji_tag(EMOJIS['package'], '📦')} <b>Add New Product</b>\n\n"
+        f"Send format:\n"
+        f"<code>PID | PRODUCT_NAME</code> (For API matching)\n"
+        f"OR just send name (Auto ID will generate)\n\n"
+        f"Example: <code>153 | BALA MOD XYZ V1</code>", 
+        "HTML"
+    )
     pending_commands[user_id] = "/add_product_process"
     pending_commands_store.set(user_id, "/add_product_process")
     return True
@@ -1205,10 +1219,27 @@ def cmd_add_product_process(message, params, options=None):
         send_message(user_id, "❌ Invalid name!", "HTML")
         return True
     
-    product_id = f"p{int(time.time())}"
-    product_store.create(product_id, text)
+    # Check if user provided PID | NAME format
+    if "|" in text:
+        parts = text.split("|")
+        if len(parts) == 2:
+            product_id = parts[0].strip()
+            product_name = parts[1].strip()
+        else:
+            send_message(user_id, "❌ Invalid format! Use: <code>PID | NAME</code>", "HTML")
+            return True
+    else:
+        # Generate Auto ID if no PID given
+        product_id = f"p{int(time.time())}"
+        product_name = text
     
-    send_message(user_id, f"✅ Product <b>{text}</b> added successfully!\n\nProduct ID: <code>{product_id}</code>\n\nNow add plans for this product using /add_plan", "HTML")
+    product_store.create(product_id, product_name)
+    
+    send_message(
+        user_id, 
+        f"✅ Product <b>{product_name}</b> added successfully!\n\n🆔 PID: <code>{product_id}</code>\n\nNow add plans for this product using /add_plan", 
+        "HTML"
+    )
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
     return True
@@ -1581,8 +1612,7 @@ def cmd_delete_plan(message, params, options=None):
     
     if not params:
         send_message(user_id, "❌ Invalid")
-        return True
-    
+        return True    
     parts = params.split("_")
     if len(parts) != 2:
         send_message(user_id, "❌ Invalid format!")
