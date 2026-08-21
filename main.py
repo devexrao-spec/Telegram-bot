@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FULL CODE WITH ALL FIXES
+# tusharbot.py - COMPLETE FINAL CODE
 import requests
 import json
 import time
@@ -17,25 +17,6 @@ RESELLER_API_KEY = "b25eb076f5c0412fa9f1eba94550d02e"
 RESELLER_API_HEADERS = {
     'Content-Type': 'application/x-www-form-urlencoded',
     'x-master-key': 'a7f3e8b2c9d1f4a6b8c2d5e9f1a3b6c8'
-}
-
-# ========== DURATION MAPPING - UPDATED ==========
-DURATION_MAP = {
-    "1": "1 DaYS NONROOT",
-    "2": "3 DaYS NONROOT",
-    "3": "7 DaYS NONROOT",
-    "4": "15 DaYS NONROOT",
-    "5": "30 DaYS NONROOT",
-    "6": "1 DaYS NONROOT",
-    "7": "3 DaYS NONROOT",
-    "8": "7 DaYS NONROOT",
-    "9": "14 DaYS NONROOT",
-    "10": "1 DaYS NONROOT",
-    "11": "3 DaYS NONROOT",
-    "12": "7 DaYS NONROOT",
-    "13": "14 DaYS NONROOT",
-    "14": "21 DaYS NONROOT",
-    "15": "28 DaYS NONROOT",
 }
 
 # ================================================
@@ -287,10 +268,9 @@ class ProductManager:
 
 product_manager = ProductManager()
 
-# ========== API FUNCTIONS - FIXED ==========
+# ========== API FUNCTIONS ==========
 
 def generate_api_key(product_pid, duration, android_id=None, price=None):
-    """Call reseller API to generate a key"""
     data = {
         'api_key': RESELLER_API_KEY,
         'action': 'buy',
@@ -298,7 +278,6 @@ def generate_api_key(product_pid, duration, android_id=None, price=None):
         'duration': duration
     }
     
-    # IMPORTANT: Send price
     if price:
         data['price'] = str(price)
         data['amount'] = str(price)
@@ -332,10 +311,6 @@ def generate_api_key(product_pid, duration, android_id=None, price=None):
             
     except Exception as e:
         return False, f"API Error: {str(e)}"
-
-def get_duration(plan_id):
-    """Get duration string from mapping"""
-    return DURATION_MAP.get(str(plan_id), "1 DaYS NONROOT")
 
 # ================================================
 
@@ -488,92 +463,6 @@ def command(name):
         return func
     return decorator
 
-# ========== DEFAULT PRODUCTS SETUP ==========
-
-def setup_default_products():
-    """Add default products on first run"""
-    
-    products = {
-        "abcd": {
-            "name": "ABCD",
-            "pid": "143",
-            "needs_android": False,
-            "plans": [
-                {"plan_id": "1", "duration": "12 Hours", "price": 10, "reseller_price": 8},
-            ]
-        },
-        "bala_v2": {
-            "name": "BALA MODS XYZ V2",
-            "pid": "136",
-            "needs_android": False,
-            "plans": [
-                {"plan_id": "1", "duration": "1 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 10, "reseller_price": 8},
-                {"plan_id": "2", "duration": "3 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 25, "reseller_price": 20},
-                {"plan_id": "3", "duration": "6 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 45, "reseller_price": 38},
-                {"plan_id": "4", "duration": "12 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 80, "reseller_price": 68},
-                {"plan_id": "5", "duration": "1 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 150, "reseller_price": 130},
-                {"plan_id": "6", "duration": "2 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 250, "reseller_price": 210},
-                {"plan_id": "7", "duration": "3 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 350, "reseller_price": 300},
-                {"plan_id": "8", "duration": "5 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 500, "reseller_price": 430},
-            ]
-        },
-        "drip": {
-            "name": "DRIP CLIENT MOD",
-            "pid": "133",
-            "needs_android": True,
-            "plans": [
-                {"plan_id": "1", "duration": "1 DaYS NONROOT", "price": 100, "reseller_price": 80},
-                {"plan_id": "2", "duration": "3 DaYS NONROOT", "price": 250, "reseller_price": 200},
-                {"plan_id": "3", "duration": "7 DaYS NONROOT", "price": 350, "reseller_price": 300},
-                {"plan_id": "4", "duration": "15 DaYS NONROOT", "price": 560, "reseller_price": 480},
-                {"plan_id": "5", "duration": "30 DaYS NONROOT", "price": 810, "reseller_price": 750},
-            ]
-        },
-        "silent": {
-            "name": "SILENT CHEATS ANDROID",
-            "pid": "133",
-            "needs_android": True,
-            "plans": [
-                {"plan_id": "1", "duration": "1 DaYS NONROOT", "price": 108, "reseller_price": 95},
-                {"plan_id": "2", "duration": "3 DaYS NONROOT", "price": 260, "reseller_price": 220},
-                {"plan_id": "3", "duration": "7 DaYS NONROOT", "price": 360, "reseller_price": 320},
-                {"plan_id": "4", "duration": "14 DaYS NONROOT", "price": 560, "reseller_price": 480},
-                {"plan_id": "5", "duration": "28 DaYS NONROOT", "price": 810, "reseller_price": 750},
-            ]
-        },
-        "prime": {
-            "name": "PRIME HOOK",
-            "pid": "133",
-            "needs_android": True,
-            "plans": [
-                {"plan_id": "1", "duration": "1 DaYS NONROOT", "price": 108, "reseller_price": 95},
-                {"plan_id": "2", "duration": "3 DaYS NONROOT", "price": 200, "reseller_price": 180},
-                {"plan_id": "3", "duration": "7 DaYS NONROOT", "price": 360, "reseller_price": 320},
-                {"plan_id": "4", "duration": "14 DaYS NONROOT", "price": 600, "reseller_price": 550},
-                {"plan_id": "5", "duration": "21 DaYS NONROOT", "price": 700, "reseller_price": 650},
-            ]
-        }
-    }
-    
-    for product_id, data in products.items():
-        existing = product_manager.get_product(product_id)
-        if not existing:
-            product_manager.add_product(
-                product_id,
-                data["name"],
-                data["pid"],
-                data["needs_android"]
-            )
-            for plan in data["plans"]:
-                product_manager.add_plan(
-                    product_id,
-                    plan["plan_id"],
-                    plan["duration"],
-                    plan["price"],
-                    plan["reseller_price"]
-                )
-            print(f"✅ Added: {data['name']}")
-
 # ========== PROCESS PURCHASE ==========
 
 def process_purchase(message, product_id, plan_id, price, product_name, duration, pid, android_id=None):
@@ -589,11 +478,8 @@ def process_purchase(message, product_id, plan_id, price, product_name, duration
     balance.cut(price)
     Resources.another_res("Order", user=user_id).add(1)
     
-    # Get duration from mapping
-    api_duration = get_duration(plan_id)
-    
     # Generate key with price
-    success, result = generate_api_key(pid, api_duration, android_id, price)
+    success, result = generate_api_key(pid, duration, android_id, price)
     
     if success:
         easy_time = get_easy_time()
@@ -624,13 +510,96 @@ def process_purchase(message, product_id, plan_id, price, product_name, duration
             user_id,
             f"❌ <b>Key Generation Failed</b>\n\n"
             f"Error: {result}\n\n"
-            f"Your balance of ₹{price} has been refunded.\n"
-            f"Please try again later or contact support.",
+            f"Your balance of ₹{price} has been refunded.",
             "HTML"
         )
         return True
 
-# ========== COMMANDS ==========
+# ========== DEFAULT PRODUCTS ==========
+
+def setup_default_products():
+    products = {
+        "abcd": {
+            "name": "ABCD",
+            "pid": "143",
+            "needs_android": False,
+            "plans": [
+                {"plan_id": "1", "duration": "1 Day", "price": 10, "reseller_price": 8},
+            ]
+        },
+        "bala_v2": {
+            "name": "BALA MODS XYZ V2",
+            "pid": "136",
+            "needs_android": False,
+            "plans": [
+                {"plan_id": "1", "duration": "1 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 10, "reseller_price": 8},
+                {"plan_id": "2", "duration": "3 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 25, "reseller_price": 20},
+                {"plan_id": "3", "duration": "6 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 45, "reseller_price": 38},
+                {"plan_id": "4", "duration": "12 Hours [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 80, "reseller_price": 68},
+                {"plan_id": "5", "duration": "1 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 150, "reseller_price": 130},
+                {"plan_id": "6", "duration": "2 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 250, "reseller_price": 210},
+                {"plan_id": "7", "duration": "3 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 350, "reseller_price": 300},
+                {"plan_id": "8", "duration": "5 Day [BALA MODS XYZ V2 (Auto - No HWID)]", "price": 500, "reseller_price": 430},
+            ]
+        },
+        "drip": {
+            "name": "DRIP CLIENT MOD",
+            "pid": "133",
+            "needs_android": True,
+            "plans": [
+                {"plan_id": "1", "duration": "1 Day", "price": 108, "reseller_price": 95},
+                {"plan_id": "2", "duration": "3 Days", "price": 260, "reseller_price": 220},
+                {"plan_id": "3", "duration": "7 Days", "price": 360, "reseller_price": 320},
+                {"plan_id": "4", "duration": "15 Days", "price": 560, "reseller_price": 480},
+                {"plan_id": "5", "duration": "30 Days", "price": 810, "reseller_price": 750},
+            ]
+        },
+        "silent": {
+            "name": "SILENT CHEATS ANDROID",
+            "pid": "133",
+            "needs_android": True,
+            "plans": [
+                {"plan_id": "1", "duration": "1 Day", "price": 108, "reseller_price": 95},
+                {"plan_id": "2", "duration": "3 Days", "price": 260, "reseller_price": 220},
+                {"plan_id": "3", "duration": "7 Days", "price": 360, "reseller_price": 320},
+                {"plan_id": "4", "duration": "14 Days", "price": 560, "reseller_price": 480},
+                {"plan_id": "5", "duration": "28 Days", "price": 810, "reseller_price": 750},
+            ]
+        },
+        "prime": {
+            "name": "PRIME HOOK",
+            "pid": "133",
+            "needs_android": True,
+            "plans": [
+                {"plan_id": "1", "duration": "1 Day", "price": 108, "reseller_price": 95},
+                {"plan_id": "2", "duration": "3 Days", "price": 200, "reseller_price": 180},
+                {"plan_id": "3", "duration": "7 Days", "price": 360, "reseller_price": 320},
+                {"plan_id": "4", "duration": "14 Days", "price": 600, "reseller_price": 550},
+                {"plan_id": "5", "duration": "21 Days", "price": 700, "reseller_price": 650},
+            ]
+        }
+    }
+    
+    for product_id, data in products.items():
+        existing = product_manager.get_product(product_id)
+        if not existing:
+            product_manager.add_product(
+                product_id,
+                data["name"],
+                data["pid"],
+                data["needs_android"]
+            )
+            for plan in data["plans"]:
+                product_manager.add_plan(
+                    product_id,
+                    plan["plan_id"],
+                    plan["duration"],
+                    plan["price"],
+                    plan["reseller_price"]
+                )
+            print(f"✅ Added: {data['name']}")
+
+# ========== USER COMMANDS ==========
 
 @command("/start")
 @command("/Start")
@@ -654,7 +623,8 @@ def cmd_start(message, params, options=None):
             [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk"}],
             [{"text": "🔑 MY KEY", "callback_data": "/orderksk"}, {"text": "👤 PROFILE", "callback_data": "/profilemmm"}],
             [{"text": "📖 HOW TO USE", "callback_data": "/spinj"}, {"text": "💬 SUPPORT", "callback_data": "/supportj"}],
-            [{"text": "💰 ADD FUND", "callback_data": "/addpayment"}]
+            [{"text": "💰 ADD FUND", "callback_data": "/addpayment"}],
+            [{"text": "📥 DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl"}]
         ]
     }
     send_message(user_id, text, "HTML", reply_markup)
@@ -1335,7 +1305,7 @@ def cmd_admin_products(message, params, options=None):
             [{"text": "➕ Add Product", "callback_data": "/add_product_btn"}],
             [{"text": "✏️ Edit Product", "callback_data": "/edit_product_btn"}],
             [{"text": "🗑️ Delete Product", "callback_data": "/delete_product_btn"}],
-            [{"text": "🔙 Back", "callback_data": "/admin AP"}]
+            [{"text": "🔙 Back", "callback_data": "/admin"}]
         ]
     }
     
@@ -1359,8 +1329,10 @@ def cmd_add_product_btn(message, params, options=None):
 ➕ <b>ADD PRODUCT</b>
 ━━━━━━━━━━━━━━━━━━
 
-Format: <code>product_id|name|pid</code>
-Example: <code>abcd|ABCD|143</code>
+Format: <code>product_id|name|pid|needs_android</code>
+Example: <code>abcd|ABCD|143|false</code>
+
+needs_android: true/false
 
 Type /cancel to stop.
 """
@@ -1382,19 +1354,20 @@ def cmd_add_product_process(message, params, options=None):
     
     parts = text.split('|')
     if len(parts) < 3:
-        send_message(user_id, "❌ Invalid! Use: product_id|name|pid", "HTML")
+        send_message(user_id, "❌ Invalid! Use: product_id|name|pid|needs_android", "HTML")
         return True
     
     product_id = parts[0].strip()
     name = parts[1].strip()
     pid = parts[2].strip()
+    needs_android = parts[3].strip().lower() == 'true' if len(parts) > 3 else True
     
     existing = product_manager.get_product(product_id)
     if existing:
         send_message(user_id, f"❌ Product '{product_id}' exists!", "HTML")
         return True
     
-    product_manager.add_product(product_id, name, pid, True)
+    product_manager.add_product(product_id, name, pid, needs_android)
     
     markup = {
         "inline_keyboard": [
@@ -1405,7 +1378,7 @@ def cmd_add_product_process(message, params, options=None):
     
     send_message(
         user_id,
-        f"✅ Product Added!\n\n📦 {name}\n🔑 PID: {pid}\n\nAdd plans:",
+        f"✅ Product Added!\n\n📦 {name}\n🔑 PID: {pid}\n📱 Android: {'Required' if needs_android else 'Not Required'}\n\nAdd plans:",
         "HTML",
         markup
     )
@@ -1439,7 +1412,7 @@ def cmd_add_plan_btn(message, params, options=None):
 ━━━━━━━━━━━━━━━━━━
 
 Format: <code>plan_id|duration|price|reseller_price</code>
-Example: <code>1|12 Hours|10|8</code>
+Example: <code>1|1 Day|10|8</code>
 
 Type /cancel to stop.
 """
@@ -1457,6 +1430,7 @@ def cmd_add_plan_process(message, params, options=None):
         send_message(user_id, "❌ Cancelled", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
+        User.save_data(user_id, "add_plan_product", None)
         return True
     
     product_id = User.get_data(user_id, "add_plan_product")
@@ -1485,6 +1459,7 @@ def cmd_add_plan_process(message, params, options=None):
         send_message(user_id, "Product not found", "HTML")
         pending_commands.pop(user_id, None)
         pending_commands_store.delete(user_id)
+        User.save_data(user_id, "add_plan_product", None)
         return True
     
     for plan in product.get('plans', []):
@@ -1637,7 +1612,7 @@ def cmd_edit_pid_process(message, params, options=None):
     
     markup = {
         "inline_keyboard": [
-            [{"text": "🔙 Back to Edit", "callback_data": f"/edit_product_select {product_id}"}]
+            [{"text": "🔙 Back", "callback_data": f"/edit_product_select {product_id}"}]
         ]
     }
     
@@ -2002,7 +1977,7 @@ def cmd_admin_resellers(message, params, options=None):
         "inline_keyboard": [
             [{"text": "➕ Add Reseller", "callback_data": "/addreseller_btn"}],
             [{"text": "📝 Reseller List", "callback_data": "/resellerlist_btn"}],
-            [{"text": "🔙 Back", "callback_data": "/admin AP"}]
+            [{"text": "🔙 Back", "callback_data": "/admin"}]
         ]
     }
     text = "💰 <b>RESELLER MANAGEMENT</b>"
@@ -2109,7 +2084,7 @@ def cmd_tushar_admins(message, params, options=None):
             {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}"}
         ])
     markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin"}])
-    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin AP"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin"}])
     
     text = "👑 <b>ADMIN MANAGEMENT</b>"
     try:
