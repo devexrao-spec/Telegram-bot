@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE WITH API INTEGRATION
+# tusharbot.py - COMPLETE HYBRID (API Key + Local Products)
 import requests
 import json
 import time
@@ -48,6 +48,8 @@ EMOJIS = {
     "buy": "6172208745582433583",
     "user": "5317006024517912643",
     "mykeys": "6176966310920983412",
+    "edit": "5345783284653636765",
+    "calendar": "5116553153419936517",
 }
 
 def emoji_tag(emoji_id, char=""):
@@ -67,16 +69,16 @@ class MongoDB:
         return cls._instance
     
     def _initialize_collections(self):
-        collections = ['bot_data', 'user_data', 'pending_commands', 'pending_payments', 'processed_payments', 'payment_orders']
+        collections = ['bot_data', 'user_data', 'pending_commands', 'pending_payments', 
+                      'processed_payments', 'payment_orders', 'products', 'plans']
         for coll in collections:
             if coll not in self.db.list_collection_names():
                 self.db.create_collection(coll)
         
         self.db.bot_data.create_index("key", unique=True)
         self.db.user_data.create_index([("user_id", 1), ("key", 1)], unique=True)
-        self.db.pending_payments.create_index("user_id", unique=True)
-        self.db.processed_payments.create_index("order_id", unique=True)
-        self.db.payment_orders.create_index("order_id", unique=True)
+        self.db.products.create_index("product_id", unique=True)
+        self.db.plans.create_index([("product_id", 1), ("plan_id", 1)], unique=True)
     
     def get_collection(self, name):
         return self.db[name]
@@ -174,7 +176,8 @@ class PaymentOrdersStore:
         self.collection = mongo.get_collection('payment_orders')
     
     def create(self, order_id, user_id, amount, product_name=None, plan=None):
-        doc = {"order_id": order_id, "user_id": str(user_id), "amount": float(amount), "product_name": product_name, "plan": plan, "created_at": datetime.now(), "status": "pending"}
+        doc = {"order_id": order_id, "user_id": str(user_id), "amount": float(amount), 
+               "product_name": product_name, "plan": plan, "created_at": datetime.now(), "status": "pending"}
         self.collection.update_one({"order_id": order_id}, {"$set": doc}, upsert=True)
         return doc
     
@@ -189,16 +192,59 @@ class PaymentOrdersStore:
 
 payment_orders_store = PaymentOrdersStore()
 
+# ========== PRODUCT & PLAN STORE (Local MongoDB) ==========
+class ProductStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('products')
+    
+    def get_all(self):
+        return list(self.collection.find())
+    
+    def get(self, product_id):
+        return self.collection.find_one({"product_id": str(product_id)})
+    
+    def create(self, product_id, name, emoji=None):
+        doc = {"product_id": str(product_id), "name": name, "emoji": emoji or EMOJIS['package']}
+        self.collection.update_one({"product_id": str(product_id)}, {"$set": doc}, upsert=True)
+        return doc
+    
+    def delete(self, product_id):
+        self.collection.delete_one({"product_id": str(product_id)})
+        # Also delete all plans for this product
+        plan_store = PlanStore()
+        plan_store.delete_by_product(product_id)
+
+class PlanStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('plans')
+    
+    def get_all(self, product_id=None):
+        if product_id:
+            return list(self.collection.find({"product_id": str(product_id)}))
+        return list(self.collection.find())
+    
+    def get(self, product_id, plan_id):
+        return self.collection.find_one({"product_id": str(product_id), "plan_id": str(plan_id)})
+    
+    def create(self, product_id, plan_id, days, price):
+        doc = {"product_id": str(product_id), "plan_id": str(plan_id), "days": int(days), "price": float(price)}
+        self.collection.update_one({"product_id": str(product_id), "plan_id": str(plan_id)}, {"$set": doc}, upsert=True)
+        return doc
+    
+    def delete(self, product_id, plan_id):
+        self.collection.delete_one({"product_id": str(product_id), "plan_id": str(plan_id)})
+    
+    def delete_by_product(self, product_id):
+        self.collection.delete_many({"product_id": str(product_id)})
+
+product_store = ProductStore()
+plan_store = PlanStore()
+
 # ========== API FUNCTIONS ==========
 def call_api(action, data=None):
-    """
-    API call karne ke liye generic function
-    """
+    """API call karne ke liye generic function"""
     try:
-        params = {
-            "api_key": API_KEY,
-            "action": action
-        }
+        params = {"api_key": API_KEY, "action": action}
         if data:
             params.update(data)
         
@@ -210,25 +256,11 @@ def call_api(action, data=None):
         print(f"❌ API Error [{action}]: {e}")
         return {"status": "error", "msg": str(e)}
 
-def get_products_from_api():
-    """API se products fetch karna"""
-    result = call_api("get_products")
-    if result.get("status") == "success":
-        return result.get("products", [])
-    return []
-
-def get_plans_for_product(product_id):
-    """API se product ke plans fetch karna"""
-    result = call_api("get_plans", {"product_id": product_id})
-    if result.get("status") == "success":
-        return result.get("plans", [])
-    return []
-
 def fetch_key_from_api(product_id, plan_id, user_id):
     """API se key fetch karna"""
     result = call_api("get_key", {
-        "product_id": product_id,
-        "plan_id": plan_id,
+        "product_id": str(product_id),
+        "plan_id": str(plan_id),
         "user_id": str(user_id)
     })
     if result.get("status") == "success":
@@ -428,7 +460,7 @@ def cmd_start(message, params, options=None):
     return True
 
 # ============================================================
-# ========== SHOP - API BASED ==========
+# ========== SHOP - LOCAL PRODUCTS ==========
 # ============================================================
 
 @command("/shopnawkk")
@@ -436,19 +468,18 @@ def cmd_shopnawkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     msg_id = message.get("message_id")
     
-    # API se products fetch
-    products = get_products_from_api()
+    products = product_store.get_all()
     
     if not products:
-        send_message(user_id, "❌ No products available. Please try again later.", "HTML")
+        send_message(user_id, "❌ No products available. Add products from admin panel.", "HTML")
         return True
     
     markup = {"inline_keyboard": []}
     
     for product in products:
-        product_id = product.get("id")
+        product_id = product.get("product_id")
         product_name = product.get("name", "Unknown Product")
-        emoji_id = EMOJIS['package']
+        emoji_id = product.get("emoji", EMOJIS['package'])
         
         markup["inline_keyboard"].append([
             {"text": f"📦 {product_name}", "callback_data": f"/SHOP_MOD {product_id}", "icon_custom_emoji_id": emoji_id, "style": "success"}
@@ -488,25 +519,19 @@ def cmd_shop_mod(message, params, options=None):
     
     User.save_data(user_id, "current_product", product_id)
     
-    # API se plans fetch
-    plans = get_plans_for_product(product_id)
+    plans = plan_store.get_all(product_id)
     
     if not plans:
-        send_message(user_id, "❌ No plans available for this product")
+        send_message(user_id, "❌ No plans available for this product. Add plans from admin panel.", "HTML")
         return True
     
-    # Product name fetch
-    products = get_products_from_api()
-    product_name = "Product"
-    for p in products:
-        if str(p.get("id")) == str(product_id):
-            product_name = p.get("name", "Product")
-            break
+    product = product_store.get(product_id)
+    product_name = product.get("name", "Product") if product else "Product"
     
     markup = {"inline_keyboard": []}
     
     for plan in plans:
-        plan_id = plan.get("id")
+        plan_id = plan.get("plan_id")
         days = plan.get("days", 0)
         price = plan.get("price", 0)
         plan_display = f"{days} Day{'s' if days > 1 else ''}"
@@ -561,29 +586,17 @@ def cmd_buy_mod(message, params, options=None):
         send_message(user_id, "❌ Invalid Plan")
         return True
     
-    # Get plan details
-    plans = get_plans_for_product(product_id)
-    plan_details = None
-    for p in plans:
-        if str(p.get("id")) == str(plan_id):
-            plan_details = p
-            break
-    
-    if not plan_details:
+    plan = plan_store.get(product_id, plan_id)
+    if not plan:
         send_message(user_id, "❌ Plan not found")
         return True
     
-    price = plan_details.get("price", 0)
-    days = plan_details.get("days", 0)
+    price = plan.get("price", 0)
+    days = plan.get("days", 0)
     plan_display = f"{days} Day{'s' if days > 1 else ''}"
     
-    # Get product name
-    products = get_products_from_api()
-    product_name = "Product"
-    for p in products:
-        if str(p.get("id")) == str(product_id):
-            product_name = p.get("name", "Product")
-            break
+    product = product_store.get(product_id)
+    product_name = product.get("name", "Product") if product else "Product"
     
     title = f"{product_name}\n{plan_display}"
     
@@ -592,7 +605,6 @@ def cmd_buy_mod(message, params, options=None):
     User.save_data(user_id, "last_product_id", product_id)
     User.save_data(user_id, "last_plan_id", plan_id)
     
-    # Check balance
     balance = Resources.another_res("Balance", user=user_id)
     
     if balance.value() < price:
@@ -601,17 +613,14 @@ def cmd_buy_mod(message, params, options=None):
         cmd_autobuy1(message, None)
         return True
     
-    # Deduct balance
     balance.cut(price)
     Resources.another_res("Order", user=user_id).add(1)
     
-    # 🔑 FETCH KEY FROM API
     send_message(user_id, f"{emoji_tag(EMOJIS['clock'], '⏳')} Fetching your key from server...", "HTML")
     
     key = fetch_key_from_api(product_id, plan_id, user_id)
     
     if not key:
-        # Refund if key not found
         balance.add(price)
         send_message(
             user_id,
@@ -634,7 +643,6 @@ def cmd_buy_mod(message, params, options=None):
         "HTML"
     )
     
-    # Save order
     adm_ac = User.get_data(user_id, "userhAC") or []
     adm_ac.append(
         f"📆 {easy_time}\n"
@@ -737,34 +745,15 @@ def cmd_verify_payment(message, params, options=None):
         send_message(user_id, "No order ID found.", "HTML")
         return True
     
-    print(f"🔍 User {user_id} verifying order {order_id}")
-    
     order_data = payment_orders_store.get_order(order_id)
     if not order_data:
         send_message(user_id, "❌ Invalid Order ID. Please generate QR again.", "HTML")
-        return True
-    
-    order_owner = order_data.get("user_id")
-    if str(order_owner) != str(user_id):
-        send_message(
-            user_id,
-            f"❌ <b>SECURITY ERROR!</b>\n\n"
-            f"This order <code>{order_id}</code> belongs to user: <code>{order_owner}</code>\n"
-            f"You are: <code>{user_id}</code>\n\n"
-            f"<b>You cannot verify someone else's payment!</b>",
-            "HTML"
-        )
         return True
     
     if order_data.get("status") == "verified":
         send_message(user_id, "✅ This payment has already been processed.", "HTML")
         pending_payments.pop(user_id, None)
         pending_payments_store.delete(user_id)
-        return True
-    
-    pending = pending_payments_store.get(user_id)
-    if not pending:
-        send_message(user_id, "No pending payment found for you.", "HTML")
         return True
     
     send_message(user_id, f"{emoji_tag(EMOJIS['clock'], '⏳')} Checking payment status...", "HTML")
@@ -808,7 +797,6 @@ def cmd_verify_payment(message, params, options=None):
             f"Now go to shop and buy your product! 🛒",
             "HTML"
         )
-        
         return True
     else:
         send_message(
@@ -832,17 +820,11 @@ def cmd_cancel(message, params, options=None):
         if pending:
             order_id = pending.get("order_id") if isinstance(pending, dict) else pending
         else:
-            order_id = None
-    
+            order_id = None    
     if order_id:
         order_data = payment_orders_store.get_order(order_id)
         if order_data:
-            order_owner = order_data.get("user_id")
-            if str(order_owner) == str(user_id):
-                payment_orders_store.delete(order_id)
-            else:
-                send_message(user_id, "❌ You cannot cancel someone else's order!", "HTML")
-                return True
+            payment_orders_store.delete(order_id)
     
     delete_message(user_id, msg_id)
     pending_payments.pop(user_id, None)
@@ -1144,7 +1126,7 @@ Need help? We're here for you! ⚡
     return True
 
 # ============================================================
-# ========== ADMIN COMMANDS ==========
+# ========== ADMIN PANEL WITH FULL PRODUCT/PLAN MANAGEMENT ==========
 # ============================================================
 
 @command("/admin")
@@ -1160,7 +1142,6 @@ def cmd_admin(message, params, options=None):
         send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
         return True
     
-    # Check API status
     api_status = "✅ Connected" if check_api_connection() else "❌ Disconnected"
     
     markup = {
@@ -1168,8 +1149,11 @@ def cmd_admin(message, params, options=None):
             [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
             [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}],
             [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}],
+            [{"text": "📦 Add Product", "callback_data": "/add_product", "style": "success"}],
+            [{"text": "📦 Manage Products", "callback_data": "/manage_products", "style": "success"}],
+            [{"text": "➕ Add Plan", "callback_data": "/add_plan", "style": "success"}],
+            [{"text": "📝 Manage Plans", "callback_data": "/manage_plans", "style": "success"}],
             [{"text": f"🔗 API: {api_status}", "callback_data": "/check_api", "style": "primary"}],
-            [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}],
             [{"text": "🔙 Back", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
@@ -1190,6 +1174,436 @@ def cmd_admin(message, params, options=None):
             send_message(user_id, txt, "HTML", markup)
     return True
 
+# ============================================================
+# ========== ADD PRODUCT ==========
+# ============================================================
+
+@command("/add_product")
+def cmd_add_product(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    send_message(user_id, f"{emoji_tag(EMOJIS['package'], '📦')} <b>Add New Product</b>\n\nSend product name:\nExample: <code>DRIP CLIENT NON-ROOT</code>", "HTML")
+    pending_commands[user_id] = "/add_product_process"
+    pending_commands_store.set(user_id, "/add_product_process")
+    return True
+
+@command("/add_product_process")
+def cmd_add_product_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "").strip()
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    if not text:
+        send_message(user_id, "❌ Invalid name!", "HTML")
+        return True
+    
+    product_id = f"p{int(time.time())}"
+    product_store.create(product_id, text)
+    
+    send_message(user_id, f"✅ Product <b>{text}</b> added successfully!\n\nProduct ID: <code>{product_id}</code>\n\nNow add plans for this product using /add_plan", "HTML")
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ============================================================
+# ========== MANAGE PRODUCTS ==========
+# ============================================================
+
+@command("/manage_products")
+def cmd_manage_products(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    products = product_store.get_all()
+    
+    if not products:
+        send_message(user_id, "❌ No products available. Add using /add_product", "HTML")
+        return True
+    
+    markup = {"inline_keyboard": []}
+    for product in products:
+        product_id = product.get("product_id")
+        name = product.get("name", "Unknown")
+        plans = plan_store.get_all(product_id)
+        plan_count = len(plans)
+        markup["inline_keyboard"].append([
+            {"text": f"📦 {name} ({plan_count} plans)", "callback_data": f"/view_product {product_id}", "style": "primary"}
+        ])
+        markup["inline_keyboard"].append([
+            {"text": f"🗑️ Delete {name}", "callback_data": f"/delete_product {product_id}", "style": "danger"}
+        ])
+    
+    markup["inline_keyboard"].append([
+        {"text": "🔙 Back to Admin", "callback_data": "/admin", "style": "danger"}
+    ])
+    
+    txt = f"""<b>📦 Manage Products</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+Total Products: {len(products)}
+
+Select a product to manage or delete:
+"""
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/view_product")
+def cmd_view_product(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    product_id = params
+    if not product_id:
+        send_message(user_id, "❌ Invalid Product")
+        return True
+    
+    product = product_store.get(product_id)
+    if not product:
+        send_message(user_id, "❌ Product not found")
+        return True
+    
+    plans = plan_store.get_all(product_id)
+    
+    markup = {"inline_keyboard": []}
+    
+    if plans:
+        for plan in plans:
+            plan_id = plan.get("plan_id")
+            days = plan.get("days", 0)
+            price = plan.get("price", 0)
+            markup["inline_keyboard"].append([
+                {"text": f"📅 {days} Days - ₹{price}", "callback_data": f"/edit_plan {product_id}_{plan_id}", "style": "primary"}
+            ])
+            markup["inline_keyboard"].append([
+                {"text": f"🗑️ Delete Plan", "callback_data": f"/delete_plan {product_id}_{plan_id}", "style": "danger"}
+            ])
+    else:
+        markup["inline_keyboard"].append([
+            {"text": "No Plans Available", "callback_data": "none", "style": "secondary"}
+        ])
+    
+    markup["inline_keyboard"].append([
+        {"text": "➕ Add Plan", "callback_data": f"/add_plan_for {product_id}", "style": "success"}
+    ])
+    markup["inline_keyboard"].append([
+        {"text": "🔙 Back", "callback_data": "/manage_products", "style": "danger"}
+    ])
+    
+    txt = f"""<b>📦 Product: {product.get('name', 'Unknown')}</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+🆔 ID: <code>{product_id}</code>
+📅 Total Plans: {len(plans)}
+
+Select a plan to edit or add new:
+"""
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/delete_product")
+def cmd_delete_product(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    product_id = params
+    if not product_id:
+        send_message(user_id, "❌ Invalid")
+        return True
+    
+    product = product_store.get(product_id)
+    if not product:
+        send_message(user_id, "❌ Product not found")
+        return True
+    
+    product_store.delete(product_id)
+    send_message(user_id, f"✅ Product <b>{product.get('name', 'Unknown')}</b> deleted successfully!", "HTML")
+    return True
+
+# ============================================================
+# ========== ADD PLAN ==========
+# ============================================================
+
+@command("/add_plan")
+@command("/add_plan_for")
+def cmd_add_plan(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    # Check if product_id is passed
+    product_id = params
+    if not product_id:
+        # Show product list to select
+        products = product_store.get_all()
+        if not products:
+            send_message(user_id, "❌ No products available. First add a product using /add_product", "HTML")
+            return True
+        
+        markup = {"inline_keyboard": []}
+        for product in products:
+            pid = product.get("product_id")
+            name = product.get("name", "Unknown")
+            markup["inline_keyboard"].append([
+                {"text": f"📦 {name}", "callback_data": f"/add_plan_for {pid}", "style": "success"}
+            ])
+        markup["inline_keyboard"].append([
+            {"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}
+        ])
+        
+        send_message(user_id, f"{emoji_tag(EMOJIS['package'], '➕')} <b>Select Product to Add Plan</b>", "HTML", markup)
+        return True
+    
+    User.save_data(user_id, "add_plan_product_id", product_id)
+    send_message(user_id, f"{emoji_tag(EMOJIS['calendar'], '📅')} <b>Add New Plan</b>\n\nSend plan details in format:\n<code>DAYS|PRICE</code>\n\nExample: <code>7|250</code>\n\nType /cancel to stop.", "HTML")
+    pending_commands[user_id] = "/add_plan_process"
+    pending_commands_store.set(user_id, "/add_plan_process")
+    return True
+
+@command("/add_plan_process")
+def cmd_add_plan_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "").strip()
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    parts = text.split("|")
+    if len(parts) != 2:
+        send_message(user_id, "❌ Invalid format! Use: DAYS|PRICE\nExample: 7|250", "HTML")
+        return True
+    
+    try:
+        days = int(parts[0].strip())
+        price = float(parts[1].strip())
+    except:
+        send_message(user_id, "❌ Invalid numbers!", "HTML")
+        return True
+    
+    if days <= 0 or price <= 0:
+        send_message(user_id, "❌ Values must be greater than 0!", "HTML")
+        return True
+    
+    product_id = User.get_data(user_id, "add_plan_product_id")
+    if not product_id:
+        send_message(user_id, "❌ Error: No product selected", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    plan_id = f"pl{int(time.time())}"
+    plan_store.create(product_id, plan_id, days, price)
+    
+    product = product_store.get(product_id)
+    product_name = product.get("name", "Unknown") if product else "Unknown"
+    
+    send_message(
+        user_id,
+        f"✅ <b>Plan Added Successfully!</b>\n\n"
+        f"📦 Product: {product_name}\n"
+        f"📅 Days: {days}\n"
+        f"💰 Price: ₹{price}\n"
+        f"🆔 Plan ID: <code>{plan_id}</code>",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ============================================================
+# ========== MANAGE PLANS ==========
+# ============================================================
+
+@command("/manage_plans")
+def cmd_manage_plans(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    products = product_store.get_all()
+    if not products:
+        send_message(user_id, "❌ No products available", "HTML")
+        return True
+    
+    markup = {"inline_keyboard": []}
+    for product in products:
+        pid = product.get("product_id")
+        name = product.get("name", "Unknown")
+        plans = plan_store.get_all(pid)
+        plan_count = len(plans)
+        markup["inline_keyboard"].append([
+            {"text": f"📦 {name} ({plan_count} plans)", "callback_data": f"/view_product {pid}", "style": "primary"}
+        ])
+    
+    markup["inline_keyboard"].append([
+        {"text": "🔙 Back to Admin", "callback_data": "/admin", "style": "danger"}
+    ])
+    
+    txt = f"""<b>📝 Manage Plans</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+Select a product to view its plans:
+"""
+    try:
+        edit_message(user_id, message.get("message_id"), txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+@command("/edit_plan")
+def cmd_edit_plan(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    if not params:
+        send_message(user_id, "❌ Invalid")
+        return True
+    
+    parts = params.split("_")
+    if len(parts) != 2:
+        send_message(user_id, "❌ Invalid format!")
+        return True
+    
+    product_id = parts[0]
+    plan_id = parts[1]
+    
+    plan = plan_store.get(product_id, plan_id)
+    if not plan:
+        send_message(user_id, "❌ Plan not found")
+        return True
+    
+    User.save_data(user_id, "edit_plan_product_id", product_id)
+    User.save_data(user_id, "edit_plan_plan_id", plan_id)
+    
+    send_message(
+        user_id,
+        f"""<b>✏️ Edit Plan</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+Current: {plan.get('days', 0)} Days - ₹{plan.get('price', 0)}
+
+Send new details in format:
+<code>DAYS|PRICE</code>
+
+Example: <code>10|300</code>
+
+Type /cancel to stop.""",
+        "HTML"
+    )
+    pending_commands[user_id] = "/edit_plan_process"
+    pending_commands_store.set(user_id, "/edit_plan_process")
+    return True
+
+@command("/edit_plan_process")
+def cmd_edit_plan_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "").strip()
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    parts = text.split("|")
+    if len(parts) != 2:
+        send_message(user_id, "❌ Invalid format! Use: DAYS|PRICE", "HTML")
+        return True
+    
+    try:
+        days = int(parts[0].strip())
+        price = float(parts[1].strip())
+    except:
+        send_message(user_id, "❌ Invalid numbers!", "HTML")
+        return True
+    
+    if days <= 0 or price <= 0:
+        send_message(user_id, "❌ Values must be greater than 0!", "HTML")
+        return True
+    
+    product_id = User.get_data(user_id, "edit_plan_product_id")
+    plan_id = User.get_data(user_id, "edit_plan_plan_id")
+    
+    if not product_id or not plan_id:
+        send_message(user_id, "❌ Error", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    plan_store.delete(product_id, plan_id)
+    plan_store.create(product_id, plan_id, days, price)
+    
+    send_message(
+        user_id,
+        f"✅ <b>Plan Updated!</b>\n\n"
+        f"📅 Days: {days}\n"
+        f"💰 Price: ₹{price}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/delete_plan")
+def cmd_delete_plan(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    
+    if not params:
+        send_message(user_id, "❌ Invalid")
+        return True
+    
+    parts = params.split("_")
+    if len(parts) != 2:
+        send_message(user_id, "❌ Invalid format!")
+        return True
+    
+    product_id = parts[0]
+    plan_id = parts[1]
+    
+    plan = plan_store.get(product_id, plan_id)
+    if not plan:
+        send_message(user_id, "❌ Plan not found")
+        return True
+    
+    plan_store.delete(product_id, plan_id)
+    send_message(user_id, f"✅ Plan deleted: {plan.get('days', 0)} Days - ₹{plan.get('price', 0)}", "HTML")
+    return True
+
+# ============================================================
+# ========== CHECK API ==========
+# ============================================================
+
 @command("/check_api")
 def cmd_check_api(message, params, options=None):
     user_id = message.get("from", {}).get("id")
@@ -1198,104 +1612,9 @@ def cmd_check_api(message, params, options=None):
         return True
     
     if check_api_connection():
-        send_message(user_id, f"{emoji_tag(EMOJIS['success'], '✅')} API is connected successfully!", "HTML")
+        send_message(user_id, f"{emoji_tag(EMOJIS['success'], '✅')} API is connected successfully!\n\nURL: {API_URL}", "HTML")
     else:
-        send_message(user_id, f"{emoji_tag(EMOJIS['danger'], '❌')} API is not responding! Please check your API key.\n\nURL: {API_URL}", "HTML")
-    return True
-
-@command("/resellerlist")
-def cmd_resellerlist(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in [str(a) for a in admins]:
-        return True
-    
-    result = call_api("get_resellers")
-    if result.get("status") == "success":
-        resellers = result.get("resellers", [])
-        if not resellers:
-            send_message(user_id, "No resellers found.", "HTML")
-            return True
-        
-        text = "📝 Reseller List\n━━━━━━━━━━━━━━━\n"
-        for i, r in enumerate(resellers, 1):
-            text += f"{i}. <code>{r}</code>\n"
-        text += f"\nTotal: {len(resellers)}"
-        send_message(user_id, text, "HTML")
-    else:
-        send_message(user_id, f"❌ Error: {result.get('msg', 'Unknown error')}", "HTML")
-    return True
-
-# ============================================================
-# ========== ADD RESELLER ==========
-# ============================================================
-
-@command("/addreseller")
-def cmd_addreseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in [str(a) for a in admins]:
-        return True
-    send_message(user_id, "📩 Send reseller ID:", "HTML")
-    pending_commands[user_id] = "/add_reseller_process"
-    pending_commands_store.set(user_id, "/add_reseller_process")
-    return True
-
-@command("/add_reseller_process")
-def cmd_add_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target = message.get("text", "").strip()
-    try:
-        target = str(int(target))
-    except:
-        send_message(user_id, "❌ Invalid ID!", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    # API call to add reseller
-    result = call_api("add_reseller", {"user_id": target})
-    if result.get("status") == "success":
-        send_message(user_id, f"✅ User <code>{target}</code> added as reseller", "HTML")
-    else:
-        send_message(user_id, f"❌ Error: {result.get('msg', 'Unknown error')}", "HTML")
-    
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-@command("/removereseller")
-def cmd_removereseller(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    if str(user_id) not in [str(a) for a in admins]:
-        return True
-    send_message(user_id, "📩 Send reseller ID to remove:", "HTML")
-    pending_commands[user_id] = "/remove_reseller_process"
-    pending_commands_store.set(user_id, "/remove_reseller_process")
-    return True
-
-@command("/remove_reseller_process")
-def cmd_remove_reseller_process(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    target = message.get("text", "").strip()
-    try:
-        target = str(int(target))
-    except:
-        send_message(user_id, "❌ Invalid ID!", "HTML")
-        pending_commands.pop(user_id, None)
-        pending_commands_store.delete(user_id)
-        return True
-    
-    # API call to remove reseller
-    result = call_api("remove_reseller", {"user_id": target})
-    if result.get("status") == "success":
-        send_message(user_id, f"✅ User <code>{target}</code> removed from resellers", "HTML")
-    else:
-        send_message(user_id, f"❌ Error: {result.get('msg', 'Unknown error')}", "HTML")
-    
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
+        send_message(user_id, f"{emoji_tag(EMOJIS['danger'], '❌')} API is not responding!\n\nURL: {API_URL}\n\nPlease check your API key and endpoint.", "HTML")
     return True
 
 # ============================================================
@@ -1548,16 +1867,15 @@ def handle_update(update):
                     print(f"Command error: {e}")
 
 def main():
-    print("🤖 Bot Started with API Integration!")
+    print("🤖 Bot Started with Hybrid System (API Key + Local Products)!")
     print(f"📁 Connected to MongoDB: {DB_NAME}")
     print(f"🔗 API URL: {API_URL}")
     print(f"📋 Registered commands: {list(commands.keys())}")
     
-    # Check API connection
     if check_api_connection():
         print("✅ API Connected Successfully!")
     else:
-        print("❌ API Connection Failed! Check your API key.")
+        print("❌ API Connection Failed! Key fetch might not work.")
     
     last_update_id = 0
     while True:
