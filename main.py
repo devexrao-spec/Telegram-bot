@@ -6,7 +6,7 @@ from datetime import datetime
 import threading
 from pymongo import MongoClient
 
-BOT_TOKEN = "8856781249:AAFxh7E65tpu_bzMlTv2vSbFld_WGS1nl24"
+BOT_TOKEN = "8565204943:AAEw7F-5NIwZjluyWT-PQYk70xHY3j01xAo"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # ========== RESELLER API CONFIGURATION ==========
