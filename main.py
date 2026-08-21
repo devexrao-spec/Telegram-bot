@@ -1,4 +1,4 @@
-# tusharbot.py - API INTEGRATED VERSION
+# tusharbot.py - COMPLETE WITH API INTEGRATION
 import requests
 import json
 import time
@@ -9,7 +9,7 @@ from pymongo import MongoClient
 BOT_TOKEN = "8388786589:AAFlxWhA0Jyg72HNsQydRlIqkkTedX54qjs"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# API Configuration
+# ========== API CONFIGURATION ==========
 API_URL = "https://xyzcheats.com/api/reseller_v1.php"
 API_KEY = "b25eb076f5c0412fa9f1eba94550d02e"
 
@@ -190,48 +190,55 @@ class PaymentOrdersStore:
 payment_orders_store = PaymentOrdersStore()
 
 # ========== API FUNCTIONS ==========
-def fetch_key_from_api(product_id, plan_id, user_id):
+def call_api(action, data=None):
     """
-    API se key fetch karne ke liye function
+    API call karne ke liye generic function
     """
     try:
         params = {
             "api_key": API_KEY,
-            "action": "get_key",
-            "product_id": product_id,
-            "plan_id": plan_id,
-            "user_id": str(user_id)
+            "action": action
         }
+        if data:
+            params.update(data)
         
         response = requests.get(API_URL, params=params, timeout=30)
-        data = response.json()
-        
-        print(f"🔑 API Response: {data}")
-        
-        if data.get("status") == "success":
-            return data.get("key")
-        else:
-            print(f"❌ API Error: {data.get('msg', 'Unknown error')}")
-            return None
-            
+        result = response.json()
+        print(f"📡 API Response [{action}]: {result}")
+        return result
     except Exception as e:
-        print(f"❌ API Exception: {e}")
-        return None
+        print(f"❌ API Error [{action}]: {e}")
+        return {"status": "error", "msg": str(e)}
+
+def get_products_from_api():
+    """API se products fetch karna"""
+    result = call_api("get_products")
+    if result.get("status") == "success":
+        return result.get("products", [])
+    return []
+
+def get_plans_for_product(product_id):
+    """API se product ke plans fetch karna"""
+    result = call_api("get_plans", {"product_id": product_id})
+    if result.get("status") == "success":
+        return result.get("plans", [])
+    return []
+
+def fetch_key_from_api(product_id, plan_id, user_id):
+    """API se key fetch karna"""
+    result = call_api("get_key", {
+        "product_id": product_id,
+        "plan_id": plan_id,
+        "user_id": str(user_id)
+    })
+    if result.get("status") == "success":
+        return result.get("key")
+    return None
 
 def check_api_connection():
-    """
-    API connection check karne ke liye
-    """
-    try:
-        params = {
-            "api_key": API_KEY,
-            "action": "ping"
-        }
-        response = requests.get(API_URL, params=params, timeout=10)
-        data = response.json()
-        return data.get("status") == "success"
-    except:
-        return False
+    """API connection check"""
+    result = call_api("ping")
+    return result.get("status") == "success"
 
 # ========== TELEGRAM FUNCTIONS ==========
 def send_message(chat_id, text, parse_mode="HTML", reply_markup=None, disable_web_page_preview=True):
@@ -366,76 +373,6 @@ def command(name):
         return func
     return decorator
 
-PLAN_NAMES = {
-    "1": "1 Day", "2": "3 Days", "3": "7 Days", "4": "15 Days", "5": "30 Days",
-    "6": "1 Day", "7": "3 Days", "8": "7 Days", "9": "14 Days",
-    "10": "1 Day", "11": "3 Days", "12": "7 Days", "13": "14 Days", "14": "21 Days", "15": "28 Days",
-}
-
-# ========== CHECK MAINTENANCE ==========
-def check_maintenance(user_id, message):
-    maintenance_mode = bot_data.get_data("maintenance_mode") or False
-    if maintenance_mode:
-        admins = bot_data.get_data("AllBotAdminss") or []
-        is_admin = str(user_id) in [str(a) for a in admins]
-        if not is_admin:
-            text = (
-                f"{emoji_tag(EMOJIS['warning'], '⚠️')} MAINTENANCE MODE ACTIVE {emoji_tag(EMOJIS['danger'], '🔴')}\n\n"
-                f"{emoji_tag(EMOJIS['info'], 'ℹ️')} The bot is currently undergoing server upgrades.\n"
-                f"{emoji_tag(EMOJIS['lightbulb'], '💡')} Purchases, balance operations, and other services may be temporarily unavailable.\n"
-                f"{emoji_tag(EMOJIS['clock'], '⏳')} Please check back later."
-            )
-            send_message(user_id, text, "HTML")
-            return True
-    return False
-
-# ============================================================
-# ========== PRODUCTS & PLANS FROM API ==========
-# ============================================================
-
-def get_products_from_api():
-    """
-    API se products fetch karna
-    """
-    try:
-        params = {
-            "api_key": API_KEY,
-            "action": "get_products"
-        }
-        response = requests.get(API_URL, params=params, timeout=30)
-        data = response.json()
-        
-        if data.get("status") == "success":
-            return data.get("products", [])
-        else:
-            print(f"❌ API Error: {data.get('msg', 'Unknown error')}")
-            return []
-    except Exception as e:
-        print(f"❌ API Exception: {e}")
-        return []
-
-def get_plans_for_product(product_id):
-    """
-    API se product ke plans fetch karna
-    """
-    try:
-        params = {
-            "api_key": API_KEY,
-            "action": "get_plans",
-            "product_id": product_id
-        }
-        response = requests.get(API_URL, params=params, timeout=30)
-        data = response.json()
-        
-        if data.get("status") == "success":
-            return data.get("plans", [])
-        else:
-            print(f"❌ API Error: {data.get('msg', 'Unknown error')}")
-            return []
-    except Exception as e:
-        print(f"❌ API Exception: {e}")
-        return []
-
 # ============================================================
 # ========== /START ==========
 # ============================================================
@@ -444,9 +381,6 @@ def get_plans_for_product(product_id):
 def cmd_start(message, params, options=None):
     user_id = message.get("from", {}).get("id")
     print(f"✅ /start received from {user_id}")
-    
-    if check_maintenance(user_id, message):
-        return True
     
     if not User.get_data(user_id, "joined_date"):
         User.save_data(user_id, "joined_date", message.get("date"))
@@ -490,8 +424,7 @@ def cmd_start(message, params, options=None):
         ]
     }
     
-    result = send_message(user_id, text, "HTML", reply_markup)
-    print(f"📤 Send result: {result}")
+    send_message(user_id, text, "HTML", reply_markup)
     return True
 
 # ============================================================
@@ -501,11 +434,9 @@ def cmd_start(message, params, options=None):
 @command("/shopnawkk")
 def cmd_shopnawkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     
-    # API se products fetch karo
+    # API se products fetch
     products = get_products_from_api()
     
     if not products:
@@ -548,8 +479,6 @@ def cmd_shopnawkk(message, params, options=None):
 @command("/SHOP_MOD")
 def cmd_shop_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     
     product_id = params
@@ -559,18 +488,18 @@ def cmd_shop_mod(message, params, options=None):
     
     User.save_data(user_id, "current_product", product_id)
     
-    # API se plans fetch karo
+    # API se plans fetch
     plans = get_plans_for_product(product_id)
     
     if not plans:
         send_message(user_id, "❌ No plans available for this product")
         return True
     
-    # Get product name
+    # Product name fetch
     products = get_products_from_api()
     product_name = "Product"
     for p in products:
-        if p.get("id") == product_id:
+        if str(p.get("id")) == str(product_id):
             product_name = p.get("name", "Product")
             break
     
@@ -616,8 +545,6 @@ Choose a plan 👇
 @command("/buy_mod")
 def cmd_buy_mod(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     if not params:
         send_message(user_id, "❌ Invalid Product")
         return True
@@ -638,7 +565,7 @@ def cmd_buy_mod(message, params, options=None):
     plans = get_plans_for_product(product_id)
     plan_details = None
     for p in plans:
-        if p.get("id") == plan_id:
+        if str(p.get("id")) == str(plan_id):
             plan_details = p
             break
     
@@ -654,7 +581,7 @@ def cmd_buy_mod(message, params, options=None):
     products = get_products_from_api()
     product_name = "Product"
     for p in products:
-        if p.get("id") == product_id:
+        if str(p.get("id")) == str(product_id):
             product_name = p.get("name", "Product")
             break
     
@@ -721,22 +648,25 @@ def cmd_buy_mod(message, params, options=None):
     
     return True
 
+# ============================================================
+# ========== AUTOBUY (Insufficient Balance) ==========
+# ============================================================
+
 @command("/autobuy1")
 def cmd_autobuy1(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     amount = User.get_data(user_id, "last_deposit_amount")
     pt = User.get_data(user_id, "last_product1") or "Unknown"
     plan = User.get_data(user_id, "last_plan") or "Unknown"
+    
     if not amount:
         send_message(user_id, "Amount missing")
         return True
+    
     balance = Resources.another_res("Balance", user=user_id).value()
-    need = float(amount) - float(balance)
-    if need < 0:
-        need = 0
-    plan_display = PLAN_NAMES.get(str(plan), plan)
+    need = max(0, float(amount) - float(balance))
+    plan_display = f"{plan} Days" if plan.isdigit() else plan
+    
     upi = "bablu.xyztb@fam"
     url = f"https://fampay.anujbots.xyz/qr.php?upi={upi}&amount={amount}"
     try:
@@ -745,9 +675,11 @@ def cmd_autobuy1(message, params, options=None):
     except:
         send_message(user_id, "API ERROR")
         return True
+    
     if not data or data.get("status") != "success":
         send_message(user_id, "QR GENERATION FAILED")
         return True
+    
     order_id = data["data"]["order_id"]
     qr_url = data["data"]["qr_url"]
     
@@ -797,8 +729,6 @@ def cmd_autobuy1(message, params, options=None):
 @command("/verify_payment")
 def cmd_verify_payment(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     
     order_id = params
@@ -858,9 +788,6 @@ def cmd_verify_payment(message, params, options=None):
         payment_orders_store.mark_verified(order_id)
         processed_payments_store.add(order_id, user_id, amount)
         
-        # After payment, user can buy product
-        User.save_data(user_id, "last_deposit_amount", None)
-        
         User.save_data(user_id, "last_order_id", "")
         User.save_data(user_id, "addpay_order_id", "")
         User.save_data(user_id, "payment_processed", True)
@@ -873,37 +800,14 @@ def cmd_verify_payment(message, params, options=None):
             except:
                 pass
         
-        # Check if user had a pending purchase
-        last_product = User.get_data(user_id, "last_product")
-        if last_product:
-            send_message(
-                user_id,
-                f"{emoji_tag(EMOJIS['success'], '✅')} <b>Payment Success!</b>\n\n"
-                f"{emoji_tag(EMOJIS['money'], '💰')} Added: ₹{amount}\n"
-                f"{emoji_tag(EMOJIS['balance'], '💰')} New Balance: ₹{bal.value()}\n\n"
-                f"Now go to shop and buy your product! 🛒",
-                "HTML"
-            )
-        else:
-            send_message(
-                user_id,
-                f"{emoji_tag(EMOJIS['success'], '✅')} <b>Payment Success!</b>\n\n"
-                f"{emoji_tag(EMOJIS['money'], '💰')} Added: ₹{amount}\n"
-                f"{emoji_tag(EMOJIS['balance'], '💰')} New Balance: ₹{bal.value()}",
-                "HTML"
-            )
-        
-        admins = bot_data.get_data("AllBotAdminss") or []
-        for admin in admins:
-            send_message(
-                admin,
-                f"{emoji_tag(EMOJIS['success'], '✅')} New Payment Received!\n\n"
-                f"👤 User ID: <code>{user_id}</code>\n"
-                f"💰 Amount: ₹{amount}\n"
-                f"🧾 Order ID: <code>{order_id}</code>\n"
-                f"💳 User Balance: ₹{bal.value()}",
-                "HTML"
-            )
+        send_message(
+            user_id,
+            f"{emoji_tag(EMOJIS['success'], '✅')} <b>Payment Success!</b>\n\n"
+            f"{emoji_tag(EMOJIS['money'], '💰')} Added: ₹{amount}\n"
+            f"{emoji_tag(EMOJIS['balance'], '💰')} New Balance: ₹{bal.value()}\n\n"
+            f"Now go to shop and buy your product! 🛒",
+            "HTML"
+        )
         
         return True
     else:
@@ -919,8 +823,6 @@ def cmd_verify_payment(message, params, options=None):
 @command("/cancel")
 def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     
     if params:
@@ -960,8 +862,6 @@ current_amount = {}
 @command("/addpayment")
 def cmd_addpayment(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
     reply_markup = {
@@ -985,8 +885,6 @@ for n in range(10):
     def make_handler(num):
         def handler(message, params, options=None):
             user_id = message.get("from", {}).get("id")
-            if check_maintenance(user_id, message):
-                return True
             msg_id = message.get("message_id")
             amt = current_amount.get(user_id, "0")
             if num == 0:
@@ -1003,8 +901,6 @@ for n in range(10):
 @command("/clearamt")
 def cmd_clearamt(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     current_amount[user_id] = "0"
     text = f"{emoji_tag(EMOJIS['money'], '💰')} ENTER CUSTOM AMOUNT\n\nAmount: ₹0\n\nUse the keypad below."
@@ -1014,8 +910,6 @@ def cmd_clearamt(message, params, options=None):
 @command("/done")
 def cmd_done(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     amt = current_amount.get(user_id, "0")
     if not amt or amt == "0":
         send_message(user_id, "Enter amount first")
@@ -1026,8 +920,6 @@ def cmd_done(message, params, options=None):
 
 def cmd_addpayment_qr(message):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return
     amount = User.get_data(user_id, "last_deposit_amount")
     if not amount:
         send_message(user_id, "Amount missing")
@@ -1085,8 +977,6 @@ def cmd_addpayment_qr(message):
 @command("/backkkk")
 def cmd_backkkk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     balance = Resources.another_res("Balance", user=user_id).value()
     text = (
@@ -1126,8 +1016,6 @@ def cmd_backkkk(message, params, options=None):
 @command("/orderksk")
 def cmd_orderksk(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     textn = (
         "━━━━━━━━━━━━━━━━━━━━\n"
@@ -1158,8 +1046,6 @@ def cmd_orderksk(message, params, options=None):
 @command("/profilemmm")
 def cmd_profilemmm(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     first_name = message.get("from", {}).get("first_name", "User")
     balance = Resources.another_res("Balance", user=user_id).value()
@@ -1210,8 +1096,6 @@ def cmd_profilemmm(message, params, options=None):
 @command("/spinj")
 def cmd_spinj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     text = f"""
 {emoji_tag(EMOJIS['video'], '🎥')} <b>Watch the full tutorial video below</b>
@@ -1233,8 +1117,6 @@ def cmd_spinj(message, params, options=None):
 @command("/supportj")
 def cmd_supportj(message, params, options=None):
     user_id = message.get("from", {}).get("id")
-    if check_maintenance(user_id, message):
-        return True
     msg_id = message.get("message_id")
     text = """
 ━━━━━━━━━━━━━━━━━━━━
@@ -1278,39 +1160,24 @@ def cmd_admin(message, params, options=None):
         send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
         return True
     
-    maintenance_mode = bot_data.get_data("maintenance_mode") or False
-    maint_status = "🔴 OFF"
-    maint_callback = "/maintenance_on"
-    if maintenance_mode:
-        maint_status = "🟢 ON"
-        maint_callback = "/maintenance_off"
-    
-    bot_mode = bot_data.get_data("BotMode") or "ON"
-    bot_sta = "🟢 On"
-    bot_change = "BotMode OFF"
-    if bot_mode == "OFF":
-        bot_sta = "🔴 Off"
-        bot_change = "BotMode ON"
-    
     # Check API status
     api_status = "✅ Connected" if check_api_connection() else "❌ Disconnected"
     
     markup = {
         "inline_keyboard": [
             [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
-            [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bot: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
+            [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}],
             [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}],
-            [{"text": "🔧 Maintenance", "callback_data": maint_callback, "style": "danger"}, {"text": f"Status: {maint_status}", "callback_data": "none", "style": "primary"}],
             [{"text": f"🔗 API: {api_status}", "callback_data": "/check_api", "style": "primary"}],
-            [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
+            [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}],
+            [{"text": "🔙 Back", "callback_data": "/backkkk", "style": "danger"}]
         ]
     }
     txt = f"""<b>
 👋 Welcome {message.get('from', {}).get('first_name', 'Admin')} 🎉
 
 ━━━━━━━━━━━━━━━
-🤖 Bot Status : {bot_sta}
-🔧 Maintenance : {maint_status}
+🤖 Admin Panel
 🔗 API Status : {api_status}
 ━━━━━━━━━━━━━━━
 </b>"""
@@ -1333,38 +1200,8 @@ def cmd_check_api(message, params, options=None):
     if check_api_connection():
         send_message(user_id, f"{emoji_tag(EMOJIS['success'], '✅')} API is connected successfully!", "HTML")
     else:
-        send_message(user_id, f"{emoji_tag(EMOJIS['danger'], '❌')} API is not responding! Please check your API key.", "HTML")
+        send_message(user_id, f"{emoji_tag(EMOJIS['danger'], '❌')} API is not responding! Please check your API key.\n\nURL: {API_URL}", "HTML")
     return True
-
-@command("/maintenance_on")
-def cmd_maintenance_on(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    bot_data.save_data("maintenance_mode", True)
-    send_message(user_id, "✅ Maintenance Mode Activated!", "HTML")
-    cmd_admin(message, params, options)
-    return True
-
-@command("/maintenance_off")
-def cmd_maintenance_off(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    bot_data.save_data("maintenance_mode", False)
-    send_message(user_id, "✅ Maintenance Mode Deactivated!", "HTML")
-    cmd_admin(message, params, options)
-    return True
-
-# ============================================================
-# ========== RESELLER LIST ==========
-# ============================================================
 
 @command("/resellerlist")
 def cmd_resellerlist(message, params, options=None):
@@ -1373,30 +1210,212 @@ def cmd_resellerlist(message, params, options=None):
     if str(user_id) not in [str(a) for a in admins]:
         return True
     
-    # Fetch resellers from API
-    try:
-        params = {
-            "api_key": API_KEY,
-            "action": "get_resellers"
-        }
-        response = requests.get(API_URL, params=params, timeout=30)
-        data = response.json()
+    result = call_api("get_resellers")
+    if result.get("status") == "success":
+        resellers = result.get("resellers", [])
+        if not resellers:
+            send_message(user_id, "No resellers found.", "HTML")
+            return True
         
-        if data.get("status") == "success":
-            resellers = data.get("resellers", [])
-            if not resellers:
-                send_message(user_id, "No resellers found.", "HTML")
-                return True
-            
-            text = "📝 Reseller List\n━━━━━━━━━━━━━━━\n"
-            for i, r in enumerate(resellers, 1):
-                text += f"{i}. <code>{r}</code>\n"
-            text += f"\nTotal: {len(resellers)}"
-            send_message(user_id, text, "HTML")
-        else:
-            send_message(user_id, f"❌ Error: {data.get('msg', 'Unknown error')}", "HTML")
-    except Exception as e:
-        send_message(user_id, f"❌ API Error: {str(e)}", "HTML")
+        text = "📝 Reseller List\n━━━━━━━━━━━━━━━\n"
+        for i, r in enumerate(resellers, 1):
+            text += f"{i}. <code>{r}</code>\n"
+        text += f"\nTotal: {len(resellers)}"
+        send_message(user_id, text, "HTML")
+    else:
+        send_message(user_id, f"❌ Error: {result.get('msg', 'Unknown error')}", "HTML")
+    return True
+
+# ============================================================
+# ========== ADD RESELLER ==========
+# ============================================================
+
+@command("/addreseller")
+def cmd_addreseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    send_message(user_id, "📩 Send reseller ID:", "HTML")
+    pending_commands[user_id] = "/add_reseller_process"
+    pending_commands_store.set(user_id, "/add_reseller_process")
+    return True
+
+@command("/add_reseller_process")
+def cmd_add_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target = message.get("text", "").strip()
+    try:
+        target = str(int(target))
+    except:
+        send_message(user_id, "❌ Invalid ID!", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    # API call to add reseller
+    result = call_api("add_reseller", {"user_id": target})
+    if result.get("status") == "success":
+        send_message(user_id, f"✅ User <code>{target}</code> added as reseller", "HTML")
+    else:
+        send_message(user_id, f"❌ Error: {result.get('msg', 'Unknown error')}", "HTML")
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/removereseller")
+def cmd_removereseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in [str(a) for a in admins]:
+        return True
+    send_message(user_id, "📩 Send reseller ID to remove:", "HTML")
+    pending_commands[user_id] = "/remove_reseller_process"
+    pending_commands_store.set(user_id, "/remove_reseller_process")
+    return True
+
+@command("/remove_reseller_process")
+def cmd_remove_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target = message.get("text", "").strip()
+    try:
+        target = str(int(target))
+    except:
+        send_message(user_id, "❌ Invalid ID!", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    # API call to remove reseller
+    result = call_api("remove_reseller", {"user_id": target})
+    if result.get("status") == "success":
+        send_message(user_id, f"✅ User <code>{target}</code> removed from resellers", "HTML")
+    else:
+        send_message(user_id, f"❌ Error: {result.get('msg', 'Unknown error')}", "HTML")
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ============================================================
+# ========== TUSHAR ADMINS ==========
+# ============================================================
+
+@command("/TUSHAR_Admins")
+def cmd_tushar_admins(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    if params and params in admins:
+        admins.remove(params)
+        bot_data.save_data("AllBotAdminss", admins)
+    markup = {"inline_keyboard": []}
+    for admin in admins:
+        markup["inline_keyboard"].append([
+            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
+            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
+        ])
+    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
+    text = "<b>Here You Can Manage Your Admins</b>"
+    try:
+        edit_message(user_id, msg_id, text, "HTML", markup)
+    except:
+        send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/TUSHAR_AddAdmin")
+def cmd_tushar_addadmin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
+    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
+    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
+    return True
+
+@command("/TUSHAR_AddAdmin1")
+def cmd_tushar_addadmin1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    new_admin = message.get("text")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    if new_admin in admins:
+        send_message(user_id, "Admin Already Exists")
+    else:
+        admins.append(new_admin)
+        bot_data.save_data("AllBotAdminss", admins)
+        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+# ============================================================
+# ========== CHANGE USER BALANCE ==========
+# ============================================================
+
+@command("/ChangeAnyUserBal")
+def cmd_change_balance(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    send_message(
+        user_id,
+        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/ChangeAnyUserBal2"
+    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
+    return True
+
+@command("/ChangeAnyUserBal2")
+def cmd_change_balance2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
+        return True
+    parts = text.split(" ")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid format. Use: user_id amount")
+        return True
+    target_user = parts[0]
+    try:
+        amount = float(parts[1])
+    except:
+        send_message(user_id, "Invalid amount")
+        return True
+    bal = Resources.another_res("Balance", user=target_user)
+    bal.add(amount)
+    easy_time = get_easy_time()
+    send_message(
+        user_id,
+        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
+        "HTML"
+    )
+    send_message(
+        target_user,
+        f"<b>💰 Admin Added ₹{amount} to your balance!</b>\n\nNew Balance: ₹{bal.value()}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
     return True
 
 # ============================================================
@@ -1468,126 +1487,6 @@ def cmd_broadcast_send_media(message, params, options=None):
         f"✅ <b>Broadcast Complete</b>\n✅ Success: {success}\n❌ Failed: {failed}",
         "HTML"
     )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-# ============================================================
-# ========== CHANGE USER BALANCE ==========
-# ============================================================
-
-@command("/ChangeAnyUserBal")
-def cmd_change_balance(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(
-        user_id,
-        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format: <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
-        "HTML"
-    )
-    pending_commands[user_id] = "/ChangeAnyUserBal2"
-    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
-    return True
-
-@command("/ChangeAnyUserBal2")
-def cmd_change_balance2(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    text = message.get("text", "")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    parts = text.split(" ")
-    if len(parts) < 2:
-        send_message(user_id, "Invalid format. Use: user_id amount")
-        return True
-    target_user = parts[0]
-    try:
-        amount = float(parts[1])
-    except:
-        send_message(user_id, "Invalid amount")
-        return True
-    bal = Resources.another_res("Balance", user=target_user)
-    bal.add(amount)
-    easy_time = get_easy_time()
-    send_message(
-        user_id,
-        f"<b>💰 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\nFinal Balance = {bal.value()}</b>",
-        "HTML"
-    )
-    send_message(
-        target_user,
-        f"<b>💰 Admin Added ₹{amount} to your balance!</b>\n\nNew Balance: ₹{bal.value()}",
-        "HTML"
-    )
-    pending_commands.pop(user_id, None)
-    pending_commands_store.delete(user_id)
-    return True
-
-# ============================================================
-# ========== TUSHAR ADMINS ==========
-# ============================================================
-
-@command("/TUSHAR_Admins")
-def cmd_tushar_admins(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    msg_id = message.get("message_id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    if params and params in admins:
-        admins.remove(params)
-        bot_data.save_data("AllBotAdminss", admins)
-    markup = {"inline_keyboard": []}
-    for admin in admins:
-        markup["inline_keyboard"].append([
-            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
-            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
-        ])
-    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
-    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin", "style": "danger"}])
-    text = "<b>Here You Can Manage Your Admins</b>"
-    try:
-        edit_message(user_id, msg_id, text, "HTML", markup)
-    except:
-        send_message(user_id, text, "HTML", markup)
-    return True
-
-@command("/TUSHAR_AddAdmin")
-def cmd_tushar_addadmin(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
-    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
-    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
-    return True
-
-@command("/TUSHAR_AddAdmin1")
-def cmd_tushar_addadmin1(message, params, options=None):
-    user_id = message.get("from", {}).get("id")
-    new_admin = message.get("text")
-    admins = bot_data.get_data("AllBotAdminss") or []
-    is_admin = str(user_id) in [str(a) for a in admins]
-    if not is_admin:
-        send_message(user_id, "🚫 You Are Not This Bot Admin", "HTML")
-        return True
-    if new_admin in admins:
-        send_message(user_id, "Admin Already Exists")
-    else:
-        admins.append(new_admin)
-        bot_data.save_data("AllBotAdminss", admins)
-        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
     pending_commands.pop(user_id, None)
     pending_commands_store.delete(user_id)
     return True
