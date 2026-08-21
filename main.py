@@ -245,9 +245,9 @@ class PlanStore:
 product_store = ProductStore()
 plan_store = PlanStore()
 
-# ========== API FUNCTIONS (FIXED: POST & BUY) ==========
+# ========== API FUNCTIONS (FIXED: GET FOR PING, POST FOR BUY) ==========
 def call_api(action, data=None):
-    """API call karne ke liye generic function (POST Request)"""
+    """API call karne ke liye generic function (POST Request for Buy)"""
     try:
         params = {"api_key": API_KEY, "action": action}
         if data:
@@ -264,7 +264,6 @@ def call_api(action, data=None):
 
 def fetch_key_from_api(product_id, plan_id, user_id):
     """API se Key GENERATE aur FETCH karna"""
-    # 'buy' action use kar rahe hain taaki naya key generate ho
     result = call_api("buy", {
         "product_id": str(product_id),
         "duration": str(plan_id), 
@@ -276,9 +275,17 @@ def fetch_key_from_api(product_id, plan_id, user_id):
     return None
 
 def check_api_connection():
-    """API connection check"""
-    result = call_api("ping")
-    return result.get("status") == "success"
+    """API connection check (GET request)"""
+    try:
+        # Ping command ke liye GET use kar rahe hain taaki error na aaye
+        params = {"api_key": API_KEY, "action": "ping"}
+        response = requests.get(API_URL, params=params, timeout=10)
+        result = response.json()
+        print(f"📡 API Ping Response: {result}")
+        return result.get("status") == "success"
+    except Exception as e:
+        print(f"❌ API Ping Error: {e}")
+        return False
 
 # ========== TELEGRAM FUNCTIONS ==========
 def send_message(chat_id, text, parse_mode="HTML", reply_markup=None, disable_web_page_preview=True):
@@ -813,7 +820,9 @@ def cmd_verify_payment(message, params, options=None):
             f"Please complete the payment and try again.",
             "HTML"
         )
-        return True@command("/cancel")
+        return True
+
+@command("/cancel")
 def cmd_cancel(message, params, options=None):
     user_id = str(message.get("from", {}).get("id"))
     msg_id = message.get("message_id")
