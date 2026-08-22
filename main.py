@@ -1,4 +1,4 @@
-# tusharbot.py - COMPLETE FIXED
+# tusharbot.py - COMPLETE WITH ADMIN BUTTON
 import requests
 import json
 import time
@@ -8,6 +8,9 @@ from pymongo import MongoClient
 
 BOT_TOKEN = "8565204943:AAEw7F-5NIwZjluyWT-PQYk70xHY3j01xAo"
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+
+# ========== ADMIN ID ==========
+ADMIN_IDS = ["8102646437"]  # <-- TERA ADMIN ID
 
 # ========== MONGODB ==========
 MONGO_URI = "mongodb+srv://crasher3210_db_user:devex5656@cluster0.9y5axka.mongodb.net/?appName=Cluster0&compressors=zlib"
@@ -620,6 +623,10 @@ def cmd_start(message, params, options=None):
     if not User.get_data(user_id, "joined_date"):
         User.save_data(user_id, "joined_date", message.get("date"))
     balance = Resources.another_res("Balance", user=user_id).value()
+    
+    # Check if user is admin
+    is_admin = str(user_id) in ADMIN_IDS
+    
     text = (
         "🌟 <b>WELCOME TO HACK STORE</b> 🌙\n\n"
         "✨ Your ultimate destination for premium mods, cheats & clients!\n\n"
@@ -629,15 +636,22 @@ def cmd_start(message, params, options=None):
         "🛡 100% Anti-Ban Support\n\n"
         f"💰 Your Balance: ₹{balance}"
     )
-    reply_markup = {
-        "inline_keyboard": [
-            [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk"}],
-            [{"text": "🔑 MY KEY", "callback_data": "/orderksk"}, {"text": "👤 PROFILE", "callback_data": "/profilemmm"}],
-            [{"text": "📖 HOW TO USE", "callback_data": "/spinj"}, {"text": "💬 SUPPORT", "callback_data": "/supportj"}],
-            [{"text": "💰 ADD FUND", "callback_data": "/addpayment"}],
-            [{"text": "📥 DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl"}]
-        ]
-    }
+    
+    # Keyboard with admin button at bottom
+    keyboard = [
+        [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk"}],
+        [{"text": "🔑 MY KEY", "callback_data": "/orderksk"}, {"text": "👤 PROFILE", "callback_data": "/profilemmm"}],
+        [{"text": "📖 HOW TO USE", "callback_data": "/spinj"}, {"text": "💬 SUPPORT", "callback_data": "/supportj"}],
+        [{"text": "💰 ADD FUND", "callback_data": "/addpayment"}],
+        [{"text": "📥 DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl"}]
+    ]
+    
+    # Add admin button only for admin
+    if is_admin:
+        keyboard.append([{"text": "👑 ADMIN PANEL", "callback_data": "/admin"}])
+    
+    reply_markup = {"inline_keyboard": keyboard}
+    
     send_message(user_id, text, "HTML", reply_markup)
     return True
 
@@ -1325,8 +1339,6 @@ def cmd_addpayment_qr(message):
     send_photo(user_id, qr_url, caption, "HTML", reply_markup)
 
 # ========== ADMIN COMMANDS ==========
-
-ADMIN_IDS = ["8102646437"]  # <-- TERA ADMIN ID
 
 @command("/admin")
 def cmd_admin(message, params, options=None):
@@ -2279,12 +2291,12 @@ def cmd_admin_admins(message, params, options=None):
     if str(user_id) not in ADMIN_IDS:
         return True
     
-    admins = ADMIN_IDS  # Fixed admin list
+    admins = ADMIN_IDS
     
     markup = {"inline_keyboard": []}
     for admin in admins:
         markup["inline_keyboard"].append([
-            {"text": admin, "callback_data": f"/remove_admin_{admin}"}
+            {"text": f"👑 {admin}", "callback_data": f"/remove_admin_{admin}"}
         ])
     markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin"}])
     
@@ -2302,17 +2314,7 @@ def cmd_remove_admin(message, params, options=None):
     if str(user_id) not in ADMIN_IDS:
         return True
     
-    cmd = message.get("text", "")
-    if "/remove_admin_" in cmd:
-        target = cmd.replace("/remove_admin_", "")
-    else:
-        target = params
-    
-    if target and target in ADMIN_IDS:
-        send_message(user_id, f"⚠️ Cannot remove main admin <code>{target}</code>", "HTML")
-    else:
-        send_message(user_id, "Admin not found", "HTML")
-    
+    send_message(user_id, "⚠️ Cannot remove main admin!", "HTML")
     cmd_admin_admins(message, params, options)
     return True
 
