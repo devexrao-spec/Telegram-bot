@@ -58,7 +58,7 @@ def api_buy_product(product_id, days):
     Call the external API to buy a product
     Returns: (success, message, key)
     """
-    # Try different duration formats like in your test file
+    # Try different duration formats
     durations = [
         f"{days} Day",
         f"{days} Days",
@@ -77,7 +77,7 @@ def api_buy_product(product_id, days):
                 'action': 'buy',
                 'product_id': str(product_id),
                 'duration': duration,
-                'price': '32'  # Default price, can be dynamic
+                'price': '32'
             }
             
             headers = {
@@ -238,11 +238,7 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     user_id = str(query.from_user.id)
-    chat_id = query.message.chat.id
-    message_id = query.message.message_id
     data = query.data
-    
-    balances, users, orders, products = load_data()
     
     # ========== USER BUTTONS ==========
     if data == "addbal":
@@ -334,13 +330,11 @@ async def callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         products = load_data()[3]
         plan = products[pid]['plans'][plan_index]
-        keys_count = len(plan.get('keys', []))
         
         msg = f"""✏️ <b>Edit Plan</b>
 
 Current: {plan['days']} Days - ₹{plan['price']}
 Product ID: {plan.get('product_id', 'N/A')}
-Keys: {keys_count}
 
 Kya edit karna hai?"""
         keyboard = [
@@ -464,7 +458,7 @@ Kya edit karna hai?"""
     elif data == "broadcast" and user_id == ADMIN_ID:
         save_temp(user_id, "waiting", "broadcast_text")
         await query.edit_message_text(
-            "📢 <b>Broadcast Message</b>\n\nMessage bhejo (Text, Photo, Video, Voice, Document)\n\n<b>Note:</b> Photo/Video/Voice/Document ke saath caption bhi bhej sakte ho",
+            "📢 <b>Broadcast Message</b>\n\nMessage bhejo (Text)\n\n<b>Note:</b> Only text supported",
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Cancel", callback_data="backadmin")]])
         )
@@ -537,7 +531,7 @@ Kya edit karna hai?"""
 async def send_add_balance(query, user_id):
     balances = load_data()[0]
     bal = balances.get(user_id, 0)
-    msg = f"💸 <b>Add Balance</b>\n\nCurrent balance: ₹{bal}.00\nPick a quick amount below, or enter a custom amount.\nMin: ₹1.00 • Max: ₹5,000.00\n⚠️ QR 5 Minute me expire ho jayega"
+    msg = f"💸 <b>Add Balance</b>\n\nCurrent balance: ₹{bal}.00\nPick a quick amount below, or enter a custom amount.\nMin: ₹1.00 • Max: ₹5,000.00"
     keyboard = [
         [InlineKeyboardButton("₹50", callback_data="pay_50"), InlineKeyboardButton("₹100", callback_data="pay_100"), InlineKeyboardButton("₹200", callback_data="pay_200")],
         [InlineKeyboardButton("₹500", callback_data="pay_500"), InlineKeyboardButton("₹1000", callback_data="pay_1000"), InlineKeyboardButton("₹2000", callback_data="pay_2000")],
@@ -629,8 +623,7 @@ async def send_product_plans(query, pid):
     
     for idx, plan in enumerate(plans):
         day_text = f"{plan['days']} Day{'s' if plan['days'] > 1 else ''}"
-        product_id = plan.get('product_id', 'N/A')
-        msg += f"\n• {day_text} — ₹{plan['price']} (ID: {product_id})"
+        msg += f"\n• {day_text} — ₹{plan['price']}"
         keyboard.append([InlineKeyboardButton(f"{day_text} - ₹{plan['price']}", callback_data=f"plan_{pid}_{idx}")])
     
     keyboard.append([InlineKeyboardButton("⬅️ Back to Shop", callback_data="backcat")])
@@ -664,7 +657,6 @@ async def buy_plan(query, user_id, pid, plan_index):
         )
         return
     
-    # Check if product_id exists in plan
     if 'product_id' not in plan:
         await query.edit_message_text(
             "❌ <b>Invalid Plan!</b>\n\nIs plan mein Product ID nahi hai.\nAdmin se contact karo.",
@@ -673,7 +665,7 @@ async def buy_plan(query, user_id, pid, plan_index):
         )
         return
     
-    # Use API to buy with duration testing
+    # Use API to buy
     success, message, key = api_buy_product(plan['product_id'], plan['days'])
     
     if not success:
@@ -802,8 +794,7 @@ async def send_plans_for_edit(query, pid):
     msg = f"✏️ <b>Edit Plan - {p['name']}</b>\n\nKis plan ko edit karna hai?"
     keyboard = []
     for idx, plan in enumerate(p['plans']):
-        product_id = plan.get('product_id', 'N/A')
-        keyboard.append([InlineKeyboardButton(f"{plan['days']} Days - ₹{plan['price']} (ID: {product_id})", callback_data=f"editplan_{pid}_{idx}")])
+        keyboard.append([InlineKeyboardButton(f"{plan['days']} Days - ₹{plan['price']}", callback_data=f"editplan_{pid}_{idx}")])
     keyboard.append([InlineKeyboardButton("⬅️ Back", callback_data="backadmin")])
     
     await query.edit_message_text(msg, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -1137,12 +1128,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 # ========== FLASK WEBHOOK ==========
-app = Flask(__name__)
-
 @app.route('/webhook', methods=['POST'])
-async def webhook():
+def webhook():
     update = Update.de_json(request.get_json(), application.bot)
-    await application.process_update(update)
+    application.process_update(update)
     return 'OK'
 
 # ========== MAIN ==========
