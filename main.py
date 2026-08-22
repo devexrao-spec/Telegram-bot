@@ -9,7 +9,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 
 # ========== CONFIG ==========
 BOT_TOKEN = "8565204943:AAEw7F-5NIwZjluyWT-PQYk70xHY3j01xAo"
-ADMIN_ID = "8031564572"
+ADMIN_ID = "8102646437"
 
 # API Configuration
 API_URL = "https://xyzcheats.com/api/reseller_v1.php"
