@@ -1,4 +1,4 @@
-# tusharbot.py - FULLY WORKING
+# tusharbot.py - FULLY WORKING WITH DYNAMIC HANDLERS
 import requests
 import json
 import time
@@ -314,20 +314,20 @@ def cmd_start(msg, params, options=None):
     text = f"🌟 <b>WELCOME TO HACK STORE</b> 🌙\n\n✨ Premium mods, cheats & clients!\n\n🚀 Instant Key Delivery\n💳 Secure Payment\n🛡 Anti-Ban Support\n\n💰 Balance: ₹{balance}"
     
     keyboard = [
-        [{"text": "🛒 BUY HACK", "callback_data": "/shopnawkk"}],
-        [{"text": "🔑 MY KEY", "callback_data": "/orderksk"}, {"text": "👤 PROFILE", "callback_data": "/profilemmm"}],
-        [{"text": "📖 HOW TO USE", "callback_data": "/spinj"}, {"text": "💬 SUPPORT", "callback_data": "/supportj"}],
-        [{"text": "💰 ADD FUND", "callback_data": "/addpayment"}],
+        [{"text": "🛒 BUY HACK", "callback_data": "shopnawkk"}],
+        [{"text": "🔑 MY KEY", "callback_data": "orderksk"}, {"text": "👤 PROFILE", "callback_data": "profilemmm"}],
+        [{"text": "📖 HOW TO USE", "callback_data": "spinj"}, {"text": "💬 SUPPORT", "callback_data": "supportj"}],
+        [{"text": "💰 ADD FUND", "callback_data": "addpayment"}],
         [{"text": "📥 DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl"}]
     ]
     
     if is_admin:
-        keyboard.append([{"text": "👑 ADMIN PANEL", "callback_data": "/admin"}])
+        keyboard.append([{"text": "👑 ADMIN PANEL", "callback_data": "admin"}])
     
     send_message(uid, text, "HTML", {"inline_keyboard": keyboard})
     return True
 
-@command("/shopnawkk")
+@command("shopnawkk")
 def cmd_shopnawkk(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -335,7 +335,7 @@ def cmd_shopnawkk(msg, params, options=None):
     
     if not prods:
         text = "⚠️ No products available."
-        kb = {"inline_keyboard": [[{"text": "🔙 BACK", "callback_data": "/backkkk"}]]}
+        kb = {"inline_keyboard": [[{"text": "🔙 BACK", "callback_data": "backkkk"}]]}
         try:
             edit_message(uid, mid, text, "HTML", kb)
         except:
@@ -352,9 +352,9 @@ def cmd_shopnawkk(msg, params, options=None):
             display = f"<tg-emoji emoji-id='{emoji}'>📦</tg-emoji> {p.get('name')}"
         else:
             display = f"📦 {p.get('name')}"
-        kb["inline_keyboard"].append([{"text": display, "callback_data": f"/p_{pid}"}])
+        kb["inline_keyboard"].append([{"text": display, "callback_data": f"shop_{pid}"}])
     
-    kb["inline_keyboard"].append([{"text": "🔙 BACK", "callback_data": "/backkkk"}])
+    kb["inline_keyboard"].append([{"text": "🔙 BACK", "callback_data": "backkkk"}])
     
     try:
         edit_message(uid, mid, text, "HTML", kb)
@@ -362,18 +362,23 @@ def cmd_shopnawkk(msg, params, options=None):
         send_message(uid, text, "HTML", kb)
     return True
 
-@command("/p_abcd")
-@command("/p_bala_v2")
-@command("/p_drip")
-@command("/p_silent")
-@command("/p_prime")
-def cmd_show_plans(msg, params, options=None):
+@command("shop")
+def cmd_shop_product(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
-    cmd = msg.get("text", "")
-    pid = cmd.replace("/p_", "")
     
-    p = get_product(pid)
+    # Get product_id from callback data
+    data = msg.get("text", "")
+    if data.startswith("shop_"):
+        product_id = data.replace("shop_", "")
+    else:
+        product_id = params
+    
+    if not product_id:
+        send_message(uid, "Product not found")
+        return True
+    
+    p = get_product(product_id)
     if not p:
         send_message(uid, "Product not found")
         return True
@@ -388,9 +393,9 @@ def cmd_show_plans(msg, params, options=None):
         price = plan.get('reseller_price') if is_reseller else plan.get('price')
         plan_id = plan.get('plan_id')
         duration = plan.get('duration')
-        kb["inline_keyboard"].append([{"text": f"{duration} - ₹{price}", "callback_data": f"/b_{pid}_{plan_id}"}])
+        kb["inline_keyboard"].append([{"text": f"{duration} - ₹{price}", "callback_data": f"buy_{product_id}_{plan_id}"}])
     
-    kb["inline_keyboard"].append([{"text": "🔙 BACK", "callback_data": "/shopnawkk"}])
+    kb["inline_keyboard"].append([{"text": "🔙 BACK", "callback_data": "shopnawkk"}])
     
     try:
         edit_message(uid, mid, text, "HTML", kb)
@@ -398,43 +403,28 @@ def cmd_show_plans(msg, params, options=None):
         send_message(uid, text, "HTML", kb)
     return True
 
-@command("/b_abcd_1")
-@command("/b_bala_v2_1")
-@command("/b_bala_v2_2")
-@command("/b_bala_v2_3")
-@command("/b_bala_v2_4")
-@command("/b_bala_v2_5")
-@command("/b_bala_v2_6")
-@command("/b_bala_v2_7")
-@command("/b_bala_v2_8")
-@command("/b_drip_1")
-@command("/b_drip_2")
-@command("/b_drip_3")
-@command("/b_drip_4")
-@command("/b_drip_5")
-@command("/b_silent_1")
-@command("/b_silent_2")
-@command("/b_silent_3")
-@command("/b_silent_4")
-@command("/b_silent_5")
-@command("/b_prime_1")
-@command("/b_prime_2")
-@command("/b_prime_3")
-@command("/b_prime_4")
-@command("/b_prime_5")
+@command("buy")
 def cmd_buy(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
-    cmd = msg.get("text", "")
-    parts = cmd.split("_")
     
-    if len(parts) < 3:
+    data = msg.get("text", "")
+    if data.startswith("buy_"):
+        parts = data.replace("buy_", "").split("_")
+    else:
+        if params and "_" in params:
+            parts = params.split("_")
+        else:
+            send_message(uid, "Invalid product selection")
+            return True
+    
+    if len(parts) < 2:
         send_message(uid, "Invalid product selection")
         return True
     
-    pid = parts[1]
-    plan_id = parts[2]
+    product_id = parts[0]
+    plan_id = parts[1]
     
-    p = get_product(pid)
+    p = get_product(product_id)
     if not p:
         send_message(uid, "Product not found")
         return True
@@ -460,7 +450,7 @@ def cmd_buy(msg, params, options=None):
     
     set_user(uid, "last_product1", name)
     set_user(uid, "last_plan", plan_id)
-    set_user(uid, "last_product_key", pid)
+    set_user(uid, "last_product_key", product_id)
     set_user(uid, "last_price", price)
     set_user(uid, "last_duration", duration)
     set_user(uid, "last_pid", api_pid)
@@ -471,13 +461,13 @@ def cmd_buy(msg, params, options=None):
             f"🔐 <b>Android ID Required</b>\n\nProduct: {name}\nPlan: {duration}\nPrice: ₹{price}\n\nSend Android ID (16 hex chars)\nType /cancel",
             "HTML"
         )
-        pending_cmds[uid] = "/process_android"
-        pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/process_android"}}, upsert=True)
+        pending_cmds[uid] = "process_android"
+        pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "process_android"}}, upsert=True)
         return True
     else:
-        return process_purchase(msg, pid, plan_id, price, name, duration, api_pid)
+        return process_purchase(msg, product_id, plan_id, price, name, duration, api_pid)
 
-@command("/process_android")
+@command("process_android")
 def cmd_process_android(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "").strip()
@@ -495,16 +485,16 @@ def cmd_process_android(msg, params, options=None):
     pending_cmds.pop(uid, None)
     pending_commands.delete_one({"user_id": str(uid)})
     
-    pid = get_user(uid, "last_product_key")
+    product_id = get_user(uid, "last_product_key")
     plan_id = get_user(uid, "last_plan")
     price = get_user(uid, "last_price")
     name = get_user(uid, "last_product1")
     duration = get_user(uid, "last_duration")
     api_pid = get_user(uid, "last_pid")
     
-    return process_purchase(msg, pid, plan_id, price, name, duration, api_pid, android_id=text)
+    return process_purchase(msg, product_id, plan_id, price, name, duration, api_pid, android_id=text)
 
-@command("/autobuy1")
+@command("autobuy1")
 def cmd_autobuy1(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     amount = get_user(uid, "last_deposit_amount")
@@ -546,16 +536,20 @@ def cmd_autobuy1(msg, params, options=None):
     pending_payments.update_one({"user_id": str(uid)}, {"$set": {"data": pending_pays[uid]}}, upsert=True)
     
     caption = f"💰 <b>INSUFFICIENT BALANCE</b>\n\nProduct: {pt}\nPlan: {plan_display}\nPrice: ₹{amount}\nBalance: ₹{balance}\nNeed: ₹{need}\n\nScan QR:\n🧾 Order: <code>{order_id}</code>"
-    kb = {"inline_keyboard": [[{"text": "✅ VERIFY", "callback_data": f"/v_{order_id}"}], [{"text": "❌ CANCEL", "callback_data": f"/c_{order_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "✅ VERIFY", "callback_data": f"v_{order_id}"}], [{"text": "❌ CANCEL", "callback_data": f"c_{order_id}"}]]}
     send_photo(uid, qr_url, caption, "HTML", kb)
     return True
 
-@command("/v")
+@command("v")
 def cmd_verify(msg, params, options=None):
     uid = str(msg.get("from", {}).get("id"))
     mid = msg.get("message_id")
-    cmd = msg.get("text", "")
-    order_id = cmd.replace("/v_", "") if "/v_" in cmd else params
+    data = msg.get("text", "")
+    
+    if data.startswith("v_"):
+        order_id = data.replace("v_", "")
+    else:
+        order_id = params
     
     if not order_id:
         send_message(uid, "No order ID", "HTML")
@@ -606,12 +600,16 @@ def cmd_verify(msg, params, options=None):
         send_message(uid, f"❌ <b>Payment Not Found</b>\n\nOrder: <code>{order_id}</code>", "HTML")
         return True
 
-@command("/c")
+@command("c")
 def cmd_cancel(msg, params, options=None):
     uid = str(msg.get("from", {}).get("id"))
     mid = msg.get("message_id")
-    cmd = msg.get("text", "")
-    order_id = cmd.replace("/c_", "") if "/c_" in cmd else params
+    data = msg.get("text", "")
+    
+    if data.startswith("c_"):
+        order_id = data.replace("c_", "")
+    else:
+        order_id = params
     
     if not order_id:
         p = pending_payments.find_one({"user_id": str(uid)})
@@ -634,11 +632,11 @@ def cmd_cancel(msg, params, options=None):
     send_message(uid, "❌ Cancelled", "HTML")
     return True
 
-@command("/backkkk")
+@command("backkkk")
 def cmd_backkkk(msg, params, options=None):
     return cmd_start(msg, params, options)
 
-@command("/orderksk")
+@command("orderksk")
 def cmd_orderksk(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -649,14 +647,14 @@ def cmd_orderksk(msg, params, options=None):
     else:
         text = "📦 <b>MY ORDERS</b>\n━━━━━━━━━━━━━━━━━━\n\n" + "\n\n".join(hist[-10:][::-1])
     
-    kb = {"inline_keyboard": [[{"text": "🔙 BACK", "callback_data": "/backkkk"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 BACK", "callback_data": "backkkk"}]]}
     try:
         edit_message(uid, mid, text, "HTML", kb)
     except:
         send_message(uid, text, "HTML", kb)
     return True
 
-@command("/profilemmm")
+@command("profilemmm")
 def cmd_profilemmm(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     name = msg.get("from", {}).get("first_name", "User")
@@ -664,40 +662,40 @@ def cmd_profilemmm(msg, params, options=None):
     orders = Resources.another_res("Order", uid).value()
     
     text = f"👤 <b>YOUR PROFILE</b>\n━━━━━━━━━━━━━━━━━━\n\n📛 Name: {name}\n🆔 ID: {uid}\n💰 Balance: ₹{balance}\n🛒 Orders: {orders}"
-    kb = {"inline_keyboard": [[{"text": "🛒 BUY", "callback_data": "/shopnawkk"}, {"text": "🔑 KEYS", "callback_data": "/orderksk"}], [{"text": "🔙 BACK", "callback_data": "/backkkk"}]]}
+    kb = {"inline_keyboard": [[{"text": "🛒 BUY", "callback_data": "shopnawkk"}, {"text": "🔑 KEYS", "callback_data": "orderksk"}], [{"text": "🔙 BACK", "callback_data": "backkkk"}]]}
     send_message(uid, text, "HTML", kb)
     return True
 
-@command("/spinj")
+@command("spinj")
 def cmd_spinj(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = "🎥 <b>Watch Tutorial</b>\n\nhttps://t.me/hehehehhhsljg/162"
-    kb = {"inline_keyboard": [[{"text": "▶️ Watch", "url": "https://t.me/hehehehhhsljg/162"}], [{"text": "🔙 BACK", "callback_data": "/backkkk"}]]}
+    kb = {"inline_keyboard": [[{"text": "▶️ Watch", "url": "https://t.me/hehehehhhsljg/162"}], [{"text": "🔙 BACK", "callback_data": "backkkk"}]]}
     send_message(uid, text, "HTML", kb)
     return True
 
-@command("/supportj")
+@command("supportj")
 def cmd_supportj(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = "💬 <b>Support</b>\n\n<a href='https://t.me/UR_SUBHAJIT0'>Contact</a>"
-    kb = {"inline_keyboard": [[{"text": "📱 WhatsApp", "url": "https://wa.me/917908696630"}], [{"text": "🔙 BACK", "callback_data": "/backkkk"}]]}
+    kb = {"inline_keyboard": [[{"text": "📱 WhatsApp", "url": "https://wa.me/917908696630"}], [{"text": "🔙 BACK", "callback_data": "backkkk"}]]}
     send_message(uid, text, "HTML", kb)
     return True
 
 # ========== NUMBER PAD ==========
 
-@command("/addpayment")
+@command("addpayment")
 def cmd_addpayment(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
     current_amount[uid] = "0"
     kb = {
         "inline_keyboard": [
-            [{"text": "1", "callback_data": "/n1"}, {"text": "2", "callback_data": "/n2"}, {"text": "3", "callback_data": "/n3"}],
-            [{"text": "4", "callback_data": "/n4"}, {"text": "5", "callback_data": "/n5"}, {"text": "6", "callback_data": "/n6"}],
-            [{"text": "7", "callback_data": "/n7"}, {"text": "8", "callback_data": "/n8"}, {"text": "9", "callback_data": "/n9"}],
-            [{"text": "CLEAR", "callback_data": "/clr"}, {"text": "0", "callback_data": "/n0"}, {"text": "✅", "callback_data": "/done"}],
-            [{"text": "🔙 BACK", "callback_data": "/backkkk"}]
+            [{"text": "1", "callback_data": "n1"}, {"text": "2", "callback_data": "n2"}, {"text": "3", "callback_data": "n3"}],
+            [{"text": "4", "callback_data": "n4"}, {"text": "5", "callback_data": "n5"}, {"text": "6", "callback_data": "n6"}],
+            [{"text": "7", "callback_data": "n7"}, {"text": "8", "callback_data": "n8"}, {"text": "9", "callback_data": "n9"}],
+            [{"text": "CLEAR", "callback_data": "clr"}, {"text": "0", "callback_data": "n0"}, {"text": "✅", "callback_data": "done"}],
+            [{"text": "🔙 BACK", "callback_data": "backkkk"}]
         ]
     }
     try:
@@ -706,7 +704,7 @@ def cmd_addpayment(msg, params, options=None):
         send_message(uid, "💰 <b>ENTER AMOUNT</b>\n\n₹0", "HTML", kb)
     return True
 
-@command("/n0")
+@command("n0")
 def cmd_n0(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -717,7 +715,7 @@ def cmd_n0(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n1")
+@command("n1")
 def cmd_n1(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -727,7 +725,7 @@ def cmd_n1(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n2")
+@command("n2")
 def cmd_n2(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -737,7 +735,7 @@ def cmd_n2(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n3")
+@command("n3")
 def cmd_n3(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -747,7 +745,7 @@ def cmd_n3(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n4")
+@command("n4")
 def cmd_n4(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -757,7 +755,7 @@ def cmd_n4(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n5")
+@command("n5")
 def cmd_n5(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -767,7 +765,7 @@ def cmd_n5(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n6")
+@command("n6")
 def cmd_n6(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -777,7 +775,7 @@ def cmd_n6(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n7")
+@command("n7")
 def cmd_n7(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -787,7 +785,7 @@ def cmd_n7(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n8")
+@command("n8")
 def cmd_n8(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -797,7 +795,7 @@ def cmd_n8(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/n9")
+@command("n9")
 def cmd_n9(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -807,7 +805,7 @@ def cmd_n9(msg, params, options=None):
     edit_message(uid, mid, f"💰 <b>ENTER AMOUNT</b>\n\n₹{amt}", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/clr")
+@command("clr")
 def cmd_clr(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -815,7 +813,7 @@ def cmd_clr(msg, params, options=None):
     edit_message(uid, mid, "💰 <b>ENTER AMOUNT</b>\n\n₹0", "HTML", msg.get("reply_markup"))
     return True
 
-@command("/done")
+@command("done")
 def cmd_done(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     amt = current_amount.get(uid, "0")
@@ -850,13 +848,13 @@ def cmd_done(msg, params, options=None):
     pending_payments.update_one({"user_id": str(uid)}, {"$set": {"data": pending_pays[uid]}}, upsert=True)
     
     caption = f"💰 <b>PAYMENT QR</b>\n\nAmount: ₹{amt}\n\n🧾 Order: <code>{order_id}</code>"
-    kb = {"inline_keyboard": [[{"text": "✅ VERIFY", "callback_data": f"/v_{order_id}"}], [{"text": "❌ CANCEL", "callback_data": f"/c_{order_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "✅ VERIFY", "callback_data": f"v_{order_id}"}], [{"text": "❌ CANCEL", "callback_data": f"c_{order_id}"}]]}
     send_photo(uid, qr_url, caption, "HTML", kb)
     return True
 
 # ========== ADMIN COMMANDS ==========
 
-@command("/admin")
+@command("admin")
 def cmd_admin(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -867,11 +865,11 @@ def cmd_admin(msg, params, options=None):
     
     kb = {
         "inline_keyboard": [
-            [{"text": "📦 Manage Products", "callback_data": "/admin_products"}],
-            [{"text": "👑 Manage Admins", "callback_data": "/admin_admins"}],
-            [{"text": "📣 Broadcast", "callback_data": "/broadcast"}],
-            [{"text": "💰 Add Balance", "callback_data": "/addbalance"}],
-            [{"text": "📝 Reseller Management", "callback_data": "/admin_resellers"}]
+            [{"text": "📦 Manage Products", "callback_data": "admin_products"}],
+            [{"text": "👑 Manage Admins", "callback_data": "admin_admins"}],
+            [{"text": "📣 Broadcast", "callback_data": "broadcast"}],
+            [{"text": "💰 Add Balance", "callback_data": "addbalance"}],
+            [{"text": "📝 Reseller Management", "callback_data": "admin_resellers"}]
         ]
     }
     text = "👋 <b>ADMIN PANEL</b>\n━━━━━━━━━━━━━━━━━━"
@@ -883,7 +881,7 @@ def cmd_admin(msg, params, options=None):
 
 # ========== PRODUCT MANAGEMENT ADMIN ==========
 
-@command("/admin_products")
+@command("admin_products")
 def cmd_admin_products(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -911,10 +909,10 @@ def cmd_admin_products(msg, params, options=None):
     
     kb = {
         "inline_keyboard": [
-            [{"text": "➕ Add Product", "callback_data": "/add_prod"}],
-            [{"text": "✏️ Edit Product", "callback_data": "/edit_prod"}],
-            [{"text": "🗑️ Delete Product", "callback_data": "/del_prod"}],
-            [{"text": "🔙 Back", "callback_data": "/admin"}]
+            [{"text": "➕ Add Product", "callback_data": "add_prod"}],
+            [{"text": "✏️ Edit Product", "callback_data": "edit_prod"}],
+            [{"text": "🗑️ Delete Product", "callback_data": "del_prod"}],
+            [{"text": "🔙 Back", "callback_data": "admin"}]
         ]
     }
     
@@ -926,7 +924,7 @@ def cmd_admin_products(msg, params, options=None):
 
 # ========== ADD PRODUCT ==========
 
-@command("/add_prod")
+@command("add_prod")
 def cmd_add_prod(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
@@ -946,11 +944,11 @@ emoji_id: optional
 Type /cancel
 """
     send_message(uid, text, "HTML")
-    pending_cmds[uid] = "/add_prod_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/add_prod_process"}}, upsert=True)
+    pending_cmds[uid] = "add_prod_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "add_prod_process"}}, upsert=True)
     return True
 
-@command("/add_prod_process")
+@command("add_prod_process")
 def cmd_add_prod_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "")
@@ -980,8 +978,8 @@ def cmd_add_prod_process(msg, params, options=None):
     
     kb = {
         "inline_keyboard": [
-            [{"text": "📋 Add Plan", "callback_data": f"/add_plan_{product_id}"}],
-            [{"text": "🔙 Back", "callback_data": "/admin_products"}]
+            [{"text": "📋 Add Plan", "callback_data": f"add_plan_{product_id}"}],
+            [{"text": "🔙 Back", "callback_data": "admin_products"}]
         ]
     }
     
@@ -997,15 +995,18 @@ def cmd_add_prod_process(msg, params, options=None):
 
 # ========== ADD PLAN ==========
 
-@command("/add_plan")
+@command("add_plan")
 def cmd_add_plan(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
     if str(uid) not in ADMIN_IDS:
         return True
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/add_plan_", "") if "/add_plan_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("add_plan_"):
+        product_id = data.replace("add_plan_", "")
+    else:
+        product_id = params
     
     if not product_id:
         send_message(uid, "Product ID missing")
@@ -1028,11 +1029,11 @@ Example: <code>1|1 DaYS NONROOT|108|95</code>
 Type /cancel
 """
     send_message(uid, text, "HTML")
-    pending_cmds[uid] = "/add_plan_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/add_plan_process"}}, upsert=True)
+    pending_cmds[uid] = "add_plan_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "add_plan_process"}}, upsert=True)
     return True
 
-@command("/add_plan_process")
+@command("add_plan_process")
 def cmd_add_plan_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "")
@@ -1082,8 +1083,8 @@ def cmd_add_plan_process(msg, params, options=None):
     
     kb = {
         "inline_keyboard": [
-            [{"text": "➕ Add Another", "callback_data": f"/add_plan_{product_id}"}],
-            [{"text": "🔙 Back", "callback_data": "/admin_products"}]
+            [{"text": "➕ Add Another", "callback_data": f"add_plan_{product_id}"}],
+            [{"text": "🔙 Back", "callback_data": "admin_products"}]
         ]
     }
     
@@ -1100,7 +1101,7 @@ def cmd_add_plan_process(msg, params, options=None):
 
 # ========== EDIT PRODUCT ==========
 
-@command("/edit_prod")
+@command("edit_prod")
 def cmd_edit_prod(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1116,8 +1117,8 @@ def cmd_edit_prod(msg, params, options=None):
     kb = {"inline_keyboard": []}
     for p in prods:
         pid = p.get('product_id')
-        kb["inline_keyboard"].append([{"text": f"✏️ {p.get('name')}", "callback_data": f"/edit_{pid}"}])
-    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin_products"}])
+        kb["inline_keyboard"].append([{"text": f"✏️ {p.get('name')}", "callback_data": f"edit_{pid}"}])
+    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "admin_products"}])
     
     try:
         edit_message(uid, mid, "Select product to edit:", "HTML", kb)
@@ -1125,17 +1126,20 @@ def cmd_edit_prod(msg, params, options=None):
         send_message(uid, "Select product to edit:", "HTML", kb)
     return True
 
-@command("/edit_abcd")
-@command("/edit_bala_v2")
-@command("/edit_drip")
-@command("/edit_silent")
-@command("/edit_prime")
+@command("edit")
 def cmd_edit_select(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/edit_", "")
+    data = msg.get("text", "")
+    if data.startswith("edit_"):
+        product_id = data.replace("edit_", "")
+    else:
+        product_id = params
+    
+    if not product_id:
+        send_message(uid, "Product not found")
+        return True
     
     p = get_product(product_id)
     if not p:
@@ -1160,12 +1164,12 @@ def cmd_edit_select(msg, params, options=None):
     
     kb = {
         "inline_keyboard": [
-            [{"text": "🔑 Change PID", "callback_data": f"/editpid_{product_id}"}],
-            [{"text": "🎨 Change Emoji", "callback_data": f"/editemoji_{product_id}"}],
-            [{"text": "📋 Edit Plan", "callback_data": f"/editplan_{product_id}"}],
-            [{"text": "🗑️ Remove Plan", "callback_data": f"/rmplan_{product_id}"}],
-            [{"text": "📱 Toggle Android", "callback_data": f"/togandroid_{product_id}"}],
-            [{"text": "🔙 Back", "callback_data": "/admin_products"}]
+            [{"text": "🔑 Change PID", "callback_data": f"editpid_{product_id}"}],
+            [{"text": "🎨 Change Emoji", "callback_data": f"editemoji_{product_id}"}],
+            [{"text": "📋 Edit Plan", "callback_data": f"editplan_{product_id}"}],
+            [{"text": "🗑️ Remove Plan", "callback_data": f"rmplan_{product_id}"}],
+            [{"text": "📱 Toggle Android", "callback_data": f"togandroid_{product_id}"}],
+            [{"text": "🔙 Back", "callback_data": "admin_products"}]
         ]
     }
     
@@ -1177,15 +1181,18 @@ def cmd_edit_select(msg, params, options=None):
 
 # ========== CHANGE PID ==========
 
-@command("/editpid")
+@command("editpid")
 def cmd_editpid(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
     if str(uid) not in ADMIN_IDS:
         return True
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/editpid_", "") if "/editpid_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("editpid_"):
+        product_id = data.replace("editpid_", "")
+    else:
+        product_id = params
     
     if not product_id:
         send_message(uid, "Product ID missing")
@@ -1193,11 +1200,11 @@ def cmd_editpid(msg, params, options=None):
     
     set_user(uid, "edit_pid_prod", product_id)
     send_message(uid, f"🔑 Send new PID for {product_id}\n\nType /cancel", "HTML")
-    pending_cmds[uid] = "/editpid_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/editpid_process"}}, upsert=True)
+    pending_cmds[uid] = "editpid_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "editpid_process"}}, upsert=True)
     return True
 
-@command("/editpid_process")
+@command("editpid_process")
 def cmd_editpid_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "").strip()
@@ -1226,7 +1233,7 @@ def cmd_editpid_process(msg, params, options=None):
     
     update_pid(product_id, text)
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}]]}
     send_message(uid, f"✅ PID Updated!\n\n📦 {p.get('name')}\n🔑 New PID: {text}", "HTML", kb)
     pending_cmds.pop(uid, None)
     pending_commands.delete_one({"user_id": str(uid)})
@@ -1235,15 +1242,18 @@ def cmd_editpid_process(msg, params, options=None):
 
 # ========== CHANGE EMOJI ==========
 
-@command("/editemoji")
+@command("editemoji")
 def cmd_editemoji(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
     if str(uid) not in ADMIN_IDS:
         return True
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/editemoji_", "") if "/editemoji_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("editemoji_"):
+        product_id = data.replace("editemoji_", "")
+    else:
+        product_id = params
     
     if not product_id:
         send_message(uid, "Product ID missing")
@@ -1251,11 +1261,11 @@ def cmd_editemoji(msg, params, options=None):
     
     set_user(uid, "edit_emoji_prod", product_id)
     send_message(uid, f"🎨 Send new Emoji ID for {product_id}\n\nExample: 5345976085735558094\n\nType /cancel", "HTML")
-    pending_cmds[uid] = "/editemoji_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/editemoji_process"}}, upsert=True)
+    pending_cmds[uid] = "editemoji_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "editemoji_process"}}, upsert=True)
     return True
 
-@command("/editemoji_process")
+@command("editemoji_process")
 def cmd_editemoji_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "").strip()
@@ -1284,7 +1294,7 @@ def cmd_editemoji_process(msg, params, options=None):
     
     update_emoji(product_id, text)
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}]]}
     send_message(uid, f"✅ Emoji Updated!\n\n📦 {p.get('name')}\n🎨 New Emoji: {text}", "HTML", kb)
     pending_cmds.pop(uid, None)
     pending_commands.delete_one({"user_id": str(uid)})
@@ -1293,7 +1303,7 @@ def cmd_editemoji_process(msg, params, options=None):
 
 # ========== EDIT PLAN ==========
 
-@command("/editplan")
+@command("editplan")
 def cmd_editplan(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1301,8 +1311,11 @@ def cmd_editplan(msg, params, options=None):
     if str(uid) not in ADMIN_IDS:
         return True
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/editplan_", "") if "/editplan_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("editplan_"):
+        product_id = data.replace("editplan_", "")
+    else:
+        product_id = params
     
     if not product_id:
         send_message(uid, "Product ID missing")
@@ -1324,8 +1337,8 @@ def cmd_editplan(msg, params, options=None):
     for plan in p.get('plans', []):
         plan_id = plan.get('plan_id')
         duration = plan.get('duration')
-        kb["inline_keyboard"].append([{"text": f"{duration} [ID: {plan_id}]", "callback_data": f"/editplan_select_{product_id}_{plan_id}"}])
-    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}])
+        kb["inline_keyboard"].append([{"text": f"{duration} [ID: {plan_id}]", "callback_data": f"editplan_select_{product_id}_{plan_id}"}])
+    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}])
     
     try:
         edit_message(uid, mid, text, "HTML", kb)
@@ -1333,15 +1346,15 @@ def cmd_editplan(msg, params, options=None):
         send_message(uid, text, "HTML", kb)
     return True
 
-@command("/editplan_select")
+@command("editplan_select")
 def cmd_editplan_select(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
-    cmd = msg.get("text", "")
-    parts = cmd.split("_")
-    if len(parts) >= 4:
-        product_id = parts[3]
-        plan_id = parts[4]
+    data = msg.get("text", "")
+    parts = data.replace("editplan_select_", "").split("_")
+    if len(parts) >= 2:
+        product_id = parts[0]
+        plan_id = parts[1]
     else:
         send_message(uid, "Invalid selection")
         return True
@@ -1377,11 +1390,11 @@ Example: <code>150|130</code>
 Type /cancel
 """
     send_message(uid, text, "HTML")
-    pending_cmds[uid] = "/editplan_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/editplan_process"}}, upsert=True)
+    pending_cmds[uid] = "editplan_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "editplan_process"}}, upsert=True)
     return True
 
-@command("/editplan_process")
+@command("editplan_process")
 def cmd_editplan_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "").strip()
@@ -1425,7 +1438,7 @@ def cmd_editplan_process(msg, params, options=None):
     
     update_plan_price(product_id, plan_id, price, reseller_price)
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}]]}
     send_message(uid, f"✅ Plan Updated!\n\n📦 {p.get('name')}\n💰 ₹{price}\n💰 Reseller: ₹{reseller_price}", "HTML", kb)
     pending_cmds.pop(uid, None)
     pending_commands.delete_one({"user_id": str(uid)})
@@ -1434,7 +1447,7 @@ def cmd_editplan_process(msg, params, options=None):
 
 # ========== REMOVE PLAN ==========
 
-@command("/rmplan")
+@command("rmplan")
 def cmd_rmplan(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1442,8 +1455,11 @@ def cmd_rmplan(msg, params, options=None):
     if str(uid) not in ADMIN_IDS:
         return True
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/rmplan_", "") if "/rmplan_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("rmplan_"):
+        product_id = data.replace("rmplan_", "")
+    else:
+        product_id = params
     
     if not product_id:
         send_message(uid, "Product ID missing")
@@ -1463,8 +1479,8 @@ def cmd_rmplan(msg, params, options=None):
     for plan in p.get('plans', []):
         plan_id = plan.get('plan_id')
         duration = plan.get('duration')
-        kb["inline_keyboard"].append([{"text": f"❌ {duration}", "callback_data": f"/rmplan_confirm_{product_id}_{plan_id}"}])
-    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}])
+        kb["inline_keyboard"].append([{"text": f"❌ {duration}", "callback_data": f"rmplan_confirm_{product_id}_{plan_id}"}])
+    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}])
     
     try:
         edit_message(uid, mid, text, "HTML", kb)
@@ -1472,15 +1488,15 @@ def cmd_rmplan(msg, params, options=None):
         send_message(uid, text, "HTML", kb)
     return True
 
-@command("/rmplan_confirm")
+@command("rmplan_confirm")
 def cmd_rmplan_confirm(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
-    cmd = msg.get("text", "")
-    parts = cmd.split("_")
-    if len(parts) >= 4:
-        product_id = parts[3]
-        plan_id = parts[4]
+    data = msg.get("text", "")
+    parts = data.replace("rmplan_confirm_", "").split("_")
+    if len(parts) >= 2:
+        product_id = parts[0]
+        plan_id = parts[1]
     else:
         send_message(uid, "Invalid selection")
         return True
@@ -1502,21 +1518,24 @@ def cmd_rmplan_confirm(msg, params, options=None):
     
     remove_plan(product_id, plan_id)
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}]]}
     send_message(uid, f"✅ Plan Removed!\n\n📦 {p.get('name')}\n📋 {selected.get('duration')}", "HTML", kb)
     return True
 
 # ========== TOGGLE ANDROID ==========
 
-@command("/togandroid")
+@command("togandroid")
 def cmd_togandroid(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
     if str(uid) not in ADMIN_IDS:
         return True
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/togandroid_", "") if "/togandroid_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("togandroid_"):
+        product_id = data.replace("togandroid_", "")
+    else:
+        product_id = params
     
     if not product_id:
         send_message(uid, "Product ID missing")
@@ -1529,13 +1548,13 @@ def cmd_togandroid(msg, params, options=None):
     
     new_val = toggle_android(product_id)
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"/edit_{product_id}"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": f"edit_{product_id}"}]]}
     send_message(uid, f"✅ Android: {'Required' if new_val else 'Not Required'}", "HTML", kb)
     return True
 
 # ========== DELETE PRODUCT ==========
 
-@command("/del_prod")
+@command("del_prod")
 def cmd_del_prod(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1551,8 +1570,8 @@ def cmd_del_prod(msg, params, options=None):
     kb = {"inline_keyboard": []}
     for p in prods:
         pid = p.get('product_id')
-        kb["inline_keyboard"].append([{"text": f"🗑️ {p.get('name')}", "callback_data": f"/del_confirm_{pid}"}])
-    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin_products"}])
+        kb["inline_keyboard"].append([{"text": f"🗑️ {p.get('name')}", "callback_data": f"del_confirm_{pid}"}])
+    kb["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "admin_products"}])
     
     try:
         edit_message(uid, mid, "Select product to delete:", "HTML", kb)
@@ -1560,13 +1579,16 @@ def cmd_del_prod(msg, params, options=None):
         send_message(uid, "Select product to delete:", "HTML", kb)
     return True
 
-@command("/del_confirm")
+@command("del_confirm")
 def cmd_del_confirm(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/del_confirm_", "") if "/del_confirm_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("del_confirm_"):
+        product_id = data.replace("del_confirm_", "")
+    else:
+        product_id = params
     
     if not product_id:
         return True
@@ -1576,7 +1598,7 @@ def cmd_del_confirm(msg, params, options=None):
         send_message(uid, "Product not found")
         return True
     
-    kb = {"inline_keyboard": [[{"text": "✅ Yes", "callback_data": f"/del_yes_{product_id}"}], [{"text": "❌ No", "callback_data": "/admin_products"}]]}
+    kb = {"inline_keyboard": [[{"text": "✅ Yes", "callback_data": f"del_yes_{product_id}"}], [{"text": "❌ No", "callback_data": "admin_products"}]]}
     
     try:
         edit_message(uid, mid, f"⚠️ Delete {p.get('name')}?", "HTML", kb)
@@ -1584,12 +1606,15 @@ def cmd_del_confirm(msg, params, options=None):
         send_message(uid, f"⚠️ Delete {p.get('name')}?", "HTML", kb)
     return True
 
-@command("/del_yes")
+@command("del_yes")
 def cmd_del_yes(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
-    cmd = msg.get("text", "")
-    product_id = cmd.replace("/del_yes_", "") if "/del_yes_" in cmd else params
+    data = msg.get("text", "")
+    if data.startswith("del_yes_"):
+        product_id = data.replace("del_yes_", "")
+    else:
+        product_id = params
     
     if not product_id:
         return True
@@ -1604,7 +1629,7 @@ def cmd_del_yes(msg, params, options=None):
 
 # ========== RESELLER MANAGEMENT ==========
 
-@command("/admin_resellers")
+@command("admin_resellers")
 def cmd_admin_resellers(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1614,9 +1639,9 @@ def cmd_admin_resellers(msg, params, options=None):
     
     kb = {
         "inline_keyboard": [
-            [{"text": "➕ Add Reseller", "callback_data": "/addreseller"}],
-            [{"text": "📝 Reseller List", "callback_data": "/resellerlist"}],
-            [{"text": "🔙 Back", "callback_data": "/admin"}]
+            [{"text": "➕ Add Reseller", "callback_data": "addreseller"}],
+            [{"text": "📝 Reseller List", "callback_data": "resellerlist"}],
+            [{"text": "🔙 Back", "callback_data": "admin"}]
         ]
     }
     
@@ -1626,7 +1651,7 @@ def cmd_admin_resellers(msg, params, options=None):
         send_message(uid, "💰 <b>RESELLER MANAGEMENT</b>", "HTML", kb)
     return True
 
-@command("/addreseller")
+@command("addreseller")
 def cmd_addreseller(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
@@ -1634,11 +1659,11 @@ def cmd_addreseller(msg, params, options=None):
         return True
     
     send_message(uid, "📩 Send user ID\n\nType /cancel", "HTML")
-    pending_cmds[uid] = "/addreseller_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/addreseller_process"}}, upsert=True)
+    pending_cmds[uid] = "addreseller_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "addreseller_process"}}, upsert=True)
     return True
 
-@command("/addreseller_process")
+@command("addreseller_process")
 def cmd_addreseller_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "").strip()
@@ -1673,7 +1698,7 @@ def cmd_addreseller_process(msg, params, options=None):
     pending_commands.delete_one({"user_id": str(uid)})
     return True
 
-@command("/resellerlist")
+@command("resellerlist")
 def cmd_resellerlist(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1690,7 +1715,7 @@ def cmd_resellerlist(msg, params, options=None):
             text += f"{i}. <code>{r}</code>\n"
         text += f"\nTotal: {len(resellers)}"
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": "/admin_resellers"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": "admin_resellers"}]]}
     try:
         edit_message(uid, mid, text, "HTML", kb)
     except:
@@ -1699,7 +1724,7 @@ def cmd_resellerlist(msg, params, options=None):
 
 # ========== ADMIN MANAGEMENT ==========
 
-@command("/admin_admins")
+@command("admin_admins")
 def cmd_admin_admins(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     mid = msg.get("message_id")
@@ -1711,7 +1736,7 @@ def cmd_admin_admins(msg, params, options=None):
     for admin in ADMIN_IDS:
         text += f"• <code>{admin}</code> (Main Admin)\n"
     
-    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": "/admin"}]]}
+    kb = {"inline_keyboard": [[{"text": "🔙 Back", "callback_data": "admin"}]]}
     
     try:
         edit_message(uid, mid, text, "HTML", kb)
@@ -1721,7 +1746,7 @@ def cmd_admin_admins(msg, params, options=None):
 
 # ========== ADD BALANCE ==========
 
-@command("/addbalance")
+@command("addbalance")
 def cmd_addbalance(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
@@ -1729,11 +1754,11 @@ def cmd_addbalance(msg, params, options=None):
         return True
     
     send_message(uid, "💡 Send: <code>user_id amount</code>\nExample: <code>123456 100</code>\nUse - for deduct: <code>123456 -50</code>", "HTML")
-    pending_cmds[uid] = "/addbalance_process"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/addbalance_process"}}, upsert=True)
+    pending_cmds[uid] = "addbalance_process"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "addbalance_process"}}, upsert=True)
     return True
 
-@command("/addbalance_process")
+@command("addbalance_process")
 def cmd_addbalance_process(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     text = msg.get("text", "")
@@ -1768,7 +1793,7 @@ def cmd_addbalance_process(msg, params, options=None):
 
 # ========== BROADCAST ==========
 
-@command("/broadcast")
+@command("broadcast")
 def cmd_broadcast(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
@@ -1777,11 +1802,11 @@ def cmd_broadcast(msg, params, options=None):
     
     users = user_data.distinct("user_id")
     send_message(uid, f"📢 <b>BROADCAST</b>\n━━━━━━━━━━━━━━━━━━\n👥 Users: {len(users)}\n\nSend message\nType /cancel", "HTML")
-    pending_cmds[uid] = "/broadcast_send"
-    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "/broadcast_send"}}, upsert=True)
+    pending_cmds[uid] = "broadcast_send"
+    pending_commands.update_one({"user_id": str(uid)}, {"$set": {"command": "broadcast_send"}}, upsert=True)
     return True
 
-@command("/broadcast_send")
+@command("broadcast_send")
 def cmd_broadcast_send(msg, params, options=None):
     uid = msg.get("from", {}).get("id")
     
@@ -1844,10 +1869,6 @@ def handle_update(update):
         mid = cb.get("message", {}).get("message_id")
         answer_callback(cb.get("id"))
         
-        parts = data.split(" ")
-        cmd = parts[0]
-        params = " ".join(parts[1:]) if len(parts) > 1 else None
-        
         msg = {
             "message_id": mid,
             "from": cb.get("from", {}),
@@ -1857,9 +1878,9 @@ def handle_update(update):
             "reply_markup": cb.get("message", {}).get("reply_markup")
         }
         
-        if cmd in commands:
+        if data in commands:
             try:
-                commands[cmd](msg, params)
+                commands[data](msg, None)
             except Exception as e:
                 print(f"Callback error: {e}")
         return
