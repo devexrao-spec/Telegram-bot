@@ -1,1852 +1,2296 @@
-import telegram
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
-from telegram import Update, MessageEntity
+# tusharbot.py - API INTEGRATED VERSION (AUTO KEY GENERATION)
 import requests
 import json
-import os
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
-from apscheduler.jobstores.base import JobLookupError
-import re
-from typing import Dict, List, Any, Optional
-from zoneinfo import ZoneInfo
-import tempfile
-import shutil
-import random
-import string
-import emoji
+import time
+from datetime import datetime
+import threading
+from pymongo import MongoClient
 
-# --- Configuration ---
 BOT_TOKEN = "8644946592:AAGej4mcpPcBJ9EHLTGgVeawaOo0Z4pwdZA"
-DATA_FILE = "bot_data.json"
-LOG_FILE = "bot.log"
-OWNER_ID = 8102646437
-DAILY_LIKE_TIME = "05:00"
-IST = ZoneInfo("Asia/Kolkata")
+BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# --- PREMIUM EMOJI CONFIGURATION ---
-# Sabhi responses mein premium emoji use honge
-CUSTOM_EMOJIS = {
-    "welcome": ("⭐", "6336646834139700626"),
-    "success": ("✅", "6336861449360514102"),
-    "error": ("❌", "6337033209397649451"),
-    "broadcast": ("📢", "6336698133229082903"),
-    "status": ("📊", "6336674562448563935"),
-    "bot_active": ("🚀", "6336674562448563935"),
-    "like": ("❤️", "6336861449360514102"),
-    "user": ("👤", "6336674562448563935"),
-    "uid": ("🔢", "6336646834139700626"),
-    "region": ("🌍", "6336674562448563935"),
-    "level": ("📊", "6336674562448563935"),
-    "time": ("⏰", "6336674562448563935"),
-    "days": ("📅", "6336674562448563935"),
-    "pause": ("⏸️", "6336674562448563935"),
-    "active": ("✅", "6336861449360514102"),
-    "help": ("🤖", "6336674562448563935"),
-    "stats": ("📊", "6336674562448563935"),
-    "admin": ("👑", "6336674562448563935"),
-    "group": ("🏢", "6336674562448563935"),
-    "api": ("📈", "6336674562448563935"),
-    "info": ("ℹ️", "6336674562448563935"),
-    "warning": ("⚠️", "6336674562448563935"),
-    "star": ("🌟", "6336646834139700626"),
-    "fire": ("🔥", "6336674562448563935"),
-    "settings": ("⚙️", "6336674562448563935"),
-    "backup": ("📦", "6336674562448563935"),
-    "restore": ("♻️", "6336674562448563935"),
-    "test": ("🔍", "6336674562448563935"),
-    "run": ("▶️", "6336674562448563935"),
-    "id": ("🆔", "6336674562448563935"),
-    "name": ("📋", "6336674562448563935"),
-    "command": ("⚡", "6336674562448563935"),
-    "example": ("📝", "6336674562448563935"),
-    "result": ("🎯", "6336674562448563935"),
-    "date": ("📆", "6336674562448563935"),
-    "total": ("🔢", "6336674562448563935"),
-    "failed": ("❌", "6337033209397649451"),
-    "sent": ("✅", "6336861449360514102"),
-    "processing": ("⏳", "6336674562448563935"),
-    "completed": ("✅", "6336861449360514102"),
-    "active_groups": ("🏢", "6336674562448563935"),
-    "users_count": ("👥", "6336674562448563935"),
-}
+# ========== API CONFIGURATION ==========
+API_URL = "https://xyzcheats.com/api/reseller_v1.php"
+API_KEY = "b25eb076f5c0412fa9f1eba94550d02e"
 
-# Premium Emoji IDs List
-PREMIUM_EMOJIS = [
-    "6100639476441161711", "6102462664288509137", "6100199534351097095",
-    "6102926404792360795", "6100409966273764915", "6100430105375415737",
-    "6102470558438400435", "6100451820730064687", "6102638599033858630",
-    "6100179369479642954", "6100485115316542792", "6102661242101440205",
-    "6102592514034770678", "6102475626499808862", "6102863908723236868",
-    "6102510630483271620", "6282589525348720171", "6055377380204092112",
-    "6055551219005398825", "6055181976371994390", "6055481009175010794",
-    "6055484548228062462", "6055202102588742236", "6055450347403484860",
-    "6055228576767155521", "6055183995006623379", "6337009415278828759",
-    "6336756235546663929", "6334772471757020134", "6336732269629153634",
-    "6336833407519038409", "6337048276142924106", "6337018975876030803",
-    "6336608132189395373", "6336797785060286399", "6336685231147326793",
-    "6336907611669011898", "6336988189550451848", "6337098578799893838",
-    "6336808092981796477", "6337020083977592163", "6337112997005107243",
-    "6337051755066433311", "6336835907190004485", "6336618976981818626",
-    "6336857218817728795", "6336974471424908889", "6337125748763008448",
-    "6337098338281725706", "6336962978092425393", "6336633214798404108",
-    "6337019139084786234", "6337035356881296575", "6337026908680625329",
-    "6336690569791676356", "6337106906741480828", "6337072645787361389",
-    "6336720729052027967", "6336670885956557643", "6337113894653271580",
-    "6334488003188105980", "6336721798498884548", "6336799284003873851",
-    "6337112129421713282", "6336599202952388231", "6336755629956275338",
-    "6334702021408465964", "6337109865973948062", "6336708763273142215",
-    "6337083451925078342", "6336930400765484501", "6334788126912815244",
-    "6337059606266651217", "6336812005697002754", "6336813629194640485",
-    "6337085796977221633", "6336663202260065128", "6334324468013341494",
-    "6337047855236129713", "6336782885818742144", "6336664645369076808",
-    "6336910583786383660", "6336862179504954500", "6336697226990985005",
-    "6336772620846899242", "6337033209397649451", "6336861449360514102",
-    "6336573617832206335", "6337055242579876765", "6336789422758960593",
-    "6336781331040577785", "6336603218746810844", "6337123072998383823",
-    "6336894825551371014", "6334681658968513467", "6336799919659031563",
-    "6336707603631972035", "6336874467406389346", "6336756411640323933",
-    "6336608037700115865", "6336613247495445753", "6336973539417007164",
-    "6336931040715612818", "6336653869296132233", "6336836572909938734",
-    "6336798231736885254", "6336813951317187443", "6336866435817545002",
-    "6336662845777780692", "6336580455420141312", "6336750437340816001",
-    "6336677470141422007", "6337078718871117522", "6336931345658289868",
-    "6336935322798005307", "6336646834139700626", "6337010179783007229",
-    "6336618208182673162", "6336580975111184057", "6336957184181543528",
-    "6336991256157101601", "6336655355354815762", "6336795865209904645",
-    "6337054177427988529", "6336855354801921798", "6336878444546105899",
-    "6336861037043654967", "6336662472115626382", "6337093386184432717",
-    "6336637947852365586", "6336876696494417749", "6334678278829252492",
-    "6337087411884923105", "6336989731443711607", "6336882614959349480",
-    "6336886055228153516", "6336797591786757523", "6336674519498890396",
-    "6336856849450540332", "6337048379222138619", "6336816932024491505",
-    "6336672814396874442", "6336835035311644293", "6336668004033504924",
-    "6336682357814205676", "6336764563488252026", "6337100812182887680",
-    "6336575056646249129"
-]
+# ========== MONGODB CONNECTION ==========
+MONGO_URI = "mongodb+srv://crasher3210_db_user:devex5656@cluster0.9y5axka.mongodb.net/?appName=Cluster0&compressors=zlib"
+DB_NAME = "telegram_bot1"
 
-# --- Premium Emoji Helper Functions ---
-
-def get_emoji(key: str) -> str:
-    """Get emoji character for a key."""
-    char, _ = CUSTOM_EMOJIS.get(key, ("❓", None))
-    return char
-
-def get_emoji_entity(key: str, offset: int) -> Optional[MessageEntity]:
-    """Get custom emoji entity for a key."""
-    char, emoji_id = CUSTOM_EMOJIS.get(key, ("❓", None))
-    if emoji_id:
-        return MessageEntity(
-            type="custom_emoji",
-            offset=offset,
-            length=len(char),
-            custom_emoji_id=emoji_id
-        )
-    return None
-
-def get_random_premium_emoji_id() -> str:
-    """Get a random premium emoji ID from the list."""
-    return random.choice(PREMIUM_EMOJIS)
-
-def process_text_with_premium_emojis(text: str, entities: List[MessageEntity] = None) -> tuple:
-    """
-    Process text to replace normal emojis with premium ones.
-    Returns (processed_text, new_entities)
-    """
-    if entities is None:
-        entities = []
+class MongoDB:
+    _instance = None
     
-    final_text = ""
-    new_entities = []
-    offset_map = {}
-    current_old_offset = 0
-    current_new_offset = 0
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.client = MongoClient(MONGO_URI)
+            cls._instance.db = cls._instance.client[DB_NAME]
+            cls._instance._initialize_collections()
+        return cls._instance
     
-    # First pass: replace emojis
-    i = 0
-    while i < len(text):
-        char = text[i]
-        offset_map[current_old_offset] = current_new_offset
+    def _initialize_collections(self):
+        collections = ['bot_data', 'user_data', 'pending_commands', 'pending_payments', 'processed_payments', 'payment_orders', 'products']
+        for coll in collections:
+            if coll not in self.db.list_collection_names():
+                self.db.create_collection(coll)
         
-        # Check if it's an emoji
-        if emoji.is_emoji(char):
-            rand_id = get_random_premium_emoji_id()
-            placeholder = "✨"
-            new_entities.append(MessageEntity(
-                type="custom_emoji",
-                offset=current_new_offset,
-                length=len(placeholder),
-                custom_emoji_id=rand_id
-            ))
-            final_text += placeholder
-            char_len = len(char.encode('utf-16-le')) // 2
-            current_old_offset += char_len
-            current_new_offset += len(placeholder)
-        else:
-            final_text += char
-            current_old_offset += 1
-            current_new_offset += 1
-        i += 1
+        self.db.bot_data.create_index("key", unique=True)
+        self.db.user_data.create_index([("user_id", 1), ("key", 1)], unique=True)
+        self.db.pending_payments.create_index("user_id", unique=True)
+        self.db.processed_payments.create_index("order_id", unique=True)
+        self.db.payment_orders.create_index("order_id", unique=True)
+        self.db.products.create_index("pid", unique=True)
     
-    offset_map[current_old_offset] = current_new_offset
+    def get_collection(self, name):
+        return self.db[name]
+
+mongo = MongoDB()
+
+# ========== PRODUCTS STORE ==========
+class ProductsStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('products')
     
-    # Process existing entities
-    for ent in entities:
-        if ent.type == "custom_emoji":
-            continue
-        new_start = offset_map.get(ent.offset)
-        new_end = offset_map.get(ent.offset + ent.length)
-        if new_start is not None and new_end is not None:
-            new_entities.append(MessageEntity(
-                type=ent.type,
-                offset=new_start,
-                length=new_end - new_start,
-                url=ent.url,
-                user=ent.user,
-                language=ent.language,
-                custom_emoji_id=ent.custom_emoji_id
-            ))
-    
-    return final_text, new_entities
-
-def create_premium_response(text: str, emoji_key: str = None, bold: bool = True, 
-                           code_words: List[str] = None, italic: bool = False) -> tuple:
-    """
-    Create a complete response with premium emojis everywhere
-    """
-    final_text = text
-    entities = []
-    offset = 0
-    
-    # Add emoji at start
-    if emoji_key:
-        emoji_char, _ = CUSTOM_EMOJIS.get(emoji_key, ("❓", None))
-        if emoji_char:
-            final_text = f"{emoji_char} {text}"
-            ent = get_emoji_entity(emoji_key, 0)
-            if ent:
-                entities.append(ent)
-                offset = len(emoji_char) + 1
-    
-    # Add bold formatting
-    if bold:
-        entities.append(MessageEntity(
-            type="bold",
-            offset=0,
-            length=len(final_text)
-        ))
-    
-    # Add italic formatting
-    if italic:
-        entities.append(MessageEntity(
-            type="italic",
-            offset=0,
-            length=len(final_text)
-        ))
-    
-    # Add code formatting for specific words
-    if code_words:
-        for word in code_words:
-            idx = final_text.find(str(word))
-            if idx != -1:
-                entities.append(MessageEntity(
-                    type="code",
-                    offset=idx,
-                    length=len(str(word))
-                ))
-    
-    # Process premium emojis in the text
-    processed_text, new_entities = process_text_with_premium_emojis(final_text, entities)
-    
-    return processed_text, new_entities if new_entities else None
-
-def add_premium_emojis_to_text(text: str) -> tuple:
-    """
-    Add premium emojis to any text
-    """
-    # Process all emojis in text
-    return process_text_with_premium_emojis(text)
-
-# --- Logging Setup ---
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_FILE),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# Global variables
-application = None
-scheduler = None
-
-# --- Helper Functions for Data Storage ---
-
-def is_owner(user_id):
-    return user_id == OWNER_ID
-
-def is_allowed_group(chat_id):
-    data = load_data()
-    allowed_groups = data.get("allowed_groups", [])
-    if not allowed_groups:
-        return False
-    return chat_id in allowed_groups
-
-def is_private_chat(update):
-    return update.effective_chat.type == 'private'
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            logger.error(f"Error loading data: {e}")
-            return initialize_data()
-    else:
-        return initialize_data()
-
-def initialize_data():
-    return {
-        "users": {}, 
-        "total_likes": {}, 
-        "custom_message": "",
-        "allowed_groups": [],
-        "auto_like_uids": {},
-        "paused_uids": [],
-        "settings": {"daily_like_time": DAILY_LIKE_TIME},
-        "like_limits": {},
-        "api_stats": {"total_calls": 0, "successful_calls": 0, "failed_calls": 0},
-        "active_groups": []
-    }
-
-def save_data(data):
-    try:
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as tmp:
-            json.dump(data, tmp, indent=4)
-            tmp.flush()
-        shutil.move(tmp.name, DATA_FILE)
-    except IOError as e:
-        logger.error(f"Error saving data: {e}")
-        if os.path.exists(tmp.name):
-            os.unlink(tmp.name)
-
-def format_uid_key(user_id, uid):
-    return f"{user_id}_{uid}"
-
-def parse_uid_key(key):
-    parts = key.split('_', 1)
-    if len(parts) == 2:
-        return parts[0], parts[1]
-    return None, None
-
-def update_user_info(data, user):
-    user_id = str(user.id)
-    telegram_name = user.first_name or ""
-    if user.last_name:
-        telegram_name += f" {user.last_name}"
-    username = user.username or "N/A"
-    
-    if user_id not in data["users"]:
-        data["users"][user_id] = {
-            "telegram_name": telegram_name,
-            "username": username,
-            "uid": None
+    def create(self, pid, name, description, category, durations, emoji_id=None, requires_android_id=False):
+        doc = {
+            "pid": pid,
+            "name": name,
+            "description": description,
+            "category": category,
+            "durations": durations,  # [{"duration": "1 Day", "api_duration": "1", "price": 100, "reseller_price": 90}]
+            "emoji_id": emoji_id or "5345976085735558094",
+            "requires_android_id": requires_android_id,
+            "created_at": datetime.now(),
+            "active": True
         }
-    else:
-        data["users"][user_id]["telegram_name"] = telegram_name
-        data["users"][user_id]["username"] = username
+        self.collection.update_one({"pid": pid}, {"$set": doc}, upsert=True)
+        return doc
     
-    return data
+    def get_all(self):
+        return list(self.collection.find({"active": True}))
+    
+    def get_by_pid(self, pid):
+        return self.collection.find_one({"pid": pid, "active": True})
+    
+    def get_by_category(self, category):
+        return list(self.collection.find({"category": category, "active": True}))
+    
+    def update(self, pid, data):
+        self.collection.update_one({"pid": pid}, {"$set": data})
+    
+    def delete(self, pid):
+        self.collection.update_one({"pid": pid}, {"$set": {"active": False}})
+    
+    def get_emoji(self, pid):
+        doc = self.collection.find_one({"pid": pid})
+        return doc.get("emoji_id", "5345976085735558094") if doc else "5345976085735558094"
 
-def update_group_info(data, chat):
-    chat_id = str(chat.id)
-    chat_title = chat.title or "Unknown Group"
+products_store = ProductsStore()
+
+# ========== API FUNCTIONS ==========
+def api_buy_key(product_id, duration, android_id=None):
+    """
+    Call API to buy a key
+    """
+    data = {
+        'api_key': API_KEY,
+        'action': 'buy',
+        'product_id': product_id,
+        'duration': duration
+    }
     
-    if "active_groups" not in data:
-        data["active_groups"] = []
+    if android_id:
+        data['android_id'] = android_id
     
-    group_exists = False
-    for group in data["active_groups"]:
-        if group["chat_id"] == chat_id:
-            group["chat_title"] = chat_title
-            group_exists = True
+    try:
+        response = requests.post(API_URL, data=data, timeout=30)
+        return response.json()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def api_get_products():
+    """Fetch available products from API"""
+    data = {
+        'api_key': API_KEY,
+        'action': 'list_products'
+    }
+    try:
+        response = requests.post(API_URL, data=data, timeout=30)
+        return response.json()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# ========== DATA STORE CLASSES ==========
+class DataStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('bot_data')
+    
+    def get(self, key, default=None):
+        doc = self.collection.find_one({"key": key})
+        return doc.get("value") if doc else default
+    
+    def set(self, key, value):
+        self.collection.update_one({"key": key}, {"$set": {"value": value}}, upsert=True)
+    
+    def get_data(self, key):
+        return self.get(key)
+    
+    def save_data(self, key, value):
+        self.set(key, value)
+
+bot_data = DataStore()
+
+class UserDataStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('user_data')
+    
+    def get(self, user_id, key, default=None):
+        doc = self.collection.find_one({"user_id": str(user_id), "key": key})
+        return doc.get("value") if doc else default
+    
+    def set(self, user_id, key, value):
+        self.collection.update_one(
+            {"user_id": str(user_id), "key": key},
+            {"$set": {"value": value}},
+            upsert=True
+        )
+    
+    def get_all_for_user(self, user_id):
+        docs = self.collection.find({"user_id": str(user_id)})
+        return {doc["key"]: doc["value"] for doc in docs}
+    
+    def delete(self, user_id, key):
+        self.collection.delete_one({"user_id": str(user_id), "key": key})
+    
+    def get_all_users(self):
+        users = self.collection.distinct("user_id")
+        return list(users)
+
+user_data_store = UserDataStore()
+
+class PendingCommandsStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('pending_commands')
+    
+    def get(self, user_id, default=None):
+        doc = self.collection.find_one({"user_id": str(user_id)})
+        return doc.get("command") if doc else default
+    
+    def set(self, user_id, command):
+        self.collection.update_one(
+            {"user_id": str(user_id)},
+            {"$set": {"command": command}},
+            upsert=True
+        )
+    
+    def delete(self, user_id):
+        self.collection.delete_one({"user_id": str(user_id)})
+
+pending_commands_store = PendingCommandsStore()
+
+class PendingPaymentsStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('pending_payments')
+    
+    def get(self, user_id):
+        doc = self.collection.find_one({"user_id": str(user_id)})
+        return doc.get("data") if doc else None
+    
+    def set(self, user_id, data):
+        self.collection.update_one(
+            {"user_id": str(user_id)},
+            {"$set": {"data": data}},
+            upsert=True
+        )
+    
+    def delete(self, user_id):
+        self.collection.delete_one({"user_id": str(user_id)})
+    
+    def get_all(self):
+        docs = self.collection.find()
+        return {doc["user_id"]: doc["data"] for doc in docs}
+
+pending_payments_store = PendingPaymentsStore()
+
+class ProcessedPaymentsStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('processed_payments')
+    
+    def add(self, order_id, user_id, amount):
+        doc = {
+            "order_id": order_id,
+            "user_id": str(user_id),
+            "amount": amount,
+            "processed_at": datetime.now()
+        }
+        self.collection.update_one({"order_id": order_id}, {"$set": doc}, upsert=True)
+        print(f"💾 Stored processed payment: order={order_id}, user={user_id}, amount={amount}")
+    
+    def exists(self, order_id):
+        return self.collection.find_one({"order_id": order_id}) is not None
+    
+    def get_user_payments(self, user_id):
+        return list(self.collection.find({"user_id": str(user_id)}))
+
+processed_payments_store = ProcessedPaymentsStore()
+
+class PaymentOrdersStore:
+    def __init__(self):
+        self.collection = mongo.get_collection('payment_orders')
+    
+    def create(self, order_id, user_id, amount, product_name=None, plan=None):
+        doc = {
+            "order_id": order_id,
+            "user_id": str(user_id),
+            "amount": float(amount),
+            "product_name": product_name,
+            "plan": plan,
+            "created_at": datetime.now(),
+            "status": "pending"
+        }
+        self.collection.update_one({"order_id": order_id}, {"$set": doc}, upsert=True)
+        return doc
+    
+    def get_order(self, order_id):
+        return self.collection.find_one({"order_id": order_id})
+    
+    def mark_verified(self, order_id):
+        self.collection.update_one(
+            {"order_id": order_id},
+            {"$set": {"status": "verified", "verified_at": datetime.now()}}
+        )
+    
+    def delete(self, order_id):
+        self.collection.delete_one({"order_id": order_id})
+
+payment_orders_store = PaymentOrdersStore()
+
+# ========== HELPER FUNCTIONS ==========
+def get_user_data(user_id, key, default=None):
+    return user_data_store.get(user_id, key, default)
+
+def set_user_data(user_id, key, value):
+    user_data_store.set(user_id, key, value)
+
+def send_message(chat_id, text, parse_mode="HTML", reply_markup=None, disable_web_page_preview=True):
+    url = f"{BASE_URL}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode, "disable_web_page_preview": disable_web_page_preview}
+    if reply_markup:
+        payload["reply_markup"] = json.dumps(reply_markup)
+    try:
+        return requests.post(url, json=payload).json()
+    except Exception as e:
+        print(f"Send error: {e}")
+        return None
+
+def send_photo(chat_id, photo, caption=None, parse_mode="HTML", reply_markup=None):
+    url = f"{BASE_URL}/sendPhoto"
+    payload = {"chat_id": chat_id, "photo": photo, "parse_mode": parse_mode}
+    if caption:
+        payload["caption"] = caption
+    if reply_markup:
+        payload["reply_markup"] = json.dumps(reply_markup)
+    try:
+        return requests.post(url, json=payload).json()
+    except:
+        return None
+
+def edit_message(chat_id, message_id, text, parse_mode="HTML", reply_markup=None):
+    url = f"{BASE_URL}/editMessageText"
+    payload = {"chat_id": chat_id, "message_id": message_id, "text": text, "parse_mode": parse_mode}
+    if reply_markup:
+        payload["reply_markup"] = json.dumps(reply_markup)
+    try:
+        return requests.post(url, json=payload).json()
+    except Exception as e:
+        print(f"Edit error: {e}")
+        return None
+
+def delete_message(chat_id, message_id):
+    url = f"{BASE_URL}/deleteMessage"
+    try:
+        return requests.post(url, json={"chat_id": chat_id, "message_id": message_id}).json()
+    except:
+        return None
+
+def answer_callback(callback_id, text=None, show_alert=False):
+    url = f"{BASE_URL}/answerCallbackQuery"
+    payload = {"callback_query_id": callback_id}
+    if text:
+        payload["text"] = text
+        payload["show_alert"] = show_alert
+    try:
+        return requests.post(url, json=payload).json()
+    except:
+        return None
+
+def get_updates(offset=None):
+    url = f"{BASE_URL}/getUpdates"
+    try:
+        response = requests.get(url, params={"offset": offset} if offset else {})
+        return response.json().get("result", [])
+    except:
+        return []
+
+class User:
+    @staticmethod
+    def get_data(user_id, key):
+        return get_user_data(user_id, key)
+    
+    @staticmethod
+    def save_data(user_id, key, value):
+        set_user_data(user_id, key, value)
+
+class Resources:
+    @staticmethod
+    def another_res(resource_type, user=None):
+        class Resource:
+            def __init__(self, res_type, user_id):
+                self.res_type = res_type
+                self.user_id = user_id
+                self.store_key = f"{res_type}_{user_id}"
+            
+            def value(self):
+                return bot_data.get(self.store_key, 0)
+            
+            def add(self, amount):
+                current = self.value()
+                bot_data.set(self.store_key, current + amount)
+                return self
+            
+            def cut(self, amount):
+                current = self.value()
+                bot_data.set(self.store_key, max(0, current - amount))
+                return self
+        return Resource(resource_type, user)
+
+def get_easy_time():
+    current = datetime.now()
+    date = current.strftime("%Y-%m-%d")
+    time_str = current.strftime("%H:%M")
+    year, month, day = date.split("-")
+    hour, minute = time_str.split(":")
+    hour = int(hour)
+    ampm = "am"
+    if hour >= 12:
+        ampm = "pm"
+    if hour > 12:
+        hour -= 12
+    if hour == 0:
+        hour = 12
+    MONTHS = {"01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun", "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"}
+    return f"{int(day)} {MONTHS[month]}, {hour:02}:{minute} {ampm}"
+
+commands = {}
+
+def command(name):
+    def decorator(func):
+        commands[name] = func
+        return func
+    return decorator
+
+# ========== START COMMANDS ==========
+
+@command("/start")
+@command("/Start")
+@command("/START")
+def cmd_start(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    if not User.get_data(user_id, "joined_date"):
+        User.save_data(user_id, "joined_date", message.get("date"))
+    balance = Resources.another_res("Balance", user=user_id).value()
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
+        "WELCOME TO HACK STORE "
+        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
+        "</blockquote>\n\n"
+        "<i>"
+        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
+        "Your ultimate destination for premium mods, cheats & clients!"
+        "</i>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
+        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
+        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
+        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
+        "</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
+        "</blockquote>"
+    )
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "style": "success"}],
+            [
+                {"text": "MY KEY", "callback_data": "/orderksk", "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "style": "success"}
+            ],
+            [
+                {"text": "HOW TO USE", "callback_data": "/spinj", "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "style": "success"}
+            ],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "style": "success"}],
+            [
+                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "style": "success"},
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "style": "success"}
+            ]
+        ]
+    }
+    send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+@command("/shopnawkk")
+def cmd_shopnawkk(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    
+    # Get products from database
+    products = products_store.get_all()
+    categories = {}
+    
+    for product in products:
+        cat = product.get("category", "Other")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(product)
+    
+    if not products:
+        text = "No products available. Please contact admin."
+        send_message(user_id, text, "HTML")
+        return True
+    
+    text = """
+━━━━━━━━━━━━━━━━━━━━
+<tg-emoji emoji-id="6093562529978522804">🛒</tg-emoji> <b>PANNEL STORE — SHOP</b>
+━━━━━━━━━━━━━━━━━━━━
+
+<tg-emoji emoji-id="6179339404906079822">📦</tg-emoji> Choose a product:
+"""
+    reply_markup = {"inline_keyboard": []}
+    
+    for category, product_list in categories.items():
+        for product in product_list:
+            emoji_id = product.get("emoji_id", "5345976085735558094")
+            reply_markup["inline_keyboard"].append([
+                {"text": f"{product.get('name', 'Product')}", "callback_data": f"/SHOP_PID_{product.get('pid')}", "style": "success"}
+            ])
+    
+    reply_markup["inline_keyboard"].append([
+        {"text": "BACK", "callback_data": "/backkkk", "style": "danger"}
+    ])
+    
+    try:
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+@command("/SHOP_PID_")
+def cmd_shop_pid(message, params, options=None):
+    """Dynamic product page from PID"""
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    
+    # Extract PID from callback data
+    pid = params
+    if not pid:
+        send_message(user_id, "Invalid product.")
+        return True
+    
+    product = products_store.get_by_pid(pid)
+    if not product:
+        send_message(user_id, "Product not found.")
+        return True
+    
+    resellers = bot_data.get_data("resellers_list") or []
+    is_reseller = str(user_id) in [str(u) for u in resellers]
+    
+    emoji_id = product.get("emoji_id", "5345976085735558094")
+    name = product.get("name", "Product")
+    description = product.get("description", "")
+    durations = product.get("durations", [])
+    
+    text = f"""
+━━━━━━━━━━━━━━━━━━━━
+<tg-emoji emoji-id="{emoji_id}">📦</tg-emoji> {name}
+━━━━━━━━━━━━━━━━━━━━
+{description}
+
+Choose a plan <tg-emoji emoji-id="5258336354642697821">👇</tg-emoji>
+"""
+    
+    reply_markup = {"inline_keyboard": []}
+    
+    for duration in durations:
+        dur_name = duration.get("duration", "Unknown")
+        price = duration.get("reseller_price" if is_reseller else "price", 0)
+        api_duration = duration.get("api_duration", "1")
+        
+        reply_markup["inline_keyboard"].append([
+            {"text": f"{dur_name} - ₹{price}", "callback_data": f"/BUY_PID_{pid}_{api_duration}", "style": "success"}
+        ])
+    
+    reply_markup["inline_keyboard"].append([
+        {"text": "BACK", "callback_data": "/shopnawkk", "style": "danger"}
+    ])
+    
+    try:
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+# Dynamic command handler for product purchase
+@command("/BUY_PID_")
+def cmd_buy_pid(message, params, options=None):
+    """Buy product using PID and duration from API"""
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    
+    if not params:
+        send_message(user_id, "Invalid request.")
+        return True
+    
+    parts = params.split("_")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid request format.")
+        return True
+    
+    pid = parts[0]
+    api_duration = parts[1]
+    android_id = parts[2] if len(parts) > 2 else None
+    
+    product = products_store.get_by_pid(pid)
+    if not product:
+        send_message(user_id, "Product not found.")
+        return True
+    
+    resellers = bot_data.get_data("resellers_list") or []
+    is_reseller = str(user_id) in [str(u) for u in resellers]
+    
+    # Find duration details
+    duration_data = None
+    for dur in product.get("durations", []):
+        if dur.get("api_duration") == api_duration:
+            duration_data = dur
             break
     
-    if not group_exists:
-        data["active_groups"].append({
-            "chat_id": chat_id,
-            "chat_title": chat_title,
-            "added_date": datetime.now(IST).isoformat()
-        })
-    
-    return data
-
-# --- Security Decorators ---
-
-def owner_only(func):
-    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not is_owner(update.effective_user.id):
-            text, entities = create_premium_response(
-                "Access Denied! This command is only available to the bot owner.",
-                emoji_key="error",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-            logger.warning(f"Unauthorized access attempt by user {update.effective_user.id}")
-            return
-        return await func(update, context)
-    return wrapper
-
-# --- API Helper Functions ---
-
-async def call_like_api(uid, region, retry_count=0):
-    max_retries = 3
-    api_url = f"LIKE API CODE BY T10"
-    
-    try:
-        response = requests.get(api_url, timeout=30)
-        response.raise_for_status()
-        api_data = response.json()
-        
-        data = load_data()
-        data["api_stats"]["total_calls"] += 1
-        data["api_stats"]["successful_calls"] += 1
-        save_data(data)
-        
-        return api_data
-    except Exception as e:
-        logger.error(f"API Error for UID {uid}: {str(e)}")
-        
-        data = load_data()
-        data["api_stats"]["total_calls"] += 1
-        data["api_stats"]["failed_calls"] += 1
-        save_data(data)
-        
-        if retry_count < max_retries:
-            wait_time = (2 ** retry_count) * 5
-            logger.info(f"Retrying in {wait_time} seconds...")
-            await asyncio.sleep(wait_time)
-            return await call_like_api(uid, region, retry_count + 1)
-        else:
-            raise Exception("API service temporarily unavailable")
-
-async def send_like_response(update, context, api_data, uid, region, remaining_days, is_daily=False):
-    try:
-        # Build response with premium emojis
-        prefix = "✨ Daily Auto-Like Results ✨" if is_daily else "✨ Like Results ✨"
-        
-        response_text = (
-            f"{prefix}\n\n"
-            f"{get_emoji('user')} Player Nickname: {api_data.get('PlayerNickname', 'N/A')}\n"
-            f"{get_emoji('uid')} UID: {api_data.get('UID', 'N/A')}\n"
-            f"{get_emoji('level')} Player Level: {api_data.get('PlayerLevel', 'N/A')}\n"
-            f"{get_emoji('region')} Player Region: {api_data.get('PlayerRegion', 'N/A')}\n"
-            f"{get_emoji('like')} Likes Before: {api_data.get('LikesbeforeCommand', 'N/A')}\n"
-            f"{get_emoji('like')} Likes After: {api_data.get('LikesafterCommand', 'N/A')}\n"
-            f"{get_emoji('like')} Likes Given by Bot: {api_data.get('LikesGivenByAPI', 'N/A')}\n"
-            f"{get_emoji('days')} Days Remaining: {remaining_days}\n"
-            f"{get_emoji('success')} Status: {api_data.get('status', 'N/A')}\n"
-            f"{get_emoji('time')} Time: {datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S %Z')}"
-        )
-
-        data = load_data()
-        custom_message = data.get("custom_message", "")
-        if custom_message:
-            response_text += f"\n\n✨ {custom_message}"
-
-        # Process premium emojis
-        final_text, entities = process_text_with_premium_emojis(response_text)
-        
-        # Add bold formatting
-        if entities is None:
-            entities = []
-        entities.append(MessageEntity(
-            type="bold",
-            offset=0,
-            length=len(final_text)
-        ))
-
-        if is_daily:
-            await application.bot.send_message(
-                chat_id=update,
-                text=final_text,
-                entities=entities
-            )
-            await send_to_all_groups(final_text, entities)
-        else:
-            await update.message.reply_text(final_text, entities=entities)
-            if not is_private_chat(update):
-                await send_to_all_groups(final_text, entities)
-
-        # Update user stats
-        user_id = str(update.effective_user.id) if not is_daily else str(update)
-        data = load_data()
-        if user_id not in data["users"]:
-            if not is_daily:
-                user = update.effective_user
-                telegram_name = user.first_name or ""
-                if user.last_name:
-                    telegram_name += f" {user.last_name}"
-                username = user.username or "N/A"
-            else:
-                telegram_name = f"User {user_id}"
-                username = "N/A"
-            
-            data["users"][user_id] = {
-                "telegram_name": telegram_name,
-                "username": username,
-                "uid": uid
-            }
-        else:
-            if not is_daily:
-                user = update.effective_user
-                telegram_name = user.first_name or ""
-                if user.last_name:
-                    telegram_name += f" {user.last_name}"
-                username = user.username or "N/A"
-                
-                data["users"][user_id]["telegram_name"] = telegram_name
-                data["users"][user_id]["username"] = username
-
-        if "LikesGivenByAPI" in api_data:
-            if user_id not in data["total_likes"]:
-                data["total_likes"][user_id] = {"count": 0, "days": 0}
-            data["total_likes"][user_id]["count"] += api_data["LikesGivenByAPI"]
-            data["total_likes"][user_id]["days"] += 1
-            save_data(data)
-
+    if not duration_data:
+        send_message(user_id, "Duration not found.")
         return True
-    except Exception as e:
-        logger.error(f"Error sending like response: {e}")
-        return False
-
-async def send_to_all_groups(message, entities=None):
-    try:
-        data = load_data()
-        active_groups = data.get("active_groups", [])
+    
+    price = duration_data.get("reseller_price" if is_reseller else "price", 0)
+    duration_name = duration_data.get("duration", "Unknown")
+    product_name = product.get("name", "Product")
+    
+    balance = Resources.another_res("Balance", user=user_id)
+    
+    if balance.value() < price:
+        # Insufficient balance - show payment QR
+        User.save_data(user_id, "last_deposit_amount", price)
+        User.save_data(user_id, "last_product", f"{product_name}\n{duration_name}")
+        User.save_data(user_id, "pending_buy_pid", pid)
+        User.save_data(user_id, "pending_buy_duration", api_duration)
+        User.save_data(user_id, "pending_buy_android_id", android_id)
+        cmd_autobuy1(message, None)
+        return True
+    
+    # Sufficient balance - buy from API
+    balance.cut(price)
+    Resources.another_res("Order", user=user_id).add(1)
+    
+    # Check if product requires android_id
+    requires_android_id = product.get("requires_android_id", False)
+    
+    if requires_android_id and not android_id:
+        # Ask user for android_id
+        send_message(
+            user_id,
+            f"⚠️ This product requires Android ID.\n\n"
+            f"Please send your Android ID.\n"
+            f"Type /cancel to cancel.",
+            "HTML"
+        )
+        User.save_data(user_id, "pending_android_id_product", pid)
+        User.save_data(user_id, "pending_android_id_duration", api_duration)
+        User.save_data(user_id, "pending_android_id_price", price)
+        pending_commands[user_id] = "/android_id_input"
+        pending_commands_store.set(user_id, "/android_id_input")
+        return True
+    
+    # Call API to get key
+    api_response = api_buy_key(pid, duration_name, android_id)
+    
+    if api_response.get("status") == "success":
+        key = api_response.get("data", {}).get("key", "No key returned")
         
-        for group in active_groups:
-            try:
-                await application.bot.send_message(
-                    chat_id=group["chat_id"],
-                    text=message,
-                    entities=entities
-                )
-                await asyncio.sleep(0.5)
-            except Exception as e:
-                logger.error(f"Failed to send message to group {group['chat_id']}: {e}")
-                data["active_groups"] = [g for g in data["active_groups"] if g["chat_id"] != group["chat_id"]]
-                save_data(data)
-    except Exception as e:
-        logger.error(f"Error in send_to_all_groups: {e}")
+        easy_time = get_easy_time()
+        
+        send_message(
+            user_id,
+            f"<tg-emoji emoji-id='6172208745582433583'>🛒</tg-emoji> {product_name}\n"
+            f"Plan: {duration_name}\n\n"
+            f"<tg-emoji emoji-id='6005570495603282482'>🔑</tg-emoji> <b>Your Key:</b>\n"
+            f"<code>{key}</code>\n\n"
+            f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Deducted: ₹{price}\n"
+            f"<tg-emoji emoji-id='6278102040438640835'>📦</tg-emoji> Time: {easy_time}\n\n"
+            f"<tg-emoji emoji-id='6264989131621798851'>📢</tg-emoji> <b>ALL FILES UPDATE</b>\n"
+            f"@SUBHAJIT_UPDATES",
+            "HTML"
+        )
+        
+        # Store purchase history
+        adm_ac = User.get_data(user_id, "userhAC") or []
+        adm_ac.append(
+            f"📆 {easy_time}\n"
+            f"👤 {message.get('from', {}).get('first_name', 'User')} [{user_id}]\n"
+            f"📦 {product_name} - {duration_name}\n"
+            f"💰 ₹{price}\n"
+            f"🔑 {key}\n"
+        )
+        User.save_data(user_id, "userhAC", adm_ac)
+        
+    else:
+        # API failed - refund balance
+        balance.add(price)
+        error_msg = api_response.get("message", "Unknown API error")
+        send_message(
+            user_id,
+            f"❌ <b>API Error!</b>\n\n"
+            f"Key generation failed.\n"
+            f"Your ₹{price} has been refunded.\n\n"
+            f"Error: {error_msg}\n\n"
+            f"Please try again later or contact support.",
+            "HTML"
+        )
+    
+    return True
 
-# --- Scheduler Management ---
+@command("/android_id_input")
+def cmd_android_id_input(message, params, options=None):
+    """Handle android_id input from user"""
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        User.save_data(user_id, "pending_android_id_product", None)
+        User.save_data(user_id, "pending_android_id_duration", None)
+        return True
+    
+    android_id = text.strip()
+    if len(android_id) < 8:
+        send_message(user_id, "❌ Invalid Android ID. Please send a valid ID or /cancel", "HTML")
+        return True
+    
+    pid = User.get_data(user_id, "pending_android_id_product")
+    duration = User.get_data(user_id, "pending_android_id_duration")
+    price = User.get_data(user_id, "pending_android_id_price")
+    
+    if not pid or not duration:
+        send_message(user_id, "❌ Session expired. Please try again.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    # Call API with android_id
+    product = products_store.get_by_pid(pid)
+    if not product:
+        send_message(user_id, "❌ Product not found.", "HTML")
+        return True
+    
+    product_name = product.get("name", "Product")
+    duration_name = duration
+    
+    # Get actual duration name from product
+    duration_data = None
+    for dur in product.get("durations", []):
+        if dur.get("api_duration") == duration:
+            duration_data = dur
+            duration_name = dur.get("duration", duration)
+            break
+    
+    api_response = api_buy_key(pid, duration_name, android_id)
+    
+    if api_response.get("status") == "success":
+        key = api_response.get("data", {}).get("key", "No key returned")
+        
+        easy_time = get_easy_time()
+        
+        send_message(
+            user_id,
+            f"<tg-emoji emoji-id='6172208745582433583'>🛒</tg-emoji> {product_name}\n"
+            f"Plan: {duration_name}\n\n"
+            f"<tg-emoji emoji-id='6005570495603282482'>🔑</tg-emoji> <b>Your Key:</b>\n"
+            f"<code>{key}</code>\n\n"
+            f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Deducted: ₹{price}\n"
+            f"<tg-emoji emoji-id='6278102040438640835'>📦</tg-emoji> Time: {easy_time}\n\n"
+            f"<tg-emoji emoji-id='6264989131621798851'>📢</tg-emoji> <b>ALL FILES UPDATE</b>\n"
+            f"@SUBHAJIT_UPDATES",
+            "HTML"
+        )
+        
+        adm_ac = User.get_data(user_id, "userhAC") or []
+        adm_ac.append(
+            f"📆 {easy_time}\n"
+            f"👤 {message.get('from', {}).get('first_name', 'User')} [{user_id}]\n"
+            f"📦 {product_name} - {duration_name}\n"
+            f"💰 ₹{price}\n"
+            f"🔑 {key}\n"
+        )
+        User.save_data(user_id, "userhAC", adm_ac)
+        
+    else:
+        send_message(
+            user_id,
+            f"❌ <b>API Error!</b>\n\n"
+            f"Key generation failed.\n"
+            f"Your ₹{price} has been refunded.\n\n"
+            f"Error: {api_response.get('message', 'Unknown error')}",
+            "HTML"
+        )
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    User.save_data(user_id, "pending_android_id_product", None)
+    User.save_data(user_id, "pending_android_id_duration", None)
+    return True
 
-async def reschedule_daily_job():
-    global scheduler
-    if not scheduler:
-        return
-
-    data = load_data()
-    daily_time = data.get("settings", {}).get("daily_like_time", DAILY_LIKE_TIME)
-    hour, minute = map(int, daily_time.split(':'))
-
+# ========== BACK COMMAND ==========
+@command("/backkkk")
+def cmd_backkkk(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    balance = Resources.another_res("Balance", user=user_id).value()
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='5345976085735558094'>🌟</tg-emoji> "
+        "WELCOME TO HACK STORE "
+        "<tg-emoji emoji-id='5348292765325212780'>🌙</tg-emoji>"
+        "</blockquote>\n\n"
+        "<i>"
+        "<tg-emoji emoji-id='5346024644635804737'>✨</tg-emoji> "
+        "Your ultimate destination for premium mods, cheats & clients!"
+        "</i>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5316571734604790521'>🚀</tg-emoji> PREMIUM FEATURES\n\n"
+        "<tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji> Instant Key Delivery\n"
+        "<tg-emoji emoji-id='6120544300511007571'>💳</tg-emoji> Secure Auto-Payment System\n"
+        "<tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji> 100% Anti-Ban Support"
+        "</blockquote>\n\n"
+        "<blockquote>"
+        "<tg-emoji emoji-id='5348392971207194994'>💰</tg-emoji> Your Balance: ₹" + str(balance) +
+        "</blockquote>"
+    )
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "BUY HACK", "callback_data": "/shopnawkk", "style": "success"}],
+            [
+                {"text": "MY KEY", "callback_data": "/orderksk", "style": "success"},
+                {"text": "PROFILE", "callback_data": "/profilemmm", "style": "success"}
+            ],
+            [
+                {"text": "HOW TO USE", "callback_data": "/spinj", "style": "success"},
+                {"text": "SUPPORT", "callback_data": "/supportj", "style": "success"}
+            ],
+            [{"text": "ADD FUND", "callback_data": "/addpayment", "style": "success"}],
+            [
+                {"text": "PAY PROOF", "url": "https://t.me/subhajit_feedback", "style": "success"},
+                {"text": "DOWNLOAD APK", "url": "https://t.me/+hasTLSVjzaZjZGVl", "style": "success"}
+            ]
+        ]
+    }
     try:
-        scheduler.remove_job("daily_like_job")
-    except JobLookupError:
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+# ========== ORDER HISTORY ==========
+@command("/orderksk")
+def cmd_orderksk(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    
+    adm_ac = User.get_data(user_id, "userhAC") or []
+    if not adm_ac:
+        text = (
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "<tg-emoji emoji-id='6008118472066732010'>📦</tg-emoji> <b>MY ORDERS</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━\n\n"
+            "You haven't placed any orders yet.\n"
+            "Tap <tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Shop Now to get started!"
+        )
+        reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]]}
+        try:
+            edit_message(user_id, msg_id, text, "HTML", reply_markup)
+        except:
+            send_message(user_id, text, "HTML", reply_markup)
+    else:
+        latest_10 = adm_ac[-10:][::-1]
+        safe_list = [str(item) for item in latest_10 if item]
+        text = "\n\n".join(safe_list)
+        reply_markup = {"inline_keyboard": [[{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]]}
+        try:
+            edit_message(user_id, msg_id, text, "HTML", reply_markup)
+        except:
+            send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+@command("/profilemmm")
+def cmd_profilemmm(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    first_name = message.get("from", {}).get("first_name", "User")
+    balance = Resources.another_res("Balance", user=user_id).value()
+    orders = Resources.another_res("Order", user=user_id).value()
+    joined = User.get_data(user_id, "joined_date")
+    
+    if not joined:
+        member_since = "Today"
+    else:
+        diff = message.get("date", 0) - int(joined)
+        if diff < 86400:
+            member_since = "Today"
+        elif diff < 86400 * 7:
+            member_since = str(diff // 86400) + " days ago"
+        elif diff < 86400 * 30:
+            member_since = str(diff // (86400 * 7)) + " weeks ago"
+        else:
+            member_since = str(diff // (86400 * 30)) + " months ago"
+    
+    text = (
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "<tg-emoji emoji-id='5346136537123801643'>👤</tg-emoji> YOUR PROFILE\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"<tg-emoji emoji-id='6008118472066732010'>📛</tg-emoji> Name: {first_name}\n"
+        f"<tg-emoji emoji-id='5841693351249710667'>🆔</tg-emoji> User ID: {user_id}\n"
+        f"<tg-emoji emoji-id='5348374038991357363'>💰</tg-emoji> Balance: ₹{balance}\n"
+        f"<tg-emoji emoji-id='5348490024583185697'>📅</tg-emoji> Member Since: {member_since}\n"
+        f"<tg-emoji emoji-id='6093562529978522804'>🛒</tg-emoji> Total Orders: {orders}\n\n"
+        "━━━━━━━━━━━━━━━━━━━━"
+    )
+    
+    reply_markup = {
+        "inline_keyboard": [
+            [
+                {"text": "BUY HACK", "callback_data": "/shopnawkk", "style": "success"},
+                {"text": "MY KEYS", "callback_data": "/orderksk", "style": "success"}
+            ],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
+        ]
+    }
+    
+    try:
+        if msg_id:
+            delete_message(user_id, msg_id)
+    except:
         pass
-    except Exception as e:
-        logger.error(f"Error removing daily job: {e}")
+    
+    send_message(user_id, text, "HTML", reply_markup)
+    return True
 
-    scheduler.add_job(
-        daily_like_job,
-        trigger=CronTrigger(hour=hour, minute=minute),
-        id='daily_like_job',
-        replace_existing=True,
-        coalesce=True,
-        max_instances=1,
-        misfire_grace_time=600
-    )
-    logger.info(f"Daily like job scheduled for {hour:02d}:{minute:02d} IST")
+@command("/spinj")
+def cmd_spinj(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    text = """
+<tg-emoji emoji-id='5368653135101310687'>🎥</tg-emoji> <b>Watch the full tutorial video below</b>
 
-# --- Bot Command Handlers ---
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Welcome message with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    
-    if not is_private_chat(update):
-        data = update_group_info(data, update.effective_chat)
-    
-    save_data(data)
-    
-    text, entities = create_premium_response(
-        "✨ Welcome to the Auto-Like Bot ✨\n\n"
-        "🤖 This bot helps you automatically send likes to your game UID daily.\n\n"
-        "📋 Use /help to see all available commands.",
-        emoji_key="welcome",
-        bold=True
-    )
-    
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"User {update.effective_user.id} started the bot")
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Help command with premium emojis on every command"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    
-    if not is_private_chat(update):
-        data = update_group_info(data, update.effective_chat)
-    
-    save_data(data)
-    
-    help_text = (
-        "✨ Auto-Like Bot Commands ✨\n\n"
-        "📋 User Commands:\n"
-        "⭐ /help - Show this help message\n"
-        "⭐ /start - Welcome message\n"
-        "⭐ /mylike - Check your total likes\n"
-        "⭐ /myuids - Show all your registered UIDs\n\n"
-        "👑 Owner Commands:\n"
-        "⭐ /autolike {uid} {region} {days} - Set automatic daily likes\n"
-        "⭐ /like {uid} {region} - Send single like request\n"
-        "⭐ /status - See who is using the bot\n"
-        "⭐ /setmessage <text> - Set custom autolike response message\n"
-        "⭐ /setgroup {group_id} - Add group to allowed groups\n"
-        "⭐ /removeuid {uid} - Remove a UID from auto-likes\n"
-        "⭐ /pauseuid {uid} - Pause auto-likes for a UID\n"
-        "⭐ /resumeuid {uid} - Resume auto-likes for a UID\n"
-        "⭐ /extend {uid} {days} - Extend auto-like days for a UID\n"
-        "⭐ /resetlikes {uid} - Reset likes count of a UID\n"
-        "⭐ /ownerbroadcast <message> - Broadcast a message to all users\n"
-        "⭐ /allstats - Show total stats\n"
-        "⭐ /backup - Export bot data backup\n"
-        "⭐ /restore - Restore from backup\n"
-        "⭐ /settime {hour}:{minute} - Change daily auto-like time\n"
-        "⭐ /setlimit {uid} {limit} - Set daily like limit for a UID\n"
-        "⭐ /checkapi {uid} {region} - Test API call for a UID\n"
-        "⭐ /runnow - Run daily auto-like job immediately\n"
-        "⭐ /groups - Show all active groups\n\n"
-        "📝 Usage Examples:\n"
-        "🔥 /autolike 1234567890 US 30\n"
-        "🔥 /like 1234567890 US\n"
-        "🔥 /extend 1234567890 7\n"
-        "🔥 /settime 04:30\n"
-        "🔥 /setlimit 1234567890 50"
-    )
-    
-    text, entities = create_premium_response(
-        help_text,
-        emoji_key="help",
-        bold=True
-    )
-    
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"User {update.effective_user.id} requested help")
-
-@owner_only
-async def autolike(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Setup auto-like with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if len(context.args) not in [3, 4]:
-        text, entities = create_premium_response(
-            "Usage:\n"
-            "⭐ /autolike {uid} {region} {days}\n"
-            "⭐ /autolike {uid} {region} {days} {user_id}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-
-    uid = context.args[0]
-    region = context.args[1].upper()
+<tg-emoji emoji-id='6222198028854367391'>👇</tg-emoji>
+"""
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "Watch Tutorial", "url": "https://t.me/hehehehhhsljg/162", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
+        ]
+    }
     try:
-        days = int(context.args[2])
-        if days <= 0:
-            text, entities = create_premium_response(
-                "Days must be a positive number.",
-                emoji_key="error",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-            return
-    except ValueError:
-        text, entities = create_premium_response(
-            "Days must be a valid number.",
-            emoji_key="error",
-            bold=True
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+@command("/supportj")
+def cmd_supportj(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    text = """
+━━━━━━━━━━━━━━━━━━━━
+<tg-emoji emoji-id='5891120964468480450'>💬</tg-emoji> <b>Support — Seller</b> <tg-emoji emoji-id='5346160971192747426'>🛡</tg-emoji>
+━━━━━━━━━━━━━━━━━━━━
+
+Need help? We're here for you! <tg-emoji emoji-id='5346289416484699504'>⚡</tg-emoji>
+
+📩 <b>Telegram:</b> <tg-emoji emoji-id='5776182936638329359'>⭐</tg-emoji>
+
+<a href="https://t.me/UR_SUBHAJIT0">𝐒υвʜᴀᎫιт</a> <tg-emoji emoji-id='6118314396440596568'>⭐</tg-emoji>
+
+<tg-emoji emoji-id='5891120964468480450'>💡</tg-emoji> <i>Include your User ID (from Profile)
+when contacting for faster help.</i>
+"""
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "WHATSAPP", "url": "https://wa.me/917908696630", "style": "success"}],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
+        ]
+    }
+    try:
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+# ========== PAYMENT SYSTEM (Same as before) ==========
+@command("/autobuy1")
+def cmd_autobuy1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    amount = User.get_data(user_id, "last_deposit_amount")
+    pt = User.get_data(user_id, "last_product") or "Unknown"
+    if not amount:
+        send_message(user_id, "Amount missing")
+        return True
+    balance = Resources.another_res("Balance", user=user_id).value()
+    need = float(amount) - float(balance)
+    if need < 0:
+        need = 0
+    upi = "bablu.xyztb@fam"
+    url = f"https://fampay.anujbots.xyz/qr.php?upi={upi}&amount={amount}"
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except:
+        send_message(user_id, "API ERROR")
+        return True
+    if not data or data.get("status") != "success":
+        send_message(user_id, "QR GENERATION FAILED")
+        return True
+    order_id = data["data"]["order_id"]
+    qr_url = data["data"]["qr_url"]
+    
+    payment_orders_store.create(order_id=order_id, user_id=user_id, amount=amount, product_name=pt)
+    
+    User.save_data(user_id, "last_order_id", order_id)
+    User.save_data(user_id, "payment_processed", False)
+    
+    caption = (
+        f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> INSUFFICIENT BALANCE</blockquote>\n\n"
+        f"┣ Product: {pt}\n"
+        f"┣ Price: ₹{amount}\n"
+        f"┣ Your Balance: ₹{balance}\n"
+        f"┗ Need: ₹{need}\n\n"
+        f"Scan the QR and complete payment.\n\n"
+        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b>\n"
+        f"<code>{order_id}</code>\n\n"
+        f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
+    )
+    
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "style": "success"}],
+            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "style": "danger"}]
+        ]
+    }
+    send_photo(user_id, qr_url, caption, "HTML", reply_markup)
+    return True
+
+@command("/verify_payment")
+def cmd_verify_payment(message, params, options=None):
+    user_id = str(message.get("from", {}).get("id"))
+    msg_id = message.get("message_id")
+    order_id = params
+    
+    if not order_id:
+        send_message(user_id, "No order ID found.", "HTML")
+        return True
+    
+    order_data = payment_orders_store.get_order(order_id)
+    if not order_data:
+        send_message(user_id, "❌ Invalid Order ID.", "HTML")
+        return True
+    
+    order_owner = order_data.get("user_id")
+    if str(order_owner) != str(user_id):
+        send_message(user_id, "❌ This order does not belong to you!", "HTML")
+        return True
+    
+    if order_data.get("status") == "verified":
+        send_message(user_id, "✅ This payment has already been processed.", "HTML")
+        return True
+    
+    send_message(user_id, "<tg-emoji emoji-id='5348374038991357363'>⏳</tg-emoji> Checking payment status...", "HTML")
+    
+    url = f"https://fampay.anujbots.xyz/verify.php?order_id={order_id}&api_key=FAM_71926bab274bc0d39d201e6730983da3163651ddb106b6c8"
+    
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except Exception as e:
+        send_message(user_id, f"❌ API ERROR: {str(e)}")
+        return True
+    
+    if data.get("status") == "success":
+        amount = float(data["data"]["amount"])
+        bal = Resources.another_res("Balance", user=user_id)
+        bal.add(amount)
+        
+        payment_orders_store.mark_verified(order_id)
+        processed_payments_store.add(order_id, user_id, amount)
+        
+        User.save_data(user_id, "last_order_id", "")
+        User.save_data(user_id, "payment_processed", True)
+        
+        if msg_id:
+            try:
+                delete_message(user_id, msg_id)
+            except:
+                pass
+        
+        send_message(
+            user_id,
+            f"<tg-emoji emoji-id='5348129380474306311'>✅</tg-emoji> <b>Payment Success!</b>\n\n"
+            f"<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> Added: ₹{amount}\n"
+            f"<tg-emoji emoji-id='5346227465876423936'>💳</tg-emoji> New Balance: ₹{bal.value()}",
+            "HTML"
         )
-        await update.message.reply_text(text, entities=entities)
+        
+        # Check if there's a pending purchase
+        pending_pid = User.get_data(user_id, "pending_buy_pid")
+        pending_duration = User.get_data(user_id, "pending_buy_duration")
+        pending_android_id = User.get_data(user_id, "pending_buy_android_id")
+        
+        if pending_pid and pending_duration:
+            # Auto-buy after payment
+            msg = {"from": {"id": user_id}}
+            cmd_buy_pid(msg, f"{pending_pid}_{pending_duration}_{pending_android_id or ''}", None)
+            User.save_data(user_id, "pending_buy_pid", None)
+            User.save_data(user_id, "pending_buy_duration", None)
+            User.save_data(user_id, "pending_buy_android_id", None)
+        
+        return True
+    else:
+        send_message(
+            user_id,
+            f"<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> <b>Payment Not Found</b>\n\n"
+            f"Order ID: <code>{order_id}</code>\n\n"
+            f"Please complete the payment and try again.",
+            "HTML"
+        )
+        return True
+
+@command("/cancel")
+def cmd_cancel(message, params, options=None):
+    user_id = str(message.get("from", {}).get("id"))
+    msg_id = message.get("message_id")
+    
+    order_id = params
+    if order_id:
+        order_data = payment_orders_store.get_order(order_id)
+        if order_data:
+            order_owner = order_data.get("user_id")
+            if str(order_owner) == str(user_id):
+                payment_orders_store.delete(order_id)
+    
+    if msg_id:
+        delete_message(user_id, msg_id)
+    
+    User.save_data(user_id, "last_order_id", "")
+    User.save_data(user_id, "payment_processed", False)
+    send_message(user_id, "<tg-emoji emoji-id='6278116707751956084'>❌</tg-emoji> Cancelled", "HTML")
+    return True
+
+# ========== ADD FUND ==========
+current_amount = {}
+
+@command("/addpayment")
+def cmd_addpayment(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    current_amount[user_id] = "0"
+    reply_markup = {
+        "inline_keyboard": [
+            [
+                {"text": "1", "callback_data": "/num1", "style": "success"},
+                {"text": "2", "callback_data": "/num2", "style": "success"},
+                {"text": "3", "callback_data": "/num3", "style": "success"}
+            ],
+            [
+                {"text": "4", "callback_data": "/num4", "style": "success"},
+                {"text": "5", "callback_data": "/num5", "style": "success"},
+                {"text": "6", "callback_data": "/num6", "style": "success"}
+            ],
+            [
+                {"text": "7", "callback_data": "/num7", "style": "success"},
+                {"text": "8", "callback_data": "/num8", "style": "success"},
+                {"text": "9", "callback_data": "/num9", "style": "success"}
+            ],
+            [
+                {"text": "CLEAR", "callback_data": "/clearamt", "style": "danger"},
+                {"text": "0", "callback_data": "/num0", "style": "success"},
+                {"text": "CONFIRM", "callback_data": "/done", "style": "success"}
+            ],
+            [{"text": "BACK", "callback_data": "/backkkk", "style": "danger"}]
+        ]
+    }
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹0\n\n"
+        "Use the keypad below to enter amount."
+    )
+    try:
+        edit_message(user_id, msg_id, text, "HTML", reply_markup)
+    except:
+        send_message(user_id, text, "HTML", reply_markup)
+    return True
+
+@command("/num0")
+def cmd_num0(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "0"
+    else:
+        amt += "0"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num1")
+def cmd_num1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "1"
+    else:
+        amt += "1"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num2")
+def cmd_num2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "2"
+    else:
+        amt += "2"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num3")
+def cmd_num3(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "3"
+    else:
+        amt += "3"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num4")
+def cmd_num4(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "4"
+    else:
+        amt += "4"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num5")
+def cmd_num5(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "5"
+    else:
+        amt += "5"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num6")
+def cmd_num6(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "6"
+    else:
+        amt += "6"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num7")
+def cmd_num7(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "7"
+    else:
+        amt += "7"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num8")
+def cmd_num8(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "8"
+    else:
+        amt += "8"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/num9")
+def cmd_num9(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    amt = current_amount.get(user_id, "0")
+    if amt == "0":
+        amt = "9"
+    else:
+        amt += "9"
+    current_amount[user_id] = amt
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹" + amt +
+        "\n\nUse the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/clearamt")
+def cmd_clearamt(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    current_amount[user_id] = "0"
+    text = (
+        "<blockquote>"
+        "<tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> ENTER CUSTOM AMOUNT"
+        "</blockquote>\n\n"
+        "Amount: ₹0\n\n"
+        "Use the keypad below to enter amount."
+    )
+    edit_message(user_id, msg_id, text, "HTML", message.get("reply_markup"))
+    return True
+
+@command("/done")
+def cmd_done(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    amt = current_amount.get(user_id, "0")
+    if not amt or amt == "0":
+        send_message(user_id, "Enter amount first")
+        return True
+    User.save_data(user_id, "last_deposit_amount", float(amt))
+    cmd_addpayment_qr(message)
+    return True
+
+def cmd_addpayment_qr(message):
+    user_id = message.get("from", {}).get("id")
+    amount = User.get_data(user_id, "last_deposit_amount")
+    if not amount:
+        send_message(user_id, "Amount missing")
         return
+    upi = "bablu.xyztb@fam"
+    url = f"https://fampay.anujbots.xyz/qr.php?upi={upi}&amount={amount}"
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except:
+        send_message(user_id, "API ERROR")
+        return
+    if data.get("status") != "success":
+        send_message(user_id, "QR GENERATION FAILED")
+        return
+    order_id = data["data"]["order_id"]
+    qr_url = data["data"]["qr_url"]
+    
+    payment_orders_store.create(order_id=order_id, user_id=user_id, amount=amount, product_name="Add Funds")
+    
+    User.save_data(user_id, "addpay_order_id", order_id)
+    User.save_data(user_id, "payment_processed", False)
+    
+    caption = (
+        f"<blockquote><tg-emoji emoji-id='6089104607328342288'>💰</tg-emoji> PAYMENT QR GENERATED</blockquote>\n"
+        f"Scan the QR and complete payment.\n\n"
+        f"Amount: ₹{amount}\n\n"
+        f"<tg-emoji emoji-id='5327947823071664175'>🧾</tg-emoji> <b>Order ID:</b>\n"
+        f"<code>{order_id}</code>\n\n"
+        f"<i>After payment, tap VERIFY PAYMENT button below.</i>"
+    )
+    
+    reply_markup = {
+        "inline_keyboard": [
+            [{"text": "✅ VERIFY PAYMENT", "callback_data": f"/verify_payment {order_id}", "style": "success"}],
+            [{"text": "❌ CANCEL", "callback_data": f"/cancel {order_id}", "style": "danger"}]
+        ]
+    }
+    send_photo(user_id, qr_url, caption, "HTML", reply_markup)
 
-    if len(context.args) == 4:
-        target_user_id = str(context.args[3])
+# ========== ADMIN COMMANDS ==========
+@command("/admin")
+def cmd_admin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if not admins:
+        admins = [str(user_id)]
+        bot_data.save_data("AllBotAdminss", admins)
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        return True
+    bot_mode = bot_data.get_data("BotMode") or "ON"
+    bot_sta = "🟢 On"
+    bot_change = "BotMode OFF"
+    if bot_mode == "OFF":
+        bot_sta = "🔴 Off"
+        bot_change = "BotMode ON"
+    markup = {
+        "inline_keyboard": [
+            [{"text": "👑 Admins", "callback_data": "/TUSHAR_Admins", "style": "success"}],
+            [{"text": "📣 Broadcast", "callback_data": "/broadcast", "style": "success"}, {"text": f"🤖 Bot: {bot_sta}", "callback_data": f"/admin {bot_change}", "style": "success"}],
+            [{"text": "💰 Add Balance", "callback_data": "/ChangeAnyUserBal", "style": "success"}, {"text": "📝 Recent Admin Actions", "callback_data": "/TUSHAR_AdminAction", "style": "success"}],
+            [{"text": "📊 Products", "callback_data": "/products_admin", "style": "success"}],
+            [{"text": "💰 Add Reseller", "callback_data": "/addreseller", "style": "success"}, {"text": "⛔ Remove Reseller", "callback_data": "/removereseller", "style": "danger"}],
+            [{"text": "📝 Reseller List", "callback_data": "/resellerlist", "style": "success"}]
+        ]
+    }
+    txt = f"""<b>
+👋 Welcome {message.get('from', {}).get('first_name', 'Admin')} 🎉
+
+━━━━━━━━━━━━━━━
+🤖 Bot Status : {bot_sta}
+━━━━━━━━━━━━━━━
+</b>"""
+    try:
+        edit_message(user_id, msg_id, txt, "HTML", markup)
+    except:
+        send_message(user_id, txt, "HTML", markup)
+    return True
+
+# ========== PRODUCT ADMIN ==========
+@command("/products_admin")
+def cmd_products_admin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        send_message(user_id, "<b><i>🚫 You Are Not This Bot Admin</i></b>", "HTML")
+        return True
+    
+    products = products_store.get_all()
+    
+    text = "📊 <b>PRODUCTS MANAGEMENT</b>\n━━━━━━━━━━━━━━━━━━\n\n"
+    
+    if products:
+        for p in products:
+            text += f"📦 <b>{p.get('name')}</b>\n"
+            text += f"   PID: <code>{p.get('pid')}</code>\n"
+            text += f"   Category: {p.get('category')}\n"
+            text += f"   Durations: {len(p.get('durations', []))}\n"
+            text += f"   Emoji: <code>{p.get('emoji_id')}</code>\n"
+            text += f"   Android ID Required: {p.get('requires_android_id', False)}\n"
+            text += f"   Active: {p.get('active', True)}\n"
+            text += "   ──────────────\n"
+    
+    text += f"\nTotal Products: {len(products)}"
+    
+    markup = {
+        "inline_keyboard": [
+            [{"text": "➕ Add Product", "callback_data": "/add_product", "style": "success"}],
+            [{"text": "✏️ Edit Product", "callback_data": "/edit_product", "style": "success"}],
+            [{"text": "🗑️ Delete Product", "callback_data": "/delete_product", "style": "danger"}],
+            [{"text": "🔙 Back to Admin", "callback_data": "/admin AP", "style": "danger"}]
+        ]
+    }
+    
+    try:
+        edit_message(user_id, msg_id, text, "HTML", markup)
+    except:
+        send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/add_product")
+def cmd_add_product(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        return True
+    
+    text = """📦 <b>ADD NEW PRODUCT</b>
+━━━━━━━━━━━━━━━━━━
+
+Send product details in this format:
+
+<code>PID|Name|Description|Category|Emoji_ID|Android_ID_Required</code>
+
+Example:
+<code>BALA_MOD_V1|BALA MOD XYZ V1|Best mod for BGMI|BALA|5345976085735558094|yes</code>
+
+Then send durations in this format:
+<code>duration1|api_duration1|price|reseller_price;duration2|api_duration2|price2|reseller_price2</code>
+
+Example:
+<code>1 Day|1|100|90;3 Days|3|260|220;7 Days|7|360|320</code>
+
+Type /cancel to cancel."""
+    
+    send_message(user_id, text, "HTML")
+    pending_commands[user_id] = "/add_product_step1"
+    pending_commands_store.set(user_id, "/add_product_step1")
+    return True
+
+@command("/add_product_step1")
+def cmd_add_product_step1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    parts = text.split("|")
+    if len(parts) < 5:
+        send_message(user_id, "❌ Invalid format. Need: PID|Name|Description|Category|Emoji_ID|Android_ID_Required", "HTML")
+        return True
+    
+    pid = parts[0].strip()
+    name = parts[1].strip()
+    description = parts[2].strip()
+    category = parts[3].strip()
+    emoji_id = parts[4].strip() if len(parts) > 4 else "5345976085735558094"
+    requires_android = parts[5].strip().lower() == "yes" if len(parts) > 5 else False
+    
+    User.save_data(user_id, "temp_product_pid", pid)
+    User.save_data(user_id, "temp_product_name", name)
+    User.save_data(user_id, "temp_product_desc", description)
+    User.save_data(user_id, "temp_product_cat", category)
+    User.save_data(user_id, "temp_product_emoji", emoji_id)
+    User.save_data(user_id, "temp_product_android", requires_android)
+    
+    send_message(
+        user_id,
+        f"✅ Product details saved!\n\n"
+        f"PID: <code>{pid}</code>\n"
+        f"Name: {name}\n"
+        f"Category: {category}\n"
+        f"Android ID Required: {requires_android}\n\n"
+        f"Now send durations in this format:\n"
+        f"<code>duration|api_duration|price|reseller_price;duration2|api_duration2|price2|reseller_price2</code>\n\n"
+        f"Example: <code>1 Day|1|100|90;3 Days|3|260|220</code>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/add_product_step2"
+    pending_commands_store.set(user_id, "/add_product_step2")
+    return True
+
+@command("/add_product_step2")
+def cmd_add_product_step2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    pid = User.get_data(user_id, "temp_product_pid")
+    name = User.get_data(user_id, "temp_product_name")
+    description = User.get_data(user_id, "temp_product_desc")
+    category = User.get_data(user_id, "temp_product_cat")
+    emoji_id = User.get_data(user_id, "temp_product_emoji")
+    requires_android = User.get_data(user_id, "temp_product_android")
+    
+    if not pid:
+        send_message(user_id, "❌ Session expired. Start again with /add_product", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    durations = []
+    for dur in text.split(";"):
+        parts = dur.split("|")
+        if len(parts) >= 4:
+            durations.append({
+                "duration": parts[0].strip(),
+                "api_duration": parts[1].strip(),
+                "price": float(parts[2].strip()),
+                "reseller_price": float(parts[3].strip())
+            })
+    
+    if not durations:
+        send_message(user_id, "❌ No valid durations found. Try again or /cancel", "HTML")
+        return True
+    
+    # Check if product already exists
+    existing = products_store.get_by_pid(pid)
+    if existing:
+        send_message(user_id, f"⚠️ Product with PID <code>{pid}</code> already exists. Update it instead.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    # Create product
+    products_store.create(pid, name, description, category, durations, emoji_id, requires_android)
+    
+    send_message(
+        user_id,
+        f"✅ Product <b>{name}</b> added successfully!\n\n"
+        f"PID: <code>{pid}</code>\n"
+        f"Category: {category}\n"
+        f"Durations Added: {len(durations)}\n"
+        f"Android ID Required: {requires_android}",
+        "HTML"
+    )
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    
+    # Clean up temp data
+    User.save_data(user_id, "temp_product_pid", None)
+    User.save_data(user_id, "temp_product_name", None)
+    User.save_data(user_id, "temp_product_desc", None)
+    User.save_data(user_id, "temp_product_cat", None)
+    User.save_data(user_id, "temp_product_emoji", None)
+    User.save_data(user_id, "temp_product_android", None)
+    
+    return True
+
+@command("/edit_product")
+def cmd_edit_product(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        return True
+    
+    products = products_store.get_all()
+    if not products:
+        send_message(user_id, "No products to edit.", "HTML")
+        return True
+    
+    text = "✏️ <b>EDIT PRODUCT</b>\n━━━━━━━━━━━━━━━━━━\n\nSelect a product to edit:\n\n"
+    markup = {"inline_keyboard": []}
+    
+    for p in products:
+        markup["inline_keyboard"].append([
+            {"text": f"{p.get('name')} ({p.get('pid')})", "callback_data": f"/edit_product_pid_{p.get('pid')}", "style": "success"}
+        ])
+    
+    markup["inline_keyboard"].append([
+        {"text": "🔙 Back", "callback_data": "/products_admin", "style": "danger"}
+    ])
+    
+    send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/edit_product_pid_")
+def cmd_edit_product_pid(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    pid = params
+    
+    if not pid:
+        send_message(user_id, "Invalid product ID.", "HTML")
+        return True
+    
+    product = products_store.get_by_pid(pid)
+    if not product:
+        send_message(user_id, "Product not found.", "HTML")
+        return True
+    
+    text = f"""✏️ <b>EDITING: {product.get('name')}</b>
+━━━━━━━━━━━━━━━━━━
+
+Current details:
+• PID: <code>{product.get('pid')}</code>
+• Name: {product.get('name')}
+• Description: {product.get('description')}
+• Category: {product.get('category')}
+• Emoji ID: <code>{product.get('emoji_id')}</code>
+• Android ID Required: {product.get('requires_android_id', False)}
+• Durations: {len(product.get('durations', []))}
+
+Send new details in this format (leave blank to keep current):
+<code>Name|Description|Category|Emoji_ID|Android_ID_Required</code>
+
+Or send <code>durations|...</code> to update durations only."""
+    
+    User.save_data(user_id, "edit_product_pid", pid)
+    send_message(user_id, text, "HTML")
+    pending_commands[user_id] = "/edit_product_process"
+    pending_commands_store.set(user_id, "/edit_product_process")
+    return True
+
+@command("/edit_product_process")
+def cmd_edit_product_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    
+    if text == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    pid = User.get_data(user_id, "edit_product_pid")
+    if not pid:
+        send_message(user_id, "❌ Session expired.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    product = products_store.get_by_pid(pid)
+    if not product:
+        send_message(user_id, "❌ Product not found.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    if text.startswith("durations"):
+        # Update durations
+        dur_text = text.replace("durations|", "")
+        durations = []
+        for dur in dur_text.split(";"):
+            parts = dur.split("|")
+            if len(parts) >= 4:
+                durations.append({
+                    "duration": parts[0].strip(),
+                    "api_duration": parts[1].strip(),
+                    "price": float(parts[2].strip()),
+                    "reseller_price": float(parts[3].strip())
+                })
+        
+        if durations:
+            products_store.update(pid, {"durations": durations})
+            send_message(user_id, f"✅ Durations updated for {product.get('name')}!", "HTML")
+    else:
+        # Update product details
+        parts = text.split("|")
+        if len(parts) >= 5:
+            name = parts[0].strip()
+            description = parts[1].strip()
+            category = parts[2].strip()
+            emoji_id = parts[3].strip()
+            requires_android = parts[4].strip().lower() == "yes"
+            
+            products_store.update(pid, {
+                "name": name,
+                "description": description,
+                "category": category,
+                "emoji_id": emoji_id,
+                "requires_android_id": requires_android
+            })
+            
+            send_message(user_id, f"✅ Product {name} updated successfully!", "HTML")
+        else:
+            send_message(user_id, "❌ Invalid format. Need: Name|Description|Category|Emoji_ID|Android_ID_Required", "HTML")
+    
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    User.save_data(user_id, "edit_product_pid", None)
+    return True
+
+@command("/delete_product")
+def cmd_delete_product(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        return True
+    
+    products = products_store.get_all()
+    if not products:
+        send_message(user_id, "No products to delete.", "HTML")
+        return True
+    
+    text = "🗑️ <b>DELETE PRODUCT</b>\n━━━━━━━━━━━━━━━━━━\n\nSelect a product to delete:\n\n"
+    markup = {"inline_keyboard": []}
+    
+    for p in products:
+        markup["inline_keyboard"].append([
+            {"text": f"🗑️ {p.get('name')} ({p.get('pid')})", "callback_data": f"/delete_product_pid_{p.get('pid')}", "style": "danger"}
+        ])
+    
+    markup["inline_keyboard"].append([
+        {"text": "🔙 Back", "callback_data": "/products_admin", "style": "danger"}
+    ])
+    
+    send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/delete_product_pid_")
+def cmd_delete_product_pid(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    pid = params
+    
+    if not pid:
+        send_message(user_id, "Invalid product ID.", "HTML")
+        return True
+    
+    product = products_store.get_by_pid(pid)
+    if not product:
+        send_message(user_id, "Product not found.", "HTML")
+        return True
+    
+    products_store.delete(pid)
+    send_message(user_id, f"✅ Product {product.get('name')} deleted successfully!", "HTML")
+    return True
+
+# ========== EXISTING ADMIN COMMANDS (Simplified) ==========
+@command("/TUSHAR_Admins")
+def cmd_tushar_admins(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    msg_id = message.get("message_id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    if params and params in admins:
+        admins.remove(params)
+        bot_data.save_data("AllBotAdminss", admins)
+    markup = {"inline_keyboard": []}
+    for admin in admins:
+        markup["inline_keyboard"].append([
+            {"text": admin, "callback_data": f"/TUSHAR_Admins {admin}", "style": "success"},
+            {"text": "❌", "callback_data": f"/TUSHAR_Admins {admin}", "style": "danger"}
+        ])
+    markup["inline_keyboard"].append([{"text": "➕ Add Admin", "callback_data": "/TUSHAR_AddAdmin", "style": "success"}])
+    markup["inline_keyboard"].append([{"text": "🔙 Back", "callback_data": "/admin AP", "style": "danger"}])
+    text = "<b>Here You Can Manage Your Admins</b>"
+    try:
+        edit_message(user_id, msg_id, text, "HTML", markup)
+    except:
+        send_message(user_id, text, "HTML", markup)
+    return True
+
+@command("/TUSHAR_AddAdmin")
+def cmd_tushar_addadmin(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    send_message(user_id, "<b>Send UserID of Admin You Want To Add</b>", "HTML")
+    pending_commands[user_id] = "/TUSHAR_AddAdmin1"
+    pending_commands_store.set(user_id, "/TUSHAR_AddAdmin1")
+    return True
+
+@command("/TUSHAR_AddAdmin1")
+def cmd_tushar_addadmin1(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    new_admin = message.get("text")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    if new_admin in admins:
+        send_message(user_id, "Admin Already Exists")
+    else:
+        admins.append(new_admin)
+        bot_data.save_data("AllBotAdminss", admins)
+        send_message(user_id, f"✅ Admin <code>{new_admin}</code> Added Successfully", "HTML")
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/TUSHAR_AdminAction")
+def cmd_tushar_adminaction(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    adm_ac = bot_data.get_data("AdmAC") or []
+    latest_10 = adm_ac[-10:][::-1]
+    if latest_10:
+        send_message(user_id, "\n\n".join(latest_10), "HTML")
+    else:
+        send_message(user_id, "No admin actions recorded yet.")
+    return True
+
+@command("/ChangeAnyUserBal")
+def cmd_change_balance(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    send_message(
+        user_id,
+        f"<b>💡 Send User Telegram Id & Amount\n\n⚠️ Use Format : <code>{user_id} 10</code>\n\nAdd - Before Amount To Deduct Balance Like -10</b>",
+        "HTML"
+    )
+    pending_commands[user_id] = "/ChangeAnyUserBal2"
+    pending_commands_store.set(user_id, "/ChangeAnyUserBal2")
+    return True
+
+@command("/ChangeAnyUserBal2")
+def cmd_change_balance2(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    text = message.get("text", "")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    parts = text.split(" ")
+    if len(parts) < 2:
+        send_message(user_id, "Invalid format. Use: user_id amount")
+        return True
+    target_user = parts[0]
+    try:
+        amount = float(parts[1])
+    except:
+        send_message(user_id, "Invalid amount")
+        return True
+    bal = Resources.another_res("Balance", user=target_user)
+    bal.add(amount)
+    easy_time = get_easy_time()
+    act = f"Added {amount} Rs To {target_user} Account"
+    adm_ac = bot_data.get_data("AdmAC") or []
+    adm_ac.append(
+        f"<b>📆 Time:</b> {easy_time}\n"
+        f"👥 <b>By {message.get('from', {}).get('first_name', 'Admin')}</b> [ID: <code>{user_id}</code>]\n"
+        f"🔍<b> Action: </b> {act}"
+    )
+    bot_data.save_data("AdmAC", adm_ac)
+    send_message(
+        user_id,
+        f"<b>💴 Account Of <a href='tg://user?id={target_user}'>{target_user}</a> Was Increased By {amount}\n\n💰 Final Balance = {bal.value()}</b>",
+        "HTML"
+    )
+    send_message(
+        target_user,
+        f"<b>💰 Admin Gave You A Increase In Balance By {amount}</b>",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/addreseller")
+def cmd_addreseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    is_admin = str(user_id) in [str(a) for a in admins]
+    if not is_admin:
+        return True
+    send_message(user_id, "📩 Send me id reseller", "HTML")
+    pending_commands[user_id] = "/add_reseller_process"
+    pending_commands_store.set(user_id, "/add_reseller_process")
+    return True
+
+@command("/add_reseller_process")
+def cmd_add_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user in [str(u) for u in resellers]:
+        send_message(user_id, "User already a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers.append(target_user)
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> added as Reseller.", "HTML")
+    try:
+        send_message(target_user, "You are now a Reseller", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/removereseller")
+def cmd_removereseller(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    send_message(user_id, "Send me reseller id to remove", "HTML")
+    pending_commands[user_id] = "/remove_reseller_process"
+    pending_commands_store.set(user_id, "/remove_reseller_process")
+    return True
+
+@command("/remove_reseller_process")
+def cmd_remove_reseller_process(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    target_user = message.get("text", "").strip()
+    try:
+        target_user = str(int(target_user))
+    except:
+        send_message(user_id, "Invalid User ID.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = bot_data.get_data("resellers_list") or []
+    if target_user not in [str(u) for u in resellers]:
+        send_message(user_id, "User is not a reseller.")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    resellers = [u for u in resellers if str(u) != target_user]
+    bot_data.save_data("resellers_list", resellers)
+    send_message(user_id, f"User <code>{target_user}</code> removed from Resellers.", "HTML")
+    try:
+        send_message(target_user, "You are no longer a Reseller.", "HTML")
+    except:
+        pass
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    return True
+
+@command("/resellerlist")
+def cmd_resellerlist(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    resellers = bot_data.get_data("resellers_list") or []
+    if not resellers:
+        send_message(user_id, "No resellers found.")
+        return True
+    text = "Reseller List\n━━━━━━━━━━━━━━━━━━\n\n"
+    count = 1
+    for res in resellers:
+        text += f"{count}. ID: <code>{res}</code>\n"
+        count += 1
+    text += f"\n━━━━━━━━━━━━━━━━━━\nTotal Resellers: {len(resellers)}"
+    send_message(user_id, text, "HTML")
+    return True
+
+@command("/broadcast")
+def cmd_broadcast(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        return True
+    
+    all_users = user_data_store.get_all_users()
+    payment_collection = mongo.get_collection('pending_payments')
+    for doc in payment_collection.find({}, {"user_id": 1}):
+        if doc.get("user_id") not in all_users:
+            all_users.append(doc.get("user_id"))
+    
+    admins_list = bot_data.get_data("AllBotAdminss") or []
+    for admin in admins_list:
+        if admin not in all_users:
+            all_users.append(admin)
+    
+    all_users = list(set(all_users))
+    User.save_data(user_id, "broadcast_users", all_users)
+    
+    send_message(
+        user_id, 
+        f"📢 <b>BROADCAST MODE</b>\n\n"
+        f"👥 Total Users: {len(all_users)}\n\n"
+        f"Send ANY message (text, photo, video, document).\n"
+        f"<b>Your message will be FORWARDED to all users.</b>\n\n"
+        f"Type /cancel to cancel.",
+        "HTML"
+    )
+    pending_commands[user_id] = "/broadcast_send_media"
+    pending_commands_store.set(user_id, "/broadcast_send_media")
+    return True
+
+@command("/broadcast_send_media")
+def cmd_broadcast_send_media(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    admins = bot_data.get_data("AllBotAdminss") or []
+    if str(user_id) not in admins:
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    if message.get("text") and message.get("text", "").strip() == "/cancel":
+        send_message(user_id, "❌ Cancelled", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        User.save_data(user_id, "broadcast_users", None)
+        return True
+    
+    users = User.get_data(user_id, "broadcast_users") or []
+    if not users:
+        send_message(user_id, "No users to broadcast to.", "HTML")
+        pending_commands.pop(user_id, None)
+        pending_commands_store.delete(user_id)
+        return True
+    
+    from_chat_id = message.get("chat", {}).get("id")
+    msg_id_to_forward = message.get("message_id")
+    
+    success = 0
+    failed = 0
+    
+    for target_user in users:
         try:
-            user_obj = await context.bot.get_chat(target_user_id)
-            telegram_name = user_obj.first_name or ""
-            if user_obj.last_name:
-                telegram_name += f" {user_obj.last_name}"
-            username = user_obj.username or "N/A"
-            data["users"][target_user_id] = {
-                "telegram_name": telegram_name,
-                "username": username,
-                "uid": uid
+            # Use forward_message function from original
+            forward_url = f"{BASE_URL}/forwardMessage"
+            payload = {
+                "chat_id": target_user,
+                "from_chat_id": from_chat_id,
+                "message_id": msg_id_to_forward
             }
-            save_data(data)
+            requests.post(forward_url, json=payload)
+            success += 1
         except Exception as e:
-            logger.warning(f"Could not fetch target user info: {e}")
-    else:
-        target_user_id = str(update.effective_user.id)
+            failed += 1
+        time.sleep(0.1)
+    
+    send_message(
+        user_id, 
+        f"✅ <b>Broadcast Complete</b>\n\n"
+        f"📤 Forwarded to: {success}\n"
+        f"❌ Failed: {failed}\n"
+        f"👥 Total: {len(users)}",
+        "HTML"
+    )
+    pending_commands.pop(user_id, None)
+    pending_commands_store.delete(user_id)
+    User.save_data(user_id, "broadcast_users", None)
+    return True
 
-    data = load_data()
-    uid_key = format_uid_key(target_user_id, uid)
-    expiry_date = (datetime.now(IST) + timedelta(days=days)).isoformat()
+@command("/setMyCommands")
+def cmd_set_commands(message, params, options=None):
+    user_id = message.get("from", {}).get("id")
+    commands_list = [{"command": "start", "description": "START TO BUY"}]
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/setMyCommands"
+    try:
+        response = requests.post(url, json={"commands": commands_list})
+        send_message(user_id, str(response.json()))
+    except:
+        send_message(user_id, "Error setting commands")
+    return True
 
-    if "auto_like_uids" not in data:
-        data["auto_like_uids"] = {}
-
-    if uid_key in data["auto_like_uids"]:
-        existing_expiry = datetime.fromisoformat(data["auto_like_uids"][uid_key]["expiry_date"]).astimezone(IST)
-        new_expiry = existing_expiry + timedelta(days=days)
-        data["auto_like_uids"][uid_key]["expiry_date"] = new_expiry.isoformat()
-        data["auto_like_uids"][uid_key]["region"] = region
-        action = "updated"
-    else:
-        data["auto_like_uids"][uid_key] = {
-            "uid": uid,
-            "region": region,
-            "expiry_date": expiry_date,
-            "chat_id": target_user_id,
-            "paused": False,
-            "last_run": None,
-            "total_likes": 0
+# ========== UPDATE HANDLER ==========
+def handle_update(update):
+    if "callback_query" in update:
+        callback = update["callback_query"]
+        data = callback.get("data", "")
+        user_id = callback.get("from", {}).get("id")
+        msg_id = callback.get("message", {}).get("message_id")
+        answer_callback(callback.get("id"))
+        parts = data.split(" ")
+        cmd = parts[0]
+        params = " ".join(parts[1:]) if len(parts) > 1 else None
+        msg = {
+            "message_id": msg_id,
+            "from": callback.get("from", {}),
+            "chat": {"id": user_id},
+            "date": int(time.time()),
+            "text": data,
+            "reply_markup": callback.get("message", {}).get("reply_markup")
         }
-        action = "activated"
-
-    if uid_key in data.get("paused_uids", []):
-        data["paused_uids"].remove(uid_key)
-
-    save_data(data)
-
-    try:
-        api_data = await call_like_api(uid, region)
-        remaining_days = max(0, (datetime.fromisoformat(expiry_date).astimezone(IST) - datetime.now(IST)).days)
-        await send_like_response(update, context, api_data, uid, region, remaining_days, is_daily=False)
-
-        data = load_data()
-        if uid_key in data["auto_like_uids"]:
-            data["auto_like_uids"][uid_key]["total_likes"] += api_data.get("LikesGivenByAPI", 0)
-            data["auto_like_uids"][uid_key]["last_run"] = datetime.now(IST).isoformat()
-            save_data(data)
-    except Exception as e:
-        logger.error(f"Error in autolike command: {e}")
-        text, entities = create_premium_response(
-            "Error calling the API. Please try again later.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-
-    daily_time = data.get("settings", {}).get("daily_like_time", DAILY_LIKE_TIME)
-
-    if len(context.args) == 4:
-        text, entities = create_premium_response(
-            f"✅ Auto-like {action} for user {target_user_id}!\n"
-            f"🔢 UID: {uid}\n"
-            f"🌍 Region: {region}\n"
-            f"📅 Days: {days}\n\n"
-            f"🔄 Automatic likes will be sent daily at {daily_time} IST.",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
         
-        try:
-            await context.bot.send_message(
-                chat_id=target_user_id,
-                text=f"✨ Auto-like has been {action} for your UID! ✨\n\n"
-                     f"🔢 UID: {uid}\n"
-                     f"🌍 Region: {region}\n"
-                     f"📅 Days: {days}\n"
-                     f"⏰ Daily Time: {daily_time} IST"
-            )
-        except Exception as e:
-            logger.error(f"Failed to send message to user {target_user_id}: {e}")
-    else:
-        text, entities = create_premium_response(
-            f"✅ Auto-like {action}!\n"
-            f"🔢 UID: {uid}\n"
-            f"🌍 Region: {region}\n"
-            f"📅 Days: {days}\n\n"
-            f"🔄 Automatic likes will be sent daily at {daily_time} IST.",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-    logger.info(f"Owner set autolike for UID {uid} -> target user {target_user_id}")
-
-@owner_only
-async def like(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Send a single like request with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if len(context.args) != 2:
-        text, entities = create_premium_response(
-            "Usage: /like {uid} {region}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-
-    uid = context.args[0]
-    region = context.args[1].upper()
-    
-    try:
-        api_data = await call_like_api(uid, region)
-        await send_like_response(update, context, api_data, uid, region, "1", is_daily=False)
-        logger.info(f"Owner {update.effective_user.id} sent like to UID {uid}")
-    except Exception as e:
-        logger.error(f"Error in like command: {e}")
-        text, entities = create_premium_response(
-            "Error calling the API. Please try again later.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Status command with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    data = load_data()
-    users = data.get("users", {})
-    auto_like_uids = data.get("auto_like_uids", {})
-    allowed_groups = data.get("allowed_groups", [])
-    paused_uids = data.get("paused_uids", [])
-    api_stats = data.get("api_stats", {})
-    active_groups = data.get("active_groups", [])
-
-    response_text = "✨ Bot Status ✨\n\n"
-    
-    response_text += f"📈 API Statistics:\n"
-    response_text += f"⭐ Total Calls: {api_stats.get('total_calls', 0)}\n"
-    response_text += f"⭐ Successful: {api_stats.get('successful_calls', 0)}\n"
-    response_text += f"⭐ Failed: {api_stats.get('failed_calls', 0)}\n\n"
-    
-    if active_groups:
-        response_text += f"🏢 Active Groups: {len(active_groups)}\n"
-        for group in active_groups:
-            response_text += f"⭐ {group['chat_title']} (ID: {group['chat_id']})\n"
-        response_text += "\n"
-    
-    if users:
-        response_text += f"👥 Users: {len(users)}\n"
-        for user_id, user_info in users.items():
-            response_text += (
-                f"⭐ {user_info.get('telegram_name', 'Unknown')}\n"
-                f"  ID: {user_id}\n"
-                f"  Username: @{user_info.get('username', 'N/A')}\n"
-                f"  UID: {user_info.get('uid', 'N/A')}\n\n"
-            )
-    
-    if auto_like_uids:
-        response_text += f"🔄 Auto-Like UIDs: {len(auto_like_uids)}\n"
-        for uid_key, uid_info in auto_like_uids.items():
-            user_id, uid = parse_uid_key(uid_key)
-            user_info = users.get(user_id, {})
-            user_name = user_info.get('telegram_name', 'Unknown')
-            username = user_info.get('username', 'N/A')
-            last_run = datetime.fromisoformat(uid_info['last_run']).astimezone(IST).strftime('%Y-%m-%d %H:%M') if uid_info.get('last_run') else 'Never'
-            is_paused = uid_key in paused_uids
-            status = "⏸️ Paused" if is_paused else "✅ Active"
-            
-            expiry_date = datetime.fromisoformat(uid_info['expiry_date']).astimezone(IST)
-            remaining_days = max(0, (expiry_date - datetime.now(IST)).days)
-            
-            response_text += (
-                f"⭐ {user_name} (@{username}) ({status})\n"
-                f"  UID: {uid_info['uid']}\n"
-                f"  Region: {uid_info['region']}\n"
-                f"  Days Left: {remaining_days}\n"
-                f"  Total Likes: {uid_info.get('total_likes', 0)}\n"
-                f"  Last Run: {last_run}\n\n"
-            )
-    
-    if allowed_groups:
-        response_text += f"🏢 Allowed Groups: {len(allowed_groups)}\n"
-        for group_id in allowed_groups:
-            response_text += f"⭐ {group_id}\n"
-    
-    text, entities = create_premium_response(
-        response_text,
-        emoji_key="status",
-        bold=True
-    )
-    
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"Owner {update.effective_user.id} checked status")
-
-async def mylike(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Check personal likes with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    
-    if not is_private_chat(update):
-        data = update_group_info(data, update.effective_chat)
-    
-    save_data(data)
-    
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    user_likes = data.get("total_likes", {}).get(user_id)
-
-    if user_likes:
-        response_text = (
-            f"📊 Your Like Stats:\n\n"
-            f"❤️ Total Likes Received: {user_likes['count']}\n"
-            f"📅 Total Days Used: {user_likes['days']}"
-        )
-        text, entities = create_premium_response(
-            response_text,
-            emoji_key="stats",
-            bold=True
-        )
-    else:
-        text, entities = create_premium_response(
-            "You have not received any likes yet.",
-            emoji_key="info",
-            bold=True
-        )
-
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"User {user_id} checked their likes")
-
-@owner_only
-async def setmessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Set custom message with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /setmessage <your_message_here>",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-
-    custom_message = ' '.join(context.args)
-    data = load_data()
-    data["custom_message"] = custom_message
-    save_data(data)
-    
-    text, entities = create_premium_response(
-        f"✅ The autolike response message has been set to:\n\n✨ {custom_message}",
-        emoji_key="success",
-        bold=True
-    )
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"Owner {update.effective_user.id} set custom message")
-
-@owner_only
-async def setgroup(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Add group with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /setgroup {group_id}\n\nExample: /setgroup -1001234567890",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-
-    try:
-        group_id = int(context.args[0])
-        data = load_data()
-        
-        if "allowed_groups" not in data:
-            data["allowed_groups"] = []
-        
-        if group_id not in data["allowed_groups"]:
-            data["allowed_groups"].append(group_id)
-            save_data(data)
-            
-            text, entities = create_premium_response(
-                f"✅ Group {group_id} has been added to allowed groups.",
-                emoji_key="success",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-            logger.info(f"Owner {update.effective_user.id} added group {group_id}")
-        else:
-            text, entities = create_premium_response(
-                f"ℹ️ Group {group_id} is already in the allowed groups list.",
-                emoji_key="info",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-            
-    except ValueError:
-        text, entities = create_premium_response(
-            "Invalid group ID. Please provide a valid numeric group ID.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-async def myuids(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show all registered UIDs with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    
-    if not is_private_chat(update):
-        data = update_group_info(data, update.effective_chat)
-    
-    save_data(data)
-    
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    auto_like_uids = data.get("auto_like_uids", {})
-    paused_uids = data.get("paused_uids", [])
-    
-    user_uids = {}
-    for uid_key, uid_info in auto_like_uids.items():
-        key_user_id, uid = parse_uid_key(uid_key)
-        if key_user_id == user_id:
-            user_uids[uid] = {
-                **uid_info,
-                "paused": uid_key in paused_uids
-            }
-    
-    if not user_uids:
-        text, entities = create_premium_response(
-            "You don't have any UIDs registered for auto-likes.",
-            emoji_key="info",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    response_text = "📋 Your Registered UIDs:\n\n"
-    for uid, info in user_uids.items():
-        status = "⏸️ Paused" if info["paused"] else "✅ Active"
-        last_run = datetime.fromisoformat(info['last_run']).astimezone(IST).strftime('%Y-%m-%d %H:%M') if info.get('last_run') else 'Never'
-        
-        expiry_date = datetime.fromisoformat(info['expiry_date']).astimezone(IST)
-        remaining_days = max(0, (expiry_date - datetime.now(IST)).days)
-        
-        response_text += (
-            f"🔢 UID: {uid}\n"
-            f"🌍 Region: {info['region']}\n"
-            f"📅 Days Remaining: {remaining_days}\n"
-            f"❤️ Total Likes: {info.get('total_likes', 0)}\n"
-            f"🔄 Status: {status}\n"
-            f"⏰ Last Run: {last_run}\n\n"
-        )
-    
-    text, entities = create_premium_response(
-        response_text,
-        emoji_key="uid",
-        bold=True
-    )
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"User {user_id} checked their UIDs")
-
-@owner_only
-async def remove_uid(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Remove UID with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /removeuid {uid}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid_to_remove = context.args[0]
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    uid_key = format_uid_key(user_id, uid_to_remove)
-    
-    if uid_key in data.get("auto_like_uids", {}):
-        del data["auto_like_uids"][uid_key]
-        
-        if uid_key in data.get("paused_uids", []):
-            data["paused_uids"].remove(uid_key)
-            
-        save_data(data)
-        
-        text, entities = create_premium_response(
-            f"✅ UID {uid_to_remove} has been removed from auto-likes.",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {user_id} removed UID {uid_to_remove}")
-    else:
-        text, entities = create_premium_response(
-            f"❌ You don't have auto-likes set up for UID {uid_to_remove}.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def pause_uid(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Pause UID with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /pauseuid {uid}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid_to_pause = context.args[0]
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    uid_key = format_uid_key(user_id, uid_to_pause)
-    
-    if uid_key in data.get("auto_like_uids", {}):
-        if "paused_uids" not in data:
-            data["paused_uids"] = []
-        
-        if uid_key not in data["paused_uids"]:
-            data["paused_uids"].append(uid_key)
-            save_data(data)
-            
-            text, entities = create_premium_response(
-                f"✅ Auto-likes for UID {uid_to_pause} have been paused.",
-                emoji_key="success",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-            logger.info(f"Owner {user_id} paused UID {uid_to_pause}")
-        else:
-            text, entities = create_premium_response(
-                f"ℹ️ Auto-likes for UID {uid_to_pause} are already paused.",
-                emoji_key="info",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-    else:
-        text, entities = create_premium_response(
-            f"❌ You don't have auto-likes set up for UID {uid_to_pause}.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def resume_uid(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Resume UID with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /resumeuid {uid}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid_to_resume = context.args[0]
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    uid_key = format_uid_key(user_id, uid_to_resume)
-    
-    if uid_key in data.get("auto_like_uids", {}):
-        if uid_key in data.get("paused_uids", []):
-            data["paused_uids"].remove(uid_key)
-            save_data(data)
-            
-            text, entities = create_premium_response(
-                f"✅ Auto-likes for UID {uid_to_resume} have been resumed.",
-                emoji_key="success",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-            logger.info(f"Owner {user_id} resumed UID {uid_to_resume}")
-        else:
-            text, entities = create_premium_response(
-                f"ℹ️ Auto-likes for UID {uid_to_resume} are not paused.",
-                emoji_key="info",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
-    else:
-        text, entities = create_premium_response(
-            f"❌ You don't have auto-likes set up for UID {uid_to_resume}.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def extend_uid(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Extend UID with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if len(context.args) != 2:
-        text, entities = create_premium_response(
-            "Usage: /extend {uid} {days}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid_to_extend = context.args[0]
-    try:
-        days = int(context.args[1])
-        if days <= 0:
-            text, entities = create_premium_response(
-                "Days must be a positive number.",
-                emoji_key="error",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
+        # Handle dynamic commands
+        if cmd.startswith("/SHOP_PID_"):
+            pid = cmd.replace("/SHOP_PID_", "")
+            cmd_shop_pid(msg, pid)
             return
-    except ValueError:
-        text, entities = create_premium_response(
-            "Days must be a valid number.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    uid_key = format_uid_key(user_id, uid_to_extend)
-    
-    if uid_key in data.get("auto_like_uids", {}):
-        current_expiry = datetime.fromisoformat(data["auto_like_uids"][uid_key]["expiry_date"]).astimezone(IST)
-        new_expiry = current_expiry + timedelta(days=days)
-        data["auto_like_uids"][uid_key]["expiry_date"] = new_expiry.isoformat()
-        save_data(data)
-        
-        remaining_days = max(0, (new_expiry - datetime.now(IST)).days)
-        
-        text, entities = create_premium_response(
-            f"✅ Auto-likes for UID {uid_to_extend} extended by {days} days.\n"
-            f"📅 New expiry: {new_expiry.strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
-            f"⏰ Days remaining: {remaining_days}",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {user_id} extended UID {uid_to_extend} by {days} days")
-    else:
-        text, entities = create_premium_response(
-            f"❌ You don't have auto-likes set up for UID {uid_to_extend}.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def reset_likes(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Reset likes with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /resetlikes {uid}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid_to_reset = context.args[0]
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    uid_key = format_uid_key(user_id, uid_to_reset)
-    
-    if uid_key in data.get("auto_like_uids", {}):
-        data["auto_like_uids"][uid_key]["total_likes"] = 0
-        save_data(data)
-        
-        text, entities = create_premium_response(
-            f"✅ Like count for UID {uid_to_reset} has been reset to 0.",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {user_id} reset likes for UID {uid_to_reset}")
-    else:
-        text, entities = create_premium_response(
-            f"❌ You don't have auto-likes set up for UID {uid_to_reset}.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def owner_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Broadcast with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /ownerbroadcast <message>",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    message = ' '.join(context.args)
-    data = load_data()
-    users = data.get("users", {})
-    
-    sent_count = 0
-    failed_count = 0
-    
-    for user_id in users.keys():
-        try:
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"📢 Broadcast from Owner:\n\n✨ {message}"
-            )
-            sent_count += 1
-            await asyncio.sleep(0.1)
-        except Exception as e:
-            logger.error(f"Failed to send broadcast to user {user_id}: {e}")
-            failed_count += 1
-    
-    text, entities = create_premium_response(
-        f"📢 Broadcast completed!\n"
-        f"✅ Sent: {sent_count}\n"
-        f"❌ Failed: {failed_count}",
-        emoji_key="broadcast",
-        bold=True,
-        code_words=[str(sent_count), str(failed_count)]
-    )
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"Owner {update.effective_user.id} sent broadcast to {sent_count} users")
-
-@owner_only
-async def allstats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """All statistics with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    data = load_data()
-    users = data.get("users", {})
-    auto_like_uids = data.get("auto_like_uids", {})
-    total_likes = data.get("total_likes", {})
-    api_stats = data.get("api_stats", {})
-    active_groups = data.get("active_groups", [])
-    
-    total_users = len(users)
-    total_auto_likes = len(auto_like_uids)
-    total_likes_sent = sum(info.get("total_likes", 0) for info in auto_like_uids.values())
-    
-    active_uids = 0
-    paused_uids = 0
-    expired_uids = 0
-    
-    for uid_key, uid_info in auto_like_uids.items():
-        expiry_date = datetime.fromisoformat(uid_info["expiry_date"]).astimezone(IST)
-        if expiry_date < datetime.now(IST):
-            expired_uids += 1
-        elif uid_key in data.get("paused_uids", []):
-            paused_uids += 1
-        else:
-            active_uids += 1
-    
-    response_text = (
-        f"📊 Comprehensive Statistics:\n\n"
-        f"👥 Total Users: {total_users}\n"
-        f"🏢 Active Groups: {len(active_groups)}\n"
-        f"🔄 Total Auto-Like UIDs: {total_auto_likes}\n"
-        f"✅ Active UIDs: {active_uids}\n"
-        f"⏸️ Paused UIDs: {paused_uids}\n"
-        f"❌ Expired UIDs: {expired_uids}\n"
-        f"❤️ Total Likes Sent: {total_likes_sent}\n\n"
-        f"📈 API Statistics:\n"
-        f"⭐ Total Calls: {api_stats.get('total_calls', 0)}\n"
-        f"⭐ Successful: {api_stats.get('successful_calls', 0)}\n"
-        f"⭐ Failed: {api_stats.get('failed_calls', 0)}\n"
-        f"⭐ Success Rate: {api_stats.get('successful_calls', 0) / max(api_stats.get('total_calls', 1), 1) * 100:.1f}%"
-    )
-    
-    text, entities = create_premium_response(
-        response_text,
-        emoji_key="stats",
-        bold=True
-    )
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"Owner {update.effective_user.id} checked all stats")
-
-@owner_only
-async def backup(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Backup with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    try:
-        with open(DATA_FILE, 'rb') as f:
-            await context.bot.send_document(
-                chat_id=update.effective_chat.id,
-                document=f,
-                filename="bot_data_backup.json",
-                caption="📦 Bot Data Backup"
-            )
-        logger.info(f"Owner {update.effective_user.id} exported backup")
-    except Exception as e:
-        logger.error(f"Backup failed: {e}")
-        text, entities = create_premium_response(
-            "Backup failed. Check logs for details.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def restore(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Restore with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not update.message.document:
-        text, entities = create_premium_response(
-            "Please send a backup file to restore.",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    try:
-        file = await context.bot.get_file(update.message.document.file_id)
-        await file.download_to_drive("restore_backup.json")
-        
-        with open("restore_backup.json", 'r') as f:
-            backup_data = json.load(f)
-        
-        if not isinstance(backup_data, dict):
-            raise ValueError("Invalid backup format")
-        
-        with open(DATA_FILE, 'w') as f:
-            json.dump(backup_data, f, indent=4)
-        
-        text, entities = create_premium_response(
-            "Backup restored successfully!",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {update.effective_user.id} restored backup")
-        
-        if os.path.exists("restore_backup.json"):
-            os.remove("restore_backup.json")
-            
-    except Exception as e:
-        logger.error(f"Restore failed: {e}")
-        text, entities = create_premium_response(
-            "Restore failed. Invalid backup file or format.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def set_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Set time with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if not context.args:
-        text, entities = create_premium_response(
-            "Usage: /settime {hour}:{minute}\n\nExample: /settime 04:30",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    time_str = context.args[0]
-    if not re.match(r'^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$', time_str):
-        text, entities = create_premium_response(
-            "Invalid time format. Please use HH:MM (24-hour format).",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    data = load_data()
-    if "settings" not in data:
-        data["settings"] = {}
-    
-    data["settings"]["daily_like_time"] = time_str
-    save_data(data)
-    
-    await reschedule_daily_job()
-    
-    text, entities = create_premium_response(
-        f"✅ Daily auto-like time set to {time_str} IST.",
-        emoji_key="success",
-        bold=True
-    )
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"Owner {update.effective_user.id} set daily time to {time_str}")
-
-@owner_only
-async def set_limit(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Set limit with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if len(context.args) != 2:
-        text, entities = create_premium_response(
-            "Usage: /setlimit {uid} {limit}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid = context.args[0]
-    try:
-        limit = int(context.args[1])
-        if limit <= 0:
-            text, entities = create_premium_response(
-                "Limit must be a positive number.",
-                emoji_key="error",
-                bold=True
-            )
-            await update.message.reply_text(text, entities=entities)
+        elif cmd.startswith("/BUY_PID_"):
+            pid_dur = cmd.replace("/BUY_PID_", "")
+            cmd_buy_pid(msg, pid_dur)
             return
-    except ValueError:
-        text, entities = create_premium_response(
-            "Limit must be a valid number.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
+        elif cmd.startswith("/edit_product_pid_"):
+            pid = cmd.replace("/edit_product_pid_", "")
+            cmd_edit_product_pid(msg, pid)
+            return
+        elif cmd.startswith("/delete_product_pid_"):
+            pid = cmd.replace("/delete_product_pid_", "")
+            cmd_delete_product_pid(msg, pid)
+            return
+        
+        if cmd in commands:
+            try:
+                commands[cmd](msg, params)
+            except Exception as e:
+                print(f"Callback error: {e}")
         return
     
-    data = load_data()
-    user_id = str(update.effective_user.id)
-    uid_key = format_uid_key(user_id, uid)
-    
-    if uid_key in data.get("auto_like_uids", {}):
-        if "like_limits" not in data:
-            data["like_limits"] = {}
-        
-        data["like_limits"][uid_key] = limit
-        save_data(data)
-        
-        text, entities = create_premium_response(
-            f"✅ Daily like limit for UID {uid} set to {limit}.",
-            emoji_key="success",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {user_id} set limit {limit} for UID {uid}")
-    else:
-        text, entities = create_premium_response(
-            f"❌ You don't have auto-likes set up for UID {uid}.",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
+    if "message" in update:
+        msg = update["message"]
+        user_id = msg.get("from", {}).get("id")
+        text = msg.get("text", "")
+        if user_id in pending_commands:
+            pending_cmd = pending_commands[user_id]
+            if pending_cmd in commands:
+                try:
+                    commands[pending_cmd](msg, None)
+                except Exception as e:
+                    print(f"Pending command error: {e}")
+                return
+        if text.startswith("/"):
+            parts = text.split(" ")
+            cmd = parts[0]
+            params = " ".join(parts[1:]) if len(parts) > 1 else None
+            if cmd in commands:
+                try:
+                    commands[cmd](msg, params)
+                except Exception as e:
+                    print(f"Command error: {e}")
 
-@owner_only
-async def check_api(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Check API with premium emojis"""
-    data = load_data()
-    data = update_user_info(data, update.effective_user)
-    save_data(data)
-    
-    if len(context.args) != 2:
-        text, entities = create_premium_response(
-            "Usage: /checkapi {uid} {region}",
-            emoji_key="warning",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    uid = context.args[0]
-    region = context.args[1].upper()
-    
-    try:
-        text, entities = create_premium_response(
-            f"🔍 Testing API for UID {uid}, region {region}...",
-            emoji_key="test",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        
-        api_data = await call_like_api(uid, region)
-        
-        response_text = (
-            f"✅ API Test Successful!\n\n"
-            f"🔢 UID: {api_data.get('UID', 'N/A')}\n"
-            f"👤 Player: {api_data.get('PlayerNickname', 'N/A')}\n"
-            f"📊 Level: {api_data.get('PlayerLevel', 'N/A')}\n"
-            f"🌍 Region: {api_data.get('PlayerRegion', 'N/A')}\n"
-            f"❤️ Likes Before: {api_data.get('LikesbeforeCommand', 'N/A')}\n"
-            f"❤️ Likes After: {api_data.get('LikesafterCommand', 'N/A')}\n"
-            f"🤖 Likes Given: {api_data.get('LikesGivenByAPI', 'N/A')}\n"
-            f"✅ Status: {api_data.get('status', 'N/A')}"
+# ========== SAMPLE PRODUCTS (Admin can add via bot) ==========
+def add_sample_products():
+    """Add sample products if none exist"""
+    if len(products_store.get_all()) == 0:
+        # BALA MOD XYZ V1 - Requires Android ID
+        products_store.create(
+            pid="BALA_MOD_V1",
+            name="BALA MOD XYZ V1",
+            description="🔥 Best mod for BGMI with all features",
+            category="BALA",
+            durations=[
+                {"duration": "1 Day", "api_duration": "1", "price": 100, "reseller_price": 90},
+                {"duration": "3 Days", "api_duration": "3", "price": 260, "reseller_price": 220},
+                {"duration": "7 Days", "api_duration": "7", "price": 360, "reseller_price": 320},
+                {"duration": "14 Days", "api_duration": "14", "price": 560, "reseller_price": 480},
+                {"duration": "28 Days", "api_duration": "28", "price": 810, "reseller_price": 750}
+            ],
+            emoji_id="5345976085735558094",
+            requires_android_id=True
         )
         
-        text, entities = create_premium_response(
-            response_text,
-            emoji_key="success",
-            bold=True
+        # BALA MOD XYZ V2 - No Android ID required
+        products_store.create(
+            pid="BALA_MOD_V2",
+            name="BALA MOD XYZ V2",
+            description="🚀 Advanced version with no Android ID needed",
+            category="BALA",
+            durations=[
+                {"duration": "1 Day", "api_duration": "1", "price": 120, "reseller_price": 100},
+                {"duration": "3 Days", "api_duration": "3", "price": 280, "reseller_price": 240},
+                {"duration": "7 Days", "api_duration": "7", "price": 390, "reseller_price": 340},
+                {"duration": "14 Days", "api_duration": "14", "price": 600, "reseller_price": 520},
+                {"duration": "28 Days", "api_duration": "28", "price": 850, "reseller_price": 780}
+            ],
+            emoji_id="5348292765325212780",
+            requires_android_id=False
         )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {update.effective_user.id} tested API for UID {uid}")
         
-    except Exception as e:
-        logger.error(f"API test failed for UID {uid}: {e}")
-        text, entities = create_premium_response(
-            f"API test failed: {str(e)}",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
+        print("✅ Sample products added!")
 
-@owner_only
-async def runnow(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Run job immediately with premium emojis"""
-    text, entities = create_premium_response(
-        "⏳ Running daily auto-like job now...",
-        emoji_key="processing",
-        bold=True
-    )
-    await update.message.reply_text(text, entities=entities)
-    
-    try:
-        await daily_like_job()
-        
-        text, entities = create_premium_response(
-            "✅ Daily auto-like job completed!",
-            emoji_key="completed",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        logger.info(f"Owner {update.effective_user.id} triggered runnow successfully")
-    except Exception as e:
-        logger.error(f"Error in runnow command: {e}")
-        text, entities = create_premium_response(
-            f"Error running daily job: {e}",
-            emoji_key="error",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-
-@owner_only
-async def groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show active groups with premium emojis"""
-    data = load_data()
-    active_groups = data.get("active_groups", [])
-    
-    if not active_groups:
-        text, entities = create_premium_response(
-            "ℹ️ No active groups found.",
-            emoji_key="info",
-            bold=True
-        )
-        await update.message.reply_text(text, entities=entities)
-        return
-    
-    response_text = "🏢 Active Groups:\n\n"
-    for group in active_groups:
-        added_date = datetime.fromisoformat(group['added_date']).astimezone(IST).strftime('%Y-%m-%d %H:%M:%S')
-        response_text += (
-            f"📋 {group['chat_title']}\n"
-            f"🆔 ID: {group['chat_id']}\n"
-            f"📅 Added: {added_date}\n\n"
-        )
-    
-    text, entities = create_premium_response(
-        response_text,
-        emoji_key="group",
-        bold=True
-    )
-    await update.message.reply_text(text, entities=entities)
-    logger.info(f"Owner {update.effective_user.id} checked active groups")
-
-# --- Daily Job Function ---
-
-async def daily_like_job():
-    """Scheduled job to send daily auto-likes with premium emojis"""
-    logger.info("🔄 Starting daily auto-like job...")
-    
-    data = load_data()
-    auto_like_uids = data.get("auto_like_uids", {})
-    paused_uids = data.get("paused_uids", [])
-    
-    if not auto_like_uids:
-        logger.info("No auto-like UIDs found. Skipping daily job.")
-        return
-    
-    expired_keys = []
-    processed_count = 0
-    success_count = 0
-    failed_count = 0
-    
-    for uid_key, uid_info in auto_like_uids.items():
-        if uid_key in paused_uids:
-            continue
-            
-        expiry_date = datetime.fromisoformat(uid_info["expiry_date"]).astimezone(IST)
-        if expiry_date <= datetime.now(IST):
-            expired_keys.append(uid_key)
-            continue
-            
-        processed_count += 1
-        try:
-            api_data = await call_like_api(uid_info["uid"], uid_info["region"])
-            remaining_days = max(0, (expiry_date - datetime.now(IST)).days)
-            
-            await send_like_response(
-                uid_info["chat_id"],
-                None,
-                api_data,
-                uid_info["uid"],
-                uid_info["region"],
-                remaining_days,
-                is_daily=True
-            )
-            
-            data = load_data()
-            if uid_key in data.get("auto_like_uids", {}):
-                data["auto_like_uids"][uid_key]["total_likes"] += api_data.get("LikesGivenByAPI", 0)
-                data["auto_like_uids"][uid_key]["last_run"] = datetime.now(IST).isoformat()
-                save_data(data)
-            
-            success_count += 1
-            logger.info(f"✅ Daily like sent for UID {uid_info['uid']}")
-            
-        except Exception as e:
-            failed_count += 1
-            logger.error(f"❌ Failed to send daily like for UID {uid_info['uid']}: {e}")
-            
-        await asyncio.sleep(1)
-    
-    if expired_keys:
-        data = load_data()
-        for key in expired_keys:
-            if key in data.get("auto_like_uids", {}):
-                del data["auto_like_uids"][key]
-            if key in data.get("paused_uids", []):
-                data["paused_uids"].remove(key)
-        save_data(data)
-        logger.info(f"🗑️ Removed {len(expired_keys)} expired UIDs")
-    
-    logger.info(
-        f"✅ Daily job completed: "
-        f"Processed: {processed_count}, "
-        f"Success: {success_count}, "
-        f"Failed: {failed_count}, "
-        f"Expired: {len(expired_keys)}"
-    )
-
-# --- Main Function ---
-
-async def on_startup(app: Application):
-    """Startup hook to initialize scheduler"""
-    global scheduler
-    logger.info("🚀 Starting scheduler...")
-    await reschedule_daily_job()
-    asyncio.get_running_loop().call_soon(scheduler.start)
-    logger.info("✅ Scheduler started successfully")
-
+# ========== MAIN ==========
 def main():
-    """Main function to start the bot"""
-    global application, scheduler
+    print("🤖 Bot Started with API Integration!")
+    print(f"📡 API URL: {API_URL}")
+    print(f"🔑 API Key: {API_KEY[:10]}...")
+    print(f"📦 MongoDB: {DB_NAME}")
     
-    scheduler = AsyncIOScheduler(timezone=IST)
-    application = Application.builder().token(BOT_TOKEN).build()
-
-    # Add command handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("autolike", autolike))
-    application.add_handler(CommandHandler("like", like))
-    application.add_handler(CommandHandler("status", status))
-    application.add_handler(CommandHandler("mylike", mylike))
-    application.add_handler(CommandHandler("myuids", myuids))
-    application.add_handler(CommandHandler("setmessage", setmessage))
-    application.add_handler(CommandHandler("setgroup", setgroup))
-    application.add_handler(CommandHandler("removeuid", remove_uid))
-    application.add_handler(CommandHandler("pauseuid", pause_uid))
-    application.add_handler(CommandHandler("resumeuid", resume_uid))
-    application.add_handler(CommandHandler("extend", extend_uid))
-    application.add_handler(CommandHandler("resetlikes", reset_likes))
-    application.add_handler(CommandHandler("ownerbroadcast", owner_broadcast))
-    application.add_handler(CommandHandler("allstats", allstats))
-    application.add_handler(CommandHandler("backup", backup))
-    application.add_handler(CommandHandler("restore", restore))
-    application.add_handler(CommandHandler("settime", set_time))
-    application.add_handler(CommandHandler("setlimit", set_limit))
-    application.add_handler(CommandHandler("checkapi", check_api))
-    application.add_handler(CommandHandler("runnow", runnow))
-    application.add_handler(CommandHandler("groups", groups))
-
-    application.post_init = on_startup
-
-    logger.info("🤖 Bot is starting with Premium Emojis...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Add sample products if needed
+    add_sample_products()
+    
+    print(f"📋 Registered commands: {list(commands.keys())[:5]}...")
+    print(f"📦 Products: {len(products_store.get_all())}")
+    
+    last_update_id = 0
+    while True:
+        try:
+            updates = get_updates(last_update_id + 1)
+            if updates:
+                print(f"📩 Received {len(updates)} updates")
+            for update in updates:
+                if "update_id" in update:
+                    last_update_id = update["update_id"]
+                handle_update(update)
+            time.sleep(0.5)
+        except KeyboardInterrupt:
+            print("🛑 Bot stopped.")
+            break
+        except Exception as e:
+            print(f"❌ Error in main loop: {e}")
+            time.sleep(1)
 
 if __name__ == "__main__":
     main()
