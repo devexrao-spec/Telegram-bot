@@ -20,7 +20,7 @@ import string
 import emoji
 
 # --- Configuration ---
-BOT_TOKEN = "8856781249:AAFxh7E65tpu_bzMlTv2vSbFld_WGS1nl24"
+BOT_TOKEN = "8644946592:AAGej4mcpPcBJ9EHLTGgVeawaOo0Z4pwdZA"
 DATA_FILE = "bot_data.json"
 LOG_FILE = "bot.log"
 OWNER_ID = 8102646437
