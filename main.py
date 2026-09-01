@@ -4776,7 +4776,6 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
 # 🚀 SYSTEM BOOTSTRAP & APPLICATION RUNNER
 # ==========================================
 
-@@
  def main():
      application = Application.builder().token(BOT_TOKEN).build()
  
