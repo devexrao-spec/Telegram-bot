@@ -37,7 +37,7 @@ from telegram.ext import (
 # 🛑 CORE CONFIGURATION INTERFACES
 # ==========================================
 
-BOT_TOKEN: str = "8644946592:AAGej4mcpPcBJ9EHLTGgVeawaOo0Z4pwdZA"
+BOT_TOKEN: str = "8565204943:AAHxmBVVHcEXYqtb32dyVCbCiUb740NDIOo"
 ADMIN_ID: int = 8102646437
 SUPPORT_HANDLE: str = "@DEVEXOPZ"
 FEEDBACK_LINK: str = "https://t.me/paymentproof"
