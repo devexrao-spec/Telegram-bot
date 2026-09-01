@@ -4777,15 +4777,12 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
 # ==========================================
 
  def main():
-     application = Application.builder().token(BOT_TOKEN).build()
- 
-     # System Settings Pre-Load
--    asyncio.run(load_system_settings(application))
-+    # Create and set a long-lived event loop so Application.run_polling()
-+    # finds a current event loop (avoids "There is no current event loop").
-+    loop = asyncio.new_event_loop()
-+    asyncio.set_event_loop(loop)
-+    loop.run_until_complete(load_system_settings(application))
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Fix missing current event loop (avoids "There is no current event loop").
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(load_system_settings(application))
 
     # Command Handlers
     application.add_handler(CommandHandler("start", start_command_handler))
@@ -4793,32 +4790,32 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
     application.add_handler(CommandHandler("buybot", buybot_command_handler))
 
     # Callback & Message Handlers
-# Dedicated Buy Bot route is registered first so normal-user /buybot
-# buttons are always handled independently of the admin/global router.
-application.add_handler(
-    CallbackQueryHandler(
-        buybot_callback_handler,
-        pattern=r"^buybot_(?:create|source|back|back_shop)$"
+    # Dedicated Buy Bot route is registered first so normal-user /buybot
+    # buttons are always handled independently of the admin/global router.
+    application.add_handler(
+        CallbackQueryHandler(
+            buybot_callback_handler,
+            pattern=r"^buybot_(?:create|source|back|back_shop)$"
+        )
     )
-)
 
-# Dedicated CO-ADMIN menu route is registered before the global router.
-application.add_handler(CallbackQueryHandler(coadmin_menu_callback_handler, pattern=r"^adm_coadmin_menu$"))
-application.add_handler(CallbackQueryHandler(global_callback_routing_engine))
+    # Dedicated CO-ADMIN menu route is registered before the global router.
+    application.add_handler(CallbackQueryHandler(coadmin_menu_callback_handler, pattern=r"^adm_coadmin_menu$"))
+    application.add_handler(CallbackQueryHandler(global_callback_routing_engine))
 
-# Accept all non-command messages so broadcast can copy photos, captions,
-# videos, documents, and other Telegram message types exactly as sent.
-application.add_handler(MessageHandler(~filters.COMMAND, handle_text_messages))
+    # Accept all non-command messages so broadcast can copy photos, captions,
+    # videos, documents, and other Telegram message types exactly as sent.
+    application.add_handler(MessageHandler(~filters.COMMAND, handle_text_messages))
 
-# Start any saved co-admin bots in background threads.
-saved_bots = get_managed_bot_records()
-for bot_key, record in saved_bots.items():
-    token = str(record.get("token", "")).strip()
-    if token:
-        start_managed_bot(token, bot_key)
+    # Start any saved co-admin bots in background threads.
+    saved_bots = get_managed_bot_records()
+    for bot_key, record in saved_bots.items():
+        token = str(record.get("token", "")).strip()
+        if token:
+            start_managed_bot(token, bot_key)
 
-logger.info("Bot starting polling loop...")
-application.run_polling(drop_pending_updates=True)
+    logger.info("Bot starting polling loop...")
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
     main()
