@@ -15,3 +15,6 @@ python-telegram-bot
 APScheduler
 requests
 emoji
+pytz==2024.1
+python-telegram-bot==20.7
+requests==2.31.0
