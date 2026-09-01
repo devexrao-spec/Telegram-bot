@@ -4776,11 +4776,17 @@ async def handle_text_messages(update: Update, context: ContextTypes.DEFAULT_TYP
 # 🚀 SYSTEM BOOTSTRAP & APPLICATION RUNNER
 # ==========================================
 
-def main():
-    application = Application.builder().token(BOT_TOKEN).build()
-
-    # System Settings Pre-Load
-    asyncio.run(load_system_settings(application))
+@@
+ def main():
+     application = Application.builder().token(BOT_TOKEN).build()
+ 
+     # System Settings Pre-Load
+-    asyncio.run(load_system_settings(application))
++    # Create and set a long-lived event loop so Application.run_polling()
++    # finds a current event loop (avoids "There is no current event loop").
++    loop = asyncio.new_event_loop()
++    asyncio.set_event_loop(loop)
++    loop.run_until_complete(load_system_settings(application))
 
     # Command Handlers
     application.add_handler(CommandHandler("start", start_command_handler))
