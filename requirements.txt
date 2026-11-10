@@ -20,7 +20,6 @@ python-telegram-bot==20.7
 requests==2.31.0
 telethon==1.36.0
 pymongo==4.10.1
-requests==2.32.3
 dnspython==2.7.0
 python-dotenv==1.0.1
 phonenumbers==8.13.47
